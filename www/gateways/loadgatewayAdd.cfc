@@ -4,6 +4,9 @@
 <cfif not structKeyExists(variables,"objPromilesGateway")>
 	<cfscript>variables.objPromilesGateway = #request.cfcpath#&".promile";</cfscript>
 </cfif>
+<cfif not structKeyExists(variables,"objPromilesGatewayTest")>
+	<cfscript>variables.objPromilesGatewayTest = #request.cfcpath#&".promiles";</cfscript>
+</cfif>
 
 <cffunction name="init" access="public" output="false" returntype="void">
 	<cfargument name="dsn" type="string" required="yes" />
@@ -14,7 +17,16 @@
 <!--- add load---> 
 <cffunction name="addLoad" access="public" returntype="any">
 		<cfargument name="frmstruct" type="struct" required="yes">
-		
+		<cfinvoke method="getLoadStatus" returnvariable="request.qLoadStatus" />
+		<cfif isdefined('arguments.frmstruct.weightStop1') and  arguments.frmstruct.weightStop1 neq "">
+			<cfif isnumeric(arguments.frmstruct.weightStop1)>
+				<cfset variables.weight=arguments.frmstruct.weightStop1>
+			<cfelse>
+				<cfset variables.weight=0>
+			</cfif>	
+		<cfelse>	
+			<cfset variables.weight=0>
+		</cfif>	
 		<cfif isdefined('arguments.frmstruct.posttoloadboard')>
 			<cfset posttoloadboard=True>
 		<cfelse>
@@ -51,27 +63,98 @@
 		
 		<cfset CarrierMilesCalc = ReplaceNoCase(CarrierMilesCalc,'$','','ALL')>
 		<cfset CarrierMilesCalc = ReplaceNoCase(CarrierMilesCalc,',','','ALL')>
-	 
-	 
-		<cfif isdefined("arguments.frmstruct.loadManualNo") and arguments.frmstruct.loadManualNo eq "" >
-			<cfif  arguments.frmstruct.ALLOWLOADENTRY eq 1>
-				<cfquery name="getloadmanual" datasource="#variables.dsn#">
-					SELECT loadManualNo=[MinimumLoadStartNumber]+1 FROM SystemConfig
-				</cfquery>
-			<cfelse>
-				<cfquery name="getloadmanual" datasource="#variables.dsn#">
-					SELECT  loadManualNo= MAX(LoadNumber)+1 FROM Loads
-				</cfquery>
-				<cfif getloadmanual.loadManualNo eq "null" or  getloadmanual.loadManualNo eq "" >
+		<cfquery name="qryGetLoadNumberAssignment" datasource="#variables.dsn#">
+			SELECT loadNumberAssignment FROM SystemConfig
+		</cfquery>
+		<cfset variables.loadNumberAssignment=0>
+		<cfif qryGetLoadNumberAssignment.loadNumberAssignment gt 0>
+			<cfswitch expression="#arguments.frmstruct.LOADSTATUS#">
+				<cfcase value="FBE06AA0-0868-48A9-A353-2B7CF8DA9F45">
+					<cfset variables.loadNumberAssignment=1>
+				</cfcase>
+				<cfcase value="EBE06AA0-0868-48A9-A353-2B7CF8DA9F45">
+					<cfset variables.loadNumberAssignment=2>
+				</cfcase>
+				<cfcase value="EBE06AA0-0868-48A9-A353-2B7CF8DA9F44">
+					<cfset variables.loadNumberAssignment=3>
+				</cfcase>
+				<cfcase value="B54D5427-A82E-4A7A-BAA1-DA95F4061EBE">
+					<cfset variables.loadNumberAssignment=4>
+				</cfcase>
+				<cfcase value="74151038-11EA-47F7-8451-D195D73DE2E4">
+					<cfset variables.loadNumberAssignment=5>
+				</cfcase>
+				<cfcase value="C4C98C6D-018A-41BD-8807-58D0DE1BB0F8">
+					<cfset variables.loadNumberAssignment=6>
+				</cfcase>
+				<cfcase value="E62ACAA8-804B-4B00-94E0-3FE7B081C012">
+					<cfset variables.loadNumberAssignment=7>
+				</cfcase>
+				<cfcase value="C980CD90-F7CD-4596-B254-141EAEC90186">
+					<cfset variables.loadNumberAssignment=8>
+				</cfcase>
+				<cfcase value="6419693E-A04C-4ECE-B612-36D3D40CFC70">
+					<cfset variables.loadNumberAssignment=9>
+				</cfcase>
+				<cfcase value="CE991E00-404D-486F-89B7-6E16C61676F3">
+					<cfset variables.loadNumberAssignment=10>
+				</cfcase>
+				<cfcase value="5C075883-B216-49FD-B0BF-851DCB5744A4">
+					<cfset variables.loadNumberAssignment=11>
+				</cfcase>
+				<cfcase value="C126B878-9DB5-4411-BE4D-61E93FAB8C95">
+					<cfset variables.loadNumberAssignment=12>
+				</cfcase>
+			</cfswitch>	
+		</cfif>	
+		<cfif variables.loadNumberAssignment gte qryGetLoadNumberAssignment.loadNumberAssignment>
+			<cfif isdefined("arguments.frmstruct.InvoiceNumber") and arguments.frmstruct.InvoiceNumber eq "" >
+				<cfif  arguments.frmstruct.ALLOWLOADENTRY eq 1>
+					<cfquery name="getloadmanual" datasource="#variables.dsn#">
+						SELECT invoiceNumber=[MinimumLoadInvoiceNumber]+1 FROM SystemConfig
+					</cfquery>
+				<cfelse>
+					<cfquery name="getloadmanual" datasource="#variables.dsn#">
+						SELECT  invoiceNumber= MAX(invoiceNumber)+1 FROM Loads
+					</cfquery>
+					<cfif getloadmanual.invoiceNumber eq "null" or  getloadmanual.invoiceNumber eq "" >
+						<cfquery name="getloadmanual" datasource="#variables.dsn#">
+							SELECT invoiceNumber=[MinimumLoadInvoiceNumber]+1 FROM SystemConfig
+						</cfquery>
+					</cfif>
+				</cfif>
+				<cfset invoiceNumber=getloadmanual.invoiceNumber>
+			<cfelseif  isdefined("arguments.frmstruct.InvoiceNumber") and arguments.frmstruct.InvoiceNumber neq "">
+				<cfset invoiceNumber=arguments.frmstruct.InvoiceNumber>
+			 </cfif> 
+		<cfelse>
+			<cfset invoiceNumber=0>
+		</cfif>
+		<cfif  arguments.frmstruct.ALLOWLOADENTRY eq 1>
+			<cfquery name="UpdateloadInvoiceNumber" datasource="#variables.dsn#">
+				  update SystemConfig set MinimumLoadInvoiceNumber=MinimumLoadInvoiceNumber+1
+			</cfquery>
+		</cfif>
+			<cfif isdefined("arguments.frmstruct.loadManualNo") and arguments.frmstruct.loadManualNo eq "" >
+				<cfif  arguments.frmstruct.ALLOWLOADENTRY eq 1>
 					<cfquery name="getloadmanual" datasource="#variables.dsn#">
 						SELECT loadManualNo=[MinimumLoadStartNumber]+1 FROM SystemConfig
 					</cfquery>
+				<cfelse>
+					<cfquery name="getloadmanual" datasource="#variables.dsn#">
+						SELECT  loadManualNo= MAX(LoadNumber)+1 FROM Loads
+					</cfquery>
+					<cfif getloadmanual.loadManualNo eq "null" or  getloadmanual.loadManualNo eq "" >
+						<cfquery name="getloadmanual" datasource="#variables.dsn#">
+							SELECT loadManualNo=[MinimumLoadStartNumber]+1 FROM SystemConfig
+						</cfquery>
+					</cfif>
 				</cfif>
-			</cfif>
-			<cfset loadManualNo=getloadmanual.loadManualNo>
-		<cfelseif  isdefined("arguments.frmstruct.loadManualNo") and arguments.frmstruct.loadManualNo neq "">
-			<cfset loadManualNo=arguments.frmstruct.loadManualNo>
-		 </cfif> 
+				<cfset loadManualNo=getloadmanual.loadManualNo>
+			<cfelseif  isdefined("arguments.frmstruct.loadManualNo") and arguments.frmstruct.loadManualNo neq "">
+				<cfset loadManualNo=arguments.frmstruct.loadManualNo>
+			 </cfif> 
+		
 		 <!-----if allow manual load entry is true then update systemconfig-------->
 		<cfif  arguments.frmstruct.ALLOWLOADENTRY eq 1>
 			<cfquery name="Updateloadmanual" datasource="#variables.dsn#">
@@ -125,13 +208,13 @@
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.trailerNo#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.BookedWith#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupNO1#" cfsqltype="CF_SQL_VARCHAR">
-		 	<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupDate#" cfsqltype="CF_SQL_dATE">
-		 	<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupTime#" cfsqltype="CF_SQL_VARCHAR">
+			<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupDate#" cfsqltype="cf_sql_date" null="#yesNoFormat(NOT len(arguments.frmstruct.shipperPickupDate))#">
+			<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupTime#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.shipperTimeIn#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.shipperTimeOut#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupNO#" cfsqltype="CF_SQL_VARCHAR">
-		 	<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupDate#" cfsqltype="CF_SQL_VARCHAR">
-		 	<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupTime#" cfsqltype="CF_SQL_VARCHAR">
+			<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupDate#" cfsqltype="cf_sql_date" null="#yesNoFormat(NOT len(arguments.frmstruct.consigneePickupDate))#">
+			<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupTime#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.consigneeTimeIn#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.consigneeTimeOut#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#session.adminUserName#" cfsqltype="CF_SQL_VARCHAR">
@@ -159,6 +242,12 @@
 			<CFPROCPARAM VALUE="#arguments.frmstruct.customerFax#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.customerCell#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.cutomerIdAuto#" cfsqltype="CF_SQL_VARCHAR">
+			<CFPROCPARAM VALUE="#invoiceNumber#" cfsqltype="CF_SQL_INTEGER">
+			<cfif structkeyexists(arguments.frmstruct,"weightStop1") and isnumeric(arguments.frmstruct.weightStop1)>
+				<CFPROCPARAM VALUE="#arguments.frmstruct.weightStop1#" cfsqltype="CF_SQL_INTEGER">
+			<cfelse>	
+				<CFPROCPARAM VALUE="0" cfsqltype="CF_SQL_INTEGER">
+			</cfif>	
 			<CFPROCRESULT NAME="qInsertedLoadID"> 
 	   </CFSTOREDPROC>
 	   <cfset LastLoadId=qInsertedLoadID.LASTLOADID>
@@ -204,32 +293,42 @@
 	   <cfif structKeyExists(arguments.frmstruct,"tempLoadId")>
 		   <cfinvoke method="linkAttachments" tempLoadId="#arguments.frmstruct.tempLoadId#" permLoadId="#LastLoadId#">
 	   </cfif>
-		<!--- If Stop1 shipperFlag eq 2 then update customer details--->
-	   <cfif structKeyExists(arguments.frmstruct,"shipperFlag") and  arguments.frmstruct.shipperFlag eq 2>
-		  	<cfinvoke method="updateCustomer" formStruct="#arguments.frmstruct#" updateType="shipper" stopNo="0" returnvariable="lastUpdatedShipCustomerID" />
-		<cfelseif (structKeyExists(arguments.frmstruct,"shipperFlag") and  arguments.frmstruct.shipperFlag eq 1) or arguments.frmstruct.shipperValueContainer eq "">
-			<cfscript>
-				variables.objCustomerGateway = #request.cfcpath#&".customergateway";
-			</cfscript>
-			<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="shipper" returnvariable="shipperStruct" />
-			<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#shipperStruct#" idReturn="true" returnvariable="addedShipperResult"/>
-			<cfset lastUpdatedShipCustomerID = addedShipperResult.id>
-		<cfelse>
-	   		<cfquery name="getEarlierCustName" datasource="#variables.dsn#">
-				select CustomerName from Customers WHERE CustomerID = '#arguments.frmstruct.shipperValueContainer#'
-			</cfquery>	
-	    	<!--- If the customer name has changed then insert it --->		
-			<cfif lcase(getEarlierCustName.CustomerName) neq lcase(arguments.frmstruct.shipperName)>
+	   <cfset variables.shipperStatus=0>
+		 <cfif arguments.frmstruct.shipper eq "" and arguments.frmstruct.shipperName eq "" and arguments.frmstruct.shipperlocation eq "" and arguments.frmstruct.shipperstate eq "" and arguments.frmstruct.shipperZipcode eq "" and arguments.frmstruct.shipperContactPerson eq "" and arguments.frmstruct.shipperPhone eq "" and arguments.frmstruct.shipperFax eq "" and arguments.frmstruct.shipperPickupNo1 eq "" and arguments.frmstruct.shipperPickupDate eq "" and arguments.frmstruct.shipperpickupTime eq "" and arguments.frmstruct.shipperTimeIn eq "" and arguments.frmstruct.shipperTimeOut eq "" and arguments.frmstruct.shipperEmail eq "" and shipBlind eq 'false' and arguments.frmstruct.shipperNotes eq "" and arguments.frmstruct.shipperDirection eq "">
+			<cfset variables.shipperStatus=1>
+		</cfif>
+	
+		<cfset lastUpdatedShipCustomerID ="">
+		<cfif arguments.frmstruct.shipper neq "" and arguments.frmstruct.shipperName neq "">
+			<!--- If Stop1 shipperFlag eq 2 then update customer details--->
+		   <cfif structKeyExists(arguments.frmstruct,"shipperFlag") and  arguments.frmstruct.shipperFlag eq 2>
+				<cfinvoke method="updateCustomer" formStruct="#arguments.frmstruct#" updateType="shipper" stopNo="0" returnvariable="lastUpdatedShipCustomerID" />
+			<cfelseif ((structKeyExists(arguments.frmstruct,"shipperFlag") and  arguments.frmstruct.shipperFlag eq 1) or (arguments.frmstruct.shipperValueContainer eq "")) and (variables.shipperStatus eq 0)>
 				<cfscript>
 					variables.objCustomerGateway = #request.cfcpath#&".customergateway";
 				</cfscript>
-		   		<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="shipper" returnvariable="shipperStruct" />			
+				<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="shipper" returnvariable="shipperStruct" />
 				<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#shipperStruct#" idReturn="true" returnvariable="addedShipperResult"/>
 				<cfset lastUpdatedShipCustomerID = addedShipperResult.id>
-			<cfelse>	
-	   			<cfset lastUpdatedShipCustomerID = arguments.frmstruct.shipperValueContainer>
-	  		</cfif>
-		 </cfif>	
+			<cfelseif (variables.shipperStatus eq 0)>
+				<cfquery name="getEarlierCustName" datasource="#variables.dsn#">
+					select CustomerName from Customers WHERE CustomerID = '#arguments.frmstruct.shipperValueContainer#'
+				</cfquery>	
+				<!--- If the customer name has changed then insert it --->		
+				<cfif lcase(getEarlierCustName.CustomerName) neq lcase(arguments.frmstruct.shipperName)>
+					<cfscript>
+						variables.objCustomerGateway = #request.cfcpath#&".customergateway";
+					</cfscript>
+					<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="shipper" returnvariable="shipperStruct" />			
+					<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#shipperStruct#" idReturn="true" returnvariable="addedShipperResult"/>
+					<cfset lastUpdatedShipCustomerID = addedShipperResult.id>
+				<cfelse>	
+					<cfset lastUpdatedShipCustomerID = arguments.frmstruct.shipperValueContainer>
+				</cfif>
+			<cfelse>
+				<cfset lastUpdatedShipCustomerID = arguments.frmstruct.shipperValueContainer>
+			 </cfif>
+		</cfif>	 
 		<CFSTOREDPROC PROCEDURE="USP_InsertLoadStop" DATASOURCE="#variables.dsn#"> 
 			<CFPROCPARAM VALUE="#LastLoadId#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="True" cfsqltype="CF_SQL_VARCHAR">
@@ -249,12 +348,12 @@
 				<CFPROCPARAM VALUE="Null" cfsqltype="CF_SQL_VARCHAR">
 			</cfif>
 			<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupNO1#" cfsqltype="CF_SQL_VARCHAR">
-			<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupDate#" cfsqltype="CF_SQL_dATE">
+			<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupDate#" cfsqltype="CF_SQL_dATE"  null="#yesNoFormat(NOT len(arguments.frmstruct.shipperPickupDate))#">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupTime#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.shipperTimeIn#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.shipperTimeOut#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="#session.adminUserName#" cfsqltype="CF_SQL_VARCHAR">
-			<CFPROCPARAM VALUE="#lastUpdatedShipCustomerID#" cfsqltype="CF_SQL_VARCHAR">
+			<CFPROCPARAM VALUE="#lastUpdatedShipCustomerID#" cfsqltype="CF_SQL_VARCHAR" null="#yesNoFormat(NOT len(lastUpdatedShipCustomerID))#">
 			<CFPROCPARAM VALUE="#ShipBlind#" cfsqltype="CF_SQL_BIT">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.shipperNotes#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.shipperDirection#" cfsqltype="CF_SQL_VARCHAR">
@@ -329,7 +428,7 @@
 						<cfqueryparam value="#arguments.frmstruct.dateAvailable#" cfsqltype="cf_sql_date">,
 						<cfqueryparam value="#arguments.frmstruct.demuggageFreeTimeExpirationDate#" cfsqltype="cf_sql_date">,
 						<cfqueryparam value="#arguments.frmstruct.perDiemFreeTimeExpirationDate#" cfsqltype="cf_sql_date">,
-						<cfqueryparam value="#arguments.frmstruct.pickupDate#" cfsqltype="cf_sql_date">,
+						<cfqueryparam value="#arguments.frmstruct.pickupDate#" cfsqltype="cf_sql_date" null="#yesNoFormat(NOT len(arguments.frmstruct.pickupDate))#">,
 						<cfqueryparam value="#arguments.frmstruct.requestedDeliveryDate#" cfsqltype="cf_sql_date">,
 						<cfqueryparam value="#arguments.frmstruct.requestedDeliveryTime#" cfsqltype="cf_sql_time" null="#yesNoFormat(NOT len(trim(arguments.frmstruct.requestedDeliveryTime)))#">,
 						<cfqueryparam value="#arguments.frmstruct.scheduledDeliveryDate#" cfsqltype="cf_sql_date">,
@@ -470,7 +569,7 @@
 						<cfqueryparam value="#arguments.frmstruct.exportvesselName#" cfsqltype="cf_sql_varchar">,
 						<cfqueryparam value="#arguments.frmstruct.exportPerDiemFreeTimeExpirationDate#" cfsqltype="cf_sql_date">,
 						<cfqueryparam value="#arguments.frmstruct.exportVoyage#" cfsqltype="cf_sql_varchar">,
-						<cfqueryparam value="#arguments.frmstruct.exportEmptyPickupDate#" cfsqltype="cf_sql_date">,
+						<cfqueryparam value="#arguments.frmstruct.exportEmptyPickupDate#" cfsqltype="cf_sql_date" null="#yesNoFormat(NOT len(arguments.frmstruct.exportEmptyPickupDate))#">,
 						<cfqueryparam value="#arguments.frmstruct.exportseal#" cfsqltype="cf_sql_varchar">,
 						<cfqueryparam value="#arguments.frmstruct.exportBooking#" cfsqltype="cf_sql_varchar">,
 						<cfqueryparam value="#arguments.frmstruct.exportScheduledLoadingDate#" cfsqltype="cf_sql_date">,
@@ -570,33 +669,41 @@
 			
 		</cfif>
 		<!--- EXPORT Load Stop Ends Here --->
-		
-		<!--- If Stop1 consigneeFlag  eq 2 then update customer details--->
-		<cfif structKeyExists(arguments.frmstruct,"consigneeFlag") and  arguments.frmstruct.consigneeFlag eq 2>
-			<cfinvoke method="updateCustomer" formStruct="#arguments.frmstruct#" updateType="consignee" stopNo="0" returnvariable="lastUpdatedConsCustomerID" />
-		<cfelseif (structKeyExists(arguments.frmstruct,"consigneeFlag") and  arguments.frmstruct.consigneeFlag eq 1) or arguments.frmstruct.consigneeValueContainer eq "">	
-			<cfscript>
-				variables.objCustomerGateway = #request.cfcpath#&".customergateway";
-			</cfscript>
-			<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="consignee" returnvariable="consigneeStruct" />				
-	 		<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#consigneeStruct#" idReturn="true" returnvariable="addedConsigneeResult"/>
-			<cfset lastUpdatedConsCustomerID = addedConsigneeResult.id>
-	   <cfelse>
-	   		<cfquery name="getEarlierCustName" datasource="#variables.dsn#">
-				select CustomerName from Customers WHERE CustomerID = '#consigneeValueContainer#'
-			</cfquery>	
-		   	<!--- If the customer name has changed then insert it --->		
-			<cfif lcase(getEarlierCustName.CustomerName) neq lcase(arguments.frmstruct.consigneeName)>
-		   		<cfscript>
+		<cfset variables.consigneeFlagstatus=0>
+		<cfif arguments.frmstruct.consignee eq "" and arguments.frmstruct.consigneeName eq "" and arguments.frmstruct.consigneelocation eq "" and  arguments.frmstruct.consigneestate eq "" and arguments.frmstruct.consigneecity eq "" and arguments.frmstruct.consigneeZipcode eq "" and arguments.frmstruct.consigneeContactPerson eq "" and arguments.frmstruct.consigneePhone eq "" and arguments.frmstruct.consigneeFax eq "" and arguments.frmstruct.consigneePickupNo eq "" and arguments.frmstruct.consigneePickupDate eq "" and arguments.frmstruct.consigneepickupTime eq "" and arguments.frmstruct.consigneeTimeIn eq "" and arguments.frmstruct.consigneeTimeOut eq "" and ConsBlind eq 'false' and arguments.frmstruct.consigneeEmail eq "" and arguments.frmstruct.consigneeNotes eq "" and  arguments.frmstruct.consigneeDirection eq "">
+			<cfset variables.consigneeFlagstatus=1>
+		</cfif>
+		<cfset lastUpdatedConsCustomerID ="">
+		<cfif arguments.frmstruct.consignee neq "" and arguments.frmstruct.consigneeName neq "">
+			<!--- If Stop1 consigneeFlag  eq 2 then update customer details--->
+			<cfif structKeyExists(arguments.frmstruct,"consigneeFlag") and  arguments.frmstruct.consigneeFlag eq 2>
+				<cfinvoke method="updateCustomer" formStruct="#arguments.frmstruct#" updateType="consignee" stopNo="0" returnvariable="lastUpdatedConsCustomerID" />
+			<cfelseif ((structKeyExists(arguments.frmstruct,"consigneeFlag") and  arguments.frmstruct.consigneeFlag eq 1) or (arguments.frmstruct.consigneeValueContainer eq "")) and (variables.consigneeFlagstatus eq 0) >	
+				<cfscript>
 					variables.objCustomerGateway = #request.cfcpath#&".customergateway";
 				</cfscript>
-				<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="consignee" returnvariable="consigneeStruct" />					
-	   			<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#consigneeStruct#" idReturn="true" returnvariable="addedConsigneeResult"/>
+				<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="consignee" returnvariable="consigneeStruct" />				
+				<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#consigneeStruct#" idReturn="true" returnvariable="addedConsigneeResult"/>
 				<cfset lastUpdatedConsCustomerID = addedConsigneeResult.id>
-			<cfelse>	
-	   			<cfset lastUpdatedConsCustomerID = arguments.frmstruct.consigneeValueContainer>
-	  		</cfif>
-  		</cfif>
+		   <cfelseif (variables.consigneeFlagstatus eq 0)>
+				<cfquery name="getEarlierCustName" datasource="#variables.dsn#">
+					select CustomerName from Customers WHERE CustomerID = '#consigneeValueContainer#'
+				</cfquery>	
+				<!--- If the customer name has changed then insert it --->		
+				<cfif lcase(getEarlierCustName.CustomerName) neq lcase(arguments.frmstruct.consigneeName)>
+					<cfscript>
+						variables.objCustomerGateway = #request.cfcpath#&".customergateway";
+					</cfscript>
+					<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="consignee" returnvariable="consigneeStruct" />					
+					<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#consigneeStruct#" idReturn="true" returnvariable="addedConsigneeResult"/>
+					<cfset lastUpdatedConsCustomerID = addedConsigneeResult.id>
+				<cfelse>	
+					<cfset lastUpdatedConsCustomerID = arguments.frmstruct.consigneeValueContainer>
+				</cfif>
+			<cfelse>
+				<cfset lastUpdatedConsCustomerID = arguments.frmstruct.consigneeValueContainer>
+			</cfif>
+		</cfif>
 		<CFSTOREDPROC PROCEDURE="USP_InsertLoadStop" DATASOURCE="#variables.dsn#"> 
 			<CFPROCPARAM VALUE="#LastLoadId#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="True" cfsqltype="CF_SQL_VARCHAR">
@@ -616,12 +723,12 @@
 				<CFPROCPARAM VALUE="Null" cfsqltype="CF_SQL_VARCHAR">
 			</cfif>
 			<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupNo#" cfsqltype="CF_SQL_VARCHAR">
-			<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupDate#" cfsqltype="CF_SQL_dATE">
+			<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupDate#" cfsqltype="CF_SQL_dATE" null="#yesNoFormat(NOT len(arguments.frmstruct.consigneePickupDate))#">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupTime#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.consigneetimein#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.consigneetimeout#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="#session.adminUserName#" cfsqltype="CF_SQL_VARCHAR">
-			<CFPROCPARAM VALUE="#lastUpdatedConsCustomerID#" cfsqltype="CF_SQL_VARCHAR">
+			<CFPROCPARAM VALUE="#lastUpdatedConsCustomerID#" cfsqltype="CF_SQL_VARCHAR" null="#yesNoFormat(NOT len(lastUpdatedConsCustomerID))#" >
 			<CFPROCPARAM VALUE="#ConsBlind#" cfsqltype="CF_SQL_BIT">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.consigneeNotes#" cfsqltype="CF_SQL_VARCHAR">
 			<CFPROCPARAM VALUE="#arguments.frmstruct.consigneeDirection#" cfsqltype="CF_SQL_VARCHAR">
@@ -650,7 +757,11 @@
 		     <cfset qty=VAL(evaluate("arguments.frmstruct.qty#num#"))>
 			 <cfset unit=evaluate("arguments.frmstruct.unit#num#")>
 			 <cfset description=evaluate("arguments.frmstruct.description#num#")>
-			 <cfset weight=VAL(evaluate("arguments.frmstruct.weight#num#"))>
+			 <cfif isdefined("arguments.frmstruct.weight#num#")>
+				<cfset weight=VAL(evaluate("arguments.frmstruct.weight#num#"))>
+			<cfelse>
+				<cfset weight=0>
+			</cfif>
 			 <cfset class=evaluate("arguments.frmstruct.class#num#")>
 			 <cfset CustomerRate=evaluate("arguments.frmstruct.CustomerRate#num#")>
 			 <cfset CustomerRate = replace( CustomerRate,"$","","ALL") > 
@@ -699,32 +810,41 @@
 				<cfelse>
 					<cfset ConsBlind=False>
 				</cfif>
-				<!--- If 2nd and further stops shipperFlag eq 2 then update customer details --->
-				<cfif structKeyExists(arguments.frmstruct,"shipperFlag#stpID#") and  evaluate("arguments.frmstruct.shipperFlag#stpID#") eq 2>
-					<cfinvoke method="updateCustomer" formStruct="#arguments.frmstruct#" updateType="shipper" stopNo="#stpID#" returnvariable="lastUpdatedShipCustomerID" />
-				<cfelseif (structKeyExists(arguments.frmstruct,"shipperFlag#stpID#") and  evaluate("arguments.frmstruct.shipperFlag#stpID#") eq 1) or evaluate('arguments.frmstruct.shipperValueContainer#stpID#') eq "">	
-					<cfscript>
-						variables.objCustomerGateway = #request.cfcpath#&".customergateway";
-					</cfscript>
-			   		<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="shipper" stop="#stpID#" returnvariable="shipperStruct" />				
-					<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#shipperStruct#" idReturn="true" returnvariable="addedShipperResult"/>
-					<cfset lastUpdatedShipCustomerID = addedShipperResult.id>
-			 <cfelse>  
-			   		<cfquery name="getEarlierCustName" datasource="#variables.dsn#">
-						select CustomerName from Customers WHERE CustomerID = '#arguments.frmstruct.cutomerIdAutoValueContainer#'
-					</cfquery>	
-		   			<!--- If the customer name has changed then insert it --->		
-					<cfif lcase(getEarlierCustName.CustomerName) neq lcase(evaluate("arguments.frmstruct.shipperName#stpID#"))>
-		   				<cfscript>
+				<cfset evaluate("variables.shipperStatus#stpID#=0")>
+				 <cfif  evaluate('arguments.frmstruct.shipper#stpID#') eq "" and evaluate('arguments.frmstruct.shipperName#stpID#') eq "" and evaluate('arguments.frmstruct.shipperlocation#stpID#') eq "" and evaluate('arguments.frmstruct.shipperstate#stpID#') eq "" and evaluate('arguments.frmstruct.shipperZipcode#stpID#')  eq "" and evaluate('arguments.frmstruct.shipperContactPerson#stpID#') eq "" and evaluate('arguments.frmstruct.shipperPhone#stpID#') eq "" and evaluate('arguments.frmstruct.shipperFax#stpID#') eq "" and evaluate('arguments.frmstruct.shipperPickupNo1#stpID#') eq "" and evaluate('arguments.frmstruct.shipperPickupDate#stpID#') eq "" and evaluate('arguments.frmstruct.shipperpickupTime#stpID#') eq "" and evaluate('arguments.frmstruct.shipperTimeIn#stpID#') eq "" and evaluate('arguments.frmstruct.shipperTimeOut#stpID#') eq "" and evaluate('arguments.frmstruct.shipperEmail#stpID#') eq "" and shipBlind eq 'false' and evaluate(' arguments.frmstruct.shipperNotes#stpID#') eq "" and evaluate('arguments.frmstruct.shipperDirection#stpID#') eq "">
+					<cfset evaluate("variables.shipperStatus#stpID#=1")>
+				</cfif>
+				<cfset lastUpdatedShipCustomerID ="">
+				<cfif evaluate("arguments.frmstruct.shipper#stpID#") neq "" and evaluate("arguments.frmstruct.shipperName#stpID#") neq "">
+					<!--- If 2nd and further stops shipperFlag eq 2 then update customer details --->
+					<cfif structKeyExists(arguments.frmstruct,"shipperFlag#stpID#") and  evaluate("arguments.frmstruct.shipperFlag#stpID#") eq 2>
+						<cfinvoke method="updateCustomer" formStruct="#arguments.frmstruct#" updateType="shipper" stopNo="#stpID#" returnvariable="lastUpdatedShipCustomerID" />
+					<cfelseif ((structKeyExists(arguments.frmstruct,"shipperFlag#stpID#") and  evaluate("arguments.frmstruct.shipperFlag#stpID#") eq 1) or (evaluate('arguments.frmstruct.shipperValueContainer#stpID#') eq "")) and ((evaluate('variables.shipperStatus#stpID#') eq 0))>	
+						<cfscript>
 							variables.objCustomerGateway = #request.cfcpath#&".customergateway";
 						</cfscript>
-			   			<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="shipper" stop="#stpID#" returnvariable="shipperStruct" />					
+						<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="shipper" stop="#stpID#" returnvariable="shipperStruct" />				
 						<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#shipperStruct#" idReturn="true" returnvariable="addedShipperResult"/>
 						<cfset lastUpdatedShipCustomerID = addedShipperResult.id>
-					<cfelse><cfset lastUpdatedShipCustomerID = arguments.frmstruct.shipperValueContainer>
-	  				</cfif>
-		 	</cfif>	
-
+					<cfelseif (evaluate('variables.shipperStatus#stpID#') eq 0)>  
+						<cfquery name="getEarlierCustName" datasource="#variables.dsn#">
+							select CustomerName from Customers WHERE CustomerID = '#arguments.frmstruct.cutomerIdAutoValueContainer#'
+						</cfquery>	
+						<!--- If the customer name has changed then insert it --->		
+						<cfif lcase(getEarlierCustName.CustomerName) neq lcase(evaluate("arguments.frmstruct.shipperName#stpID#"))>
+							<cfscript>
+								variables.objCustomerGateway = #request.cfcpath#&".customergateway";
+							</cfscript>
+							<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="shipper" stop="#stpID#" returnvariable="shipperStruct" />					
+							<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#shipperStruct#" idReturn="true" returnvariable="addedShipperResult"/>
+							<cfset lastUpdatedShipCustomerID = addedShipperResult.id>
+						<cfelse>
+							<cfset lastUpdatedShipCustomerID = evaluate('arguments.frmstruct.shipperValueContainer#stpID#')>
+						</cfif>
+					<cfelse>
+						<cfset lastUpdatedShipCustomerID = evaluate('arguments.frmstruct.shipperValueContainer#stpID#')>
+					</cfif>	
+				</cfif>
 		 	<cfset variables.NewStopNo = 0>
 	 		<cfloop from="1" to="10" index="index">
 	 			<cfquery name="qryGetStopExists" datasource="#variables.dsn#">
@@ -770,12 +890,12 @@
 						</cfif>
 					</cfif>
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.shipperPickupNO1#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
-					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.shipperPickupDate#stpID#')#" cfsqltype="CF_SQL_dATE">
+					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.shipperPickupDate#stpID#')#" cfsqltype="CF_SQL_dATE" null="#yesNoFormat(NOT len(evaluate('arguments.frmstruct.shipperPickupDate#stpID#')))#">
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.shipperPickupTime#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.shipperTimeIn#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.shipperTimeOut#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
 					<CFPROCPARAM VALUE="#session.adminUserName#" cfsqltype="CF_SQL_VARCHAR">
-					<CFPROCPARAM VALUE="#lastUpdatedShipCustomerID#" cfsqltype="CF_SQL_VARCHAR">
+					<CFPROCPARAM VALUE="#lastUpdatedShipCustomerID#" cfsqltype="CF_SQL_VARCHAR" null="#yesNoFormat(NOT len(lastUpdatedShipCustomerID))#">
 					<CFPROCPARAM VALUE="#ShipBlind#" cfsqltype="CF_SQL_BIT">
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.shipperNotes#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.shipperDirection#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
@@ -799,32 +919,41 @@
 					<CFPROCRESULT NAME="qInsertedCustStopId"> 
 				</cfstoredproc>
 				<cfset lastInsertedStopId = qInsertedCustStopId.lastStopID>
-				<!--- If 2nd and further stops consigneeFlag eq 2 then update customer details--->
-				<cfif structKeyExists(arguments.frmstruct,"consigneeFlag#stpID#") and  evaluate("arguments.frmstruct.consigneeFlag#stpID#") eq 2>
-					<cfinvoke method="updateCustomer" formStruct="#arguments.frmstruct#" updateType="consignee" stopNo="#stpID#" returnvariable="lastUpdatedConsCustomerID" />
-				<cfelseif (structKeyExists(arguments.frmstruct,"consigneeFlag#stpID#") and  evaluate("arguments.frmstruct.consigneeFlag#stpID#") eq 1) or evaluate('arguments.frmstruct.consigneeValueContainer#stpID#') eq "">	
-					<cfscript>
-						variables.objCustomerGateway = #request.cfcpath#&".customergateway";
-					</cfscript>
-	                <cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="consignee" stop="#stpID#" returnvariable="consigneeStruct" />					
-					<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#consigneeStruct#" idReturn="true" returnvariable="addedConsigneeResult"/>
-					<cfset lastUpdatedConsCustomerID = addedConsigneeResult.id>
-			   <cfelse>
-			   		<cfquery name="getEarlierCustName" datasource="#variables.dsn#">
-						select CustomerName from Customers WHERE CustomerID = '#arguments.frmstruct.cutomerIdAutoValueContainer#'
-					</cfquery>	
-	    			<!--- If the customer name has changed then insert it --->		
-					<cfif lcase(getEarlierCustName.CustomerName) neq lcase(evaluate("arguments.frmstruct.consigneeName#stpID#"))>
-			   			<cfscript>
+				<cfset evaluate("variables.consigneeFlagstatus#stpID#=0")>
+				<cfif  evaluate('arguments.frmstruct.consignee#stpID#') eq "" and evaluate('arguments.frmstruct.consigneeName#stpID#') eq "" and evaluate('arguments.frmstruct.consigneelocation#stpID#') eq "" and evaluate('arguments.frmstruct.consigneestate#stpID#') eq "" and evaluate('arguments.frmstruct.consigneecity#stpID#')  eq "" and evaluate('arguments.frmstruct.consigneeZipcode#stpID#') eq "" and evaluate('arguments.frmstruct.consigneeContactPerson#stpID#') eq "" and evaluate('arguments.frmstruct.consigneePhone#stpID#') eq "" and evaluate('arguments.frmstruct.consigneeFax#stpID#') eq "" and evaluate('arguments.frmstruct.consigneePickupNo#stpID#') eq "" and evaluate('arguments.frmstruct.consigneePickupDate#stpID#') eq "" and evaluate('arguments.frmstruct.consigneepickupTime#stpID#') eq "" and evaluate('arguments.frmstruct.consigneeTimeIn#stpID#') eq "" and evaluate('arguments.frmstruct.consigneeTimeOut#stpID#') eq "" and ConsBlind eq 'false' and evaluate(' arguments.frmstruct.consigneeEmail#stpID#') eq "" and evaluate('arguments.frmstruct.consigneeNotes#stpID#') eq ""  and evaluate('arguments.frmstruct.consigneeDirection#stpID#') eq "">
+					<cfset evaluate("variables.consigneeFlagstatus#stpID#=1")>
+				</cfif>
+				<cfset lastUpdatedConsCustomerID ="">
+				<cfif evaluate("arguments.frmstruct.consignee#stpID#") neq "" and evaluate("arguments.frmstruct.consigneeName#stpID#") neq "">
+					<!--- If 2nd and further stops consigneeFlag eq 2 then update customer details--->
+					<cfif structKeyExists(arguments.frmstruct,"consigneeFlag#stpID#") and  evaluate("arguments.frmstruct.consigneeFlag#stpID#") eq 2>
+						<cfinvoke method="updateCustomer" formStruct="#arguments.frmstruct#" updateType="consignee" stopNo="#stpID#" returnvariable="lastUpdatedConsCustomerID" />
+					<cfelseif ((structKeyExists(arguments.frmstruct,"consigneeFlag#stpID#") and  evaluate("arguments.frmstruct.consigneeFlag#stpID#") eq 1) or (evaluate('arguments.frmstruct.consigneeValueContainer#stpID#') eq "")) and (evaluate('variables.consigneeFlagstatus#stpID#') eq 0)  >	
+						<cfscript>
 							variables.objCustomerGateway = #request.cfcpath#&".customergateway";
 						</cfscript>
-						<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="consignee" stop="#stpID#" returnvariable="consigneeStruct" />		
+						<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="consignee" stop="#stpID#" returnvariable="consigneeStruct" />					
 						<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#consigneeStruct#" idReturn="true" returnvariable="addedConsigneeResult"/>
 						<cfset lastUpdatedConsCustomerID = addedConsigneeResult.id>
-			   		<cfelse>
-			   			<cfset lastUpdatedConsCustomerID = evaluate("arguments.frmstruct.consigneeValueContainer#stpID#")>	
-			   		</cfif>	
-			    </cfif>
+				   <cfelseif (evaluate('variables.consigneeFlagstatus#stpID#') eq 0)>
+						<cfquery name="getEarlierCustName" datasource="#variables.dsn#">
+							select CustomerName from Customers WHERE CustomerID = '#arguments.frmstruct.cutomerIdAutoValueContainer#'
+						</cfquery>	
+						<!--- If the customer name has changed then insert it --->		
+						<cfif lcase(getEarlierCustName.CustomerName) neq lcase(evaluate("arguments.frmstruct.consigneeName#stpID#"))>
+							<cfscript>
+								variables.objCustomerGateway = #request.cfcpath#&".customergateway";
+							</cfscript>
+							<cfinvoke method="formCustStruct" frmstruct="#arguments.frmstruct#" type="consignee" stop="#stpID#" returnvariable="consigneeStruct" />		
+							<cfinvoke component ="#variables.objCustomerGateway#" method="AddCustomer" formStruct="#consigneeStruct#" idReturn="true" returnvariable="addedConsigneeResult"/>
+							<cfset lastUpdatedConsCustomerID = addedConsigneeResult.id>
+						<cfelse>
+							<cfset lastUpdatedConsCustomerID = evaluate("arguments.frmstruct.consigneeValueContainer#stpID#")>	
+						</cfif>	
+					<cfelse>
+						<cfset lastUpdatedConsCustomerID = evaluate("arguments.frmstruct.consigneeValueContainer#stpID#")>	
+					</cfif>
+				</cfif>	
 				<CFSTOREDPROC PROCEDURE="USP_InsertLoadStop" DATASOURCE="#variables.dsn#"> 
 					<CFPROCPARAM VALUE="#LastLoadId#" cfsqltype="CF_SQL_VARCHAR">
 					<CFPROCPARAM VALUE="True" cfsqltype="CF_SQL_VARCHAR">
@@ -854,12 +983,12 @@
 						</cfif>
 					</cfif>
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.consigneePickupNo#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
-					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.consigneePickupDate#stpID#')#" cfsqltype="CF_SQL_dATE">
+					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.consigneePickupDate#stpID#')#" cfsqltype="CF_SQL_dATE" null="#yesNoFormat(NOT len(evaluate('arguments.frmstruct.consigneePickupDate#stpID#')))#">
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.consigneePickupTime#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.consigneetimein#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.consigneetimeout#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
 					<CFPROCPARAM VALUE="#session.adminUserName#" cfsqltype="CF_SQL_VARCHAR">
-					<CFPROCPARAM VALUE="#lastUpdatedConsCustomerID#" cfsqltype="CF_SQL_VARCHAR">
+					<CFPROCPARAM VALUE="#lastUpdatedConsCustomerID#" cfsqltype="CF_SQL_VARCHAR" null="#yesNoFormat(NOT len(lastUpdatedConsCustomerID))#">
 					<CFPROCPARAM VALUE="#ConsBlind#" cfsqltype="CF_SQL_BIT">
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.consigneeNotes#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
 					<CFPROCPARAM VALUE="#evaluate('arguments.frmstruct.consigneeDirection#stpID#')#" cfsqltype="CF_SQL_VARCHAR">
@@ -935,7 +1064,7 @@
 								<cfqueryparam value="#EVALUATE('arguments.frmstruct.dateAvailable#stpID#')#" cfsqltype="cf_sql_date">,
 								<cfqueryparam value="#EVALUATE('arguments.frmstruct.demuggageFreeTimeExpirationDate#stpID#')#" cfsqltype="cf_sql_date">,
 								<cfqueryparam value="#EVALUATE('arguments.frmstruct.perDiemFreeTimeExpirationDate#stpID#')#" cfsqltype="cf_sql_date">,
-								<cfqueryparam value="#EVALUATE('arguments.frmstruct.pickupDate#stpID#')#" cfsqltype="cf_sql_date">,
+								<cfqueryparam value="#EVALUATE('arguments.frmstruct.pickupDate#stpID#')#" cfsqltype="cf_sql_date" null="#yesNoFormat(NOT len(EVALUATE('arguments.frmstruct.pickupDate#stpID#')))#">,
 								<cfqueryparam value="#EVALUATE('arguments.frmstruct.requestedDeliveryDate#stpID#')#" cfsqltype="cf_sql_date">,
 								<cfset requestedDeliveryTime = EVALUATE('arguments.frmstruct.requestedDeliveryTime#stpID#')>
 								<cfqueryparam value="#EVALUATE('arguments.frmstruct.requestedDeliveryTime#stpID#')#" cfsqltype="cf_sql_time" null="#yesNoFormat(NOT len(requestedDeliveryTime))#">,
@@ -1185,7 +1314,11 @@
 					<cfset qty=evaluate("arguments.frmstruct.qty#num##stpID#")>
 					<cfset unit=evaluate("arguments.frmstruct.unit#num##stpID#")>
 					<cfset description=evaluate("arguments.frmstruct.description#num##stpID#")>
-					<cfset weight=VAL(evaluate("arguments.frmstruct.weight#num##stpID#"))>
+					<cfif isdefined("arguments.frmstruct.weight#num##stpID#")>
+						<cfset weight=VAL(evaluate("arguments.frmstruct.weight#num##stpID#"))>
+					<cfelse>
+						<cfset weight=0>
+					</cfif>
 					<cfset class=evaluate("arguments.frmstruct.class#num##stpID#")>
 					<cfset CustomerRate=evaluate("arguments.frmstruct.CustomerRate#num##stpID#")>
 					<cfset CustomerRate = replace( CustomerRate,"$","","ALL") > 
@@ -1231,7 +1364,6 @@
 				</cfloop>
 			</cfloop>
 		</cfif>
-	  
 		<cfset Msg0='1'> <cfset Msg1='1'><cfset msg2 ='1'>
 		<cfset ITS_msg = 1>
 	  <!-------posteverywhere webservice calll---->  
@@ -1251,9 +1383,10 @@
 			<cfinvoke method="Transcore360Webservice" impref="#impref#" trans360Usename="#arguments.frmstruct.trans360Usename#" trans360Password="#arguments.frmstruct.trans360Password#" POSTACTION="#p_action#" returnvariable="request.Transcore360Webservice" />
 			<!--- <cfdump var="#request.Transcore360Webservice#" /><cfabort /> --->
 			<cfset Msg1=request.Transcore360Webservice>
+			
 		</cfif>
 		<!--- Validation for Unauthorised users try to update on Transcore --->
-		<cfif NOT structKeyExists(arguments.frmstruct,"integratewithTran360") AND structKeyExists(arguments.frmstruct,"posttoTranscore")>
+		<cfif NOT structKeyExists(arguments.frmstruct,"integratewithTran360") AND structKeyExists(arguments.frmstruct,"posttoTranscore") and structKeyExists(arguments.frmstruct,"noloadboards")>
 			<cfset msg1 = "There is a problem in logging to Transcore">
 		</cfif>
 		<!--- BEGIN: ITS Webservice Integration --->
@@ -1285,10 +1418,9 @@
 			<cfinvoke method="getSystemSetupOptions" returnvariable="request.qSystemSetupOptions">
 			<cfif request.qSystemSetupOptions.googlemapspcmiler AND getProMileDetails.proMilesStatus>
 				<cfset arguments.frmstruct.loadnumber = loadManualNo>
-				<cfinvoke component="#variables.objPromilesGateway#" method="promilesCalculation" frmstruct="#arguments.frmstruct#" returnvariable="responsePromiles"/>
+				<cfinvoke component="#variables.objPromilesGatewayTest#" method="promilesCalculation" frmstruct="#arguments.frmstruct#" returnvariable="responsePromiles"/>
 			</cfif>	
 		</cfif>	
-
 		<cfset Msg0='#LastLoadId#'&'~~'&'#Msg0#'&'~~'&'#Msg1#'&'~~'&ITS_msg&'~~'&msg2>	 
 	<cfreturn Msg0>
 </cffunction>

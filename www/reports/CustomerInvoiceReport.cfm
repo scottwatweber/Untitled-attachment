@@ -1,7 +1,11 @@
 <cfoutput>
-<cfinclude template="../webroot/Application.cfm">
+<cfif structkeyExists(url,"dsn")>
+<!--- Decrypt String --->
+<cfset TheKey = 'NAMASKARAM'>
+<cfset dsn = Decrypt(ToString(ToBinary(url.dsn)), TheKey)>
+</cfif>
 <cfif structkeyexists(url,"loadno") or structkeyexists(url,"loadid")>
-	<cfquery name="careerReport" datasource="#Application.dsn#">
+	<cfquery name="careerReport" datasource="#dsn#">
 		SELECT *, 
 			(SELECT sum(weight)  from vwCarrierConfirmationReport 
 			   <cfif structkeyexists(url,"loadno")>

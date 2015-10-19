@@ -40,6 +40,7 @@
 			   </cfif>
 				   ORDER BY stopnum 
 			</cfquery>
+			
 		<cfoutput>
 			<cfreport name="genPDF" format="PDF" template="CarrierWorkOrderExport.cfr" style="../webroot/styles/reportStyle.css" query="#careerReport#"> 
 				<cfreportParam name="ReportDate" value="#DateFormat(Now(),'mm/dd/yyyy')#"> 

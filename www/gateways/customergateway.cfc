@@ -64,11 +64,11 @@
 
 	<cfset variables.userExists = 0>
 
-	<cfif arguments.formStruct.IsPayer AND len(trim(arguments.formStruct.Username))>
+	<cfif arguments.formStruct.IsPayer AND len(trim(arguments.formStruct.CustomerUsername))>
 	    <cfquery name="qryGetCustomer" datasource="#variables.dsn#">
 	    	select CustomerID from Customers
 	    	where 
-	    		Username=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.UserName#">
+	    		Username=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.CustomerUsername#">
 		</cfquery>
 		<cfif qryGetCustomer.recordCount>
 			<cfset variables.userExists = 1>
@@ -146,13 +146,53 @@
 			  <CFPROCPARAM VALUE="#arguments.formStruct.CarrierNotes#" cfsqltype="CF_SQL_VARCHAR">,
 			  <CFPROCPARAM VALUE="#arguments.formStruct.Tollfree#"  cfsqltype="CF_SQL_VARCHAR">
 			  <CFPROCPARAM VALUE="#arguments.formStruct.Fax#"  cfsqltype="CF_SQL_VARCHAR">
+				<cfif isdefined('arguments.formStruct.RemitName') and len(arguments.formStruct.RemitName)>
+					<CFPROCPARAM VALUE="#arguments.formStruct.RemitName#"  cfsqltype="CF_SQL_VARCHAR">
+				<cfelse>
+					<CFPROCPARAM VALUE="" cfsqltype="CF_SQL_VARCHAR">
+				</cfif>	
+				<cfif isdefined('arguments.formStruct.RemitAddress') and len(arguments.formStruct.RemitAddress)>
+					<CFPROCPARAM VALUE="#arguments.formStruct.RemitAddress#"  cfsqltype="CF_SQL_VARCHAR">
+				<cfelse>
+					<CFPROCPARAM VALUE="" cfsqltype="CF_SQL_VARCHAR">
+				</cfif>		
+				<cfif isdefined('arguments.formStruct.RemitCity') and len(arguments.formStruct.RemitCity)>
+					<CFPROCPARAM VALUE="#arguments.formStruct.RemitCity#"  cfsqltype="CF_SQL_VARCHAR">
+				<cfelse>
+					<CFPROCPARAM VALUE="" cfsqltype="CF_SQL_VARCHAR">
+				</cfif>		
+				<cfif isdefined('arguments.formStruct.RemitState') and len(arguments.formStruct.RemitState)>
+					<CFPROCPARAM VALUE="#arguments.formStruct.RemitState#"  cfsqltype="CF_SQL_VARCHAR">
+				<cfelse>
+					<CFPROCPARAM VALUE="" cfsqltype="CF_SQL_VARCHAR">
+				</cfif>		
+				<cfif isdefined('arguments.formStruct.RemitZipcode') and len(arguments.formStruct.RemitZipcode)>
+					<CFPROCPARAM VALUE="#arguments.formStruct.RemitZipcode#"  cfsqltype="CF_SQL_VARCHAR">
+				<cfelse>
+					<CFPROCPARAM VALUE="" cfsqltype="CF_SQL_VARCHAR">
+				</cfif>	
+				<cfif isdefined('arguments.formStruct.RemitContact') and len(arguments.formStruct.RemitContact)>
+					<CFPROCPARAM VALUE="#arguments.formStruct.RemitContact#"  cfsqltype="CF_SQL_VARCHAR">
+				<cfelse>
+					<CFPROCPARAM VALUE="" cfsqltype="CF_SQL_VARCHAR">
+				</cfif>	
+				<cfif isdefined('arguments.formStruct.RemitFax') and len(arguments.formStruct.RemitFax)>
+					<CFPROCPARAM VALUE="#arguments.formStruct.RemitFax#"  cfsqltype="CF_SQL_VARCHAR">
+				<cfelse>
+					<CFPROCPARAM VALUE="" cfsqltype="CF_SQL_VARCHAR">
+				</cfif>	
+				<cfif isdefined('arguments.formStruct.RemitPhone') and len(arguments.formStruct.RemitPhone)>
+					<CFPROCPARAM VALUE="#arguments.formStruct.RemitPhone#"  cfsqltype="CF_SQL_VARCHAR">
+				<cfelse>
+					<CFPROCPARAM VALUE="" cfsqltype="CF_SQL_VARCHAR">
+				</cfif>	
 			  <cfif arguments.formStruct.isPayer>
 			  		<cfif variables.userExists>
 			  			<CFPROCPARAM VALUE=""  cfsqltype="CF_SQL_VARCHAR">
 			  		<cfelse>
-			  			<CFPROCPARAM VALUE="#arguments.formStruct.UserName#"  cfsqltype="CF_SQL_VARCHAR">
+			  			<CFPROCPARAM VALUE="#arguments.formStruct.CustomerUsername#"  cfsqltype="CF_SQL_VARCHAR">
 			  		</cfif>				  
-				  	<CFPROCPARAM VALUE="#arguments.formStruct.Password#"  cfsqltype="CF_SQL_VARCHAR">
+				  	<CFPROCPARAM VALUE="#arguments.formStruct.CustomerPassword#"  cfsqltype="CF_SQL_VARCHAR">
 			  <cfelse>
 			  		<CFPROCPARAM VALUE=""  cfsqltype="CF_SQL_VARCHAR">
 				  	<CFPROCPARAM VALUE=""  cfsqltype="CF_SQL_VARCHAR">
@@ -211,11 +251,11 @@
 	
 	<cfset variables.userExists = 0>
 
-    <cfif arguments.formStruct.IsPayer AND len(trim(arguments.formStruct.Username))>
+    <cfif arguments.formStruct.IsPayer AND len(trim(arguments.formStruct.CustomerUsername))>
 	    <cfquery name="qryGetCustomer" datasource="#variables.dsn#">
 	    	select CustomerID from Customers
 	    	where 
-	    		Username=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.Username#"> AND
+	    		Username=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.CustomerUsername#"> AND
 	    		CustomerID <> <cfqueryparam value="#arguments.formStruct.editid#">		
 		</cfquery>
 		<cfif qryGetCustomer.recordCount>
@@ -249,9 +289,7 @@
          CustomerDirections= <cfqueryparam cfsqltype="cf_sql_longvarchar" value="#arguments.formStruct.CustomerDirections#">,
          CustomerNotes= <cfqueryparam cfsqltype="cf_sql_longvarchar" value="#arguments.formStruct.CustomerNotes#">,
          IsPayer=<cfqueryparam cfsqltype="cf_sql_bit"  value="#arguments.formStruct.IsPayer#">,
-	     CreatedBy=<cfqueryparam cfsqltype="cf_sql_varchar" value="#session.adminUserName#">,
 		 LastModifiedBy=<cfqueryparam cfsqltype="cf_sql_varchar" value="#session.adminUserName#">,
-		 CreatedDateTime=<cfqueryparam cfsqltype="cf_sql_date" value="#now()#">,
 		 LastModifiedDateTime=<cfqueryparam cfsqltype="cf_sql_date" value="#now()#">,
 		 FinanceID =<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.FinanceID#">,
 		 <cfif arguments.formStruct.CreditLimit contains '$'>
@@ -278,12 +316,20 @@
          UpdatedByIP=<cfqueryparam cfsqltype="cf_sql_varchar" value="#cgi.REMOTE_ADDR#"> ,
 		 CarrierNotes= <cfqueryparam cfsqltype="cf_sql_longvarchar" value="#arguments.formStruct.CarrierNotes#">,
 		 TollFree=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.TollFree#">,
-	     Fax=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.Fax#">
+	     Fax=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.Fax#">,
+		 RemitName=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.RemitName#">,
+		 RemitAddress=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.RemitAddress#">,  
+		 RemitCity= <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.RemitCity#">, 
+		 RemitState= <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.RemitState#">,         
+		 RemitZipcode=   <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.RemitZipcode#">,
+		 RemitContact=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.RemitContact#">,
+		 RemitPhone=  <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.RemitPhone#">,
+         RemitFax=  <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.RemitFax#">
 	     <cfif arguments.formStruct.IsPayer>
 	     	<cfif NOT variables.userExists>
-	     		,Username=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.Username#">
+	     		,Username=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.CustomerUsername#">
 	     	</cfif>			
-			,Password=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.Password#">	     	
+			,Password=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.CustomerPassword#">	     	
 	     </cfif>
       where CustomerID='#arguments.formStruct.editid#' 
      </cfquery>
@@ -542,6 +588,15 @@
       select stateID as stid from states 
       where statecode = '#arguments.stateCode#'
     </cfquery>
-    	 <cfreturn qrygetState.stid>   
+	 <cfreturn qrygetState.stid>   
 </cffunction>
+	<cffunction name="getAllpayerCustomers" access="public" output="false" returntype="any">
+		<cfquery name="qryGetCustomers" datasource="#variables.dsn#">
+			select * from  customers
+			where IsPayer=<cfqueryparam cfsqltype="cf_sql_bit" value="1">
+			and username IS NOT NULL and password IS NOT NULL
+			order by CustomerName asc
+		</cfquery>	
+		<cfreturn qryGetCustomers>
+	</cffunction>
 </cfcomponent>

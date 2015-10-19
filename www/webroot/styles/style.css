@@ -653,4 +653,44 @@ margin: 0 0 10px; padding: 2px 2px 0; width: 188px;}
 	font: 11px/16px Arial,Helvetica,sans-serif !important;
 	border: 0 !important;
   }
+  #errorShow{
+	display:none;
+  }
+ .ui-widget-header{
+	background:#fff;
+	background-color: #82BBEF !important;
+    border: 1px solid #aaaaaa;
+    color: #fff;
+    font-weight: bold;
+ }
+ .labelValue{
+	font-size: 11px;
+	font-weight: bold;
+	color: #000000;
+ }
+ .navbarDriverAdjust{
+	padding:0px 10px 0px 10px !important;
+ }
+ .ShipperHead{
+	float: left;color:#236334;font-size: 16px; padding-left:8px;padding-top: 7px;padding-top: 7px;font-weight:bold;
+ }
+ .PlusToggleButton{
+	color:#273d50;font-size: 18px !important;float:left;margin-left: 23px;margin-top: 6px;cursor:pointer;
+}
+/*change the background color*/
+.white-top ,.white-bot,.white-mid,.carrier-gap,.form-heading,.form-heading-loop,.ui-widget-content,.white-bottom,.carrier-links,.carrier-mid{background-image: none;background-color:#dfeffc !important;}
+.calculationblock{
+	width: 395px;border: 1px #b3b3b3 solid;padding-bottom: 10px;margin-top: 7px;
+}
+.calculationCustomerBlock{
+		width: 395px;border: 1px #b3b3b3 solid;padding-bottom: 12px;margin-top: -10px;border-top: none;padding-bottom: 5px;
+}
+/*carrier box information*/
+.activeSelectbox{
+	width:53px !important;
+}
+.textBoxCarrierInsurance{
+	 margin-top: 5px;
+    width: 176px;
+}
 /* All load and My load table Style end */

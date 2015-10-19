@@ -5,8 +5,13 @@
 <cfparam name="MailFrom" default="">
 <cfparam name="Subject" default="">
 <cfparam name="body" default="">
+<cfset Secret = application.dsn>
+<cfset TheKey = 'NAMASKARAM'>
+<cfset Encrypted = Encrypt(Secret, TheKey)>
+<cfset dsn = ToBase64(Encrypted)>
 <cfscript>
 	variables.objequipmentGateway = getGateway("gateways.equipmentgateway", MakeParameters("dsn=#Application.dsn#,pwdExpiryDays=#Application.pwdExpiryDays#"));
+	variables.objCutomerGateway = getGateway("gateways.customergateway", MakeParameters("dsn=#Application.dsn#,pwdExpiryDays=#Application.pwdExpiryDays#"));
 </cfscript>
 <cfsilent>
 <cfparam name="loadID" default="">
@@ -16,6 +21,7 @@
 <cfinvoke component="#variables.objloadGateway#" AuthLevelId="3" method="getSalesPerson" returnvariable="request.qDispatcher" />
 <cfinvoke component="#variables.objloadGateway#" method="getSystemSetupOptions" returnvariable="request.qGetSystemSetupOptions" />
 <cfinvoke component="#variables.objequipmentGateway#" method="getloadEquipments" returnvariable="request.qEquipments" />
+<cfinvoke component="#variables.objCutomerGateway#" method="getAllpayerCustomers" returnvariable="request.qryCustomersList" />
 <cfinvoke component="#variables.objloadGateway#" method="getcurAgentMaildetails" returnvariable="request.qcurMailAgentdetails" employeID="#session.empid#" />
 <cfset MailFrom=request.qcurAgentdetails.EmailID>
 <cfset Subject = request.qGetSystemSetupOptions.SalesHead>
@@ -32,7 +38,9 @@
 </cfsilent>
 
 <cfoutput>
-<h1>Commission Report</h1>
+<div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
+	<div style="float: left;"><h2 style="color:white;font-weight:bold;margin-left: 12px;">Commission Report</h2></div>
+</div>
 <div style="clear:left"></div>
 
 <div class="white-con-area">
@@ -50,7 +58,6 @@
                 <cfinput type="radio" name="groupBy" value="salesAgent" id="salesAgent" checked="yes" style="width:15px; padding:0px 0px 0 0px;"/>
                 <label class="normal" for="salesAgent" style="text-align:left; padding:0 0 0 0;">Sales Agent</label>
             </div>
-            
             <div class="clear"></div>
             <div style="width:110px; float:left;">&nbsp;</div>
             <div style="float:left;">
@@ -58,7 +65,12 @@
                 <label class="normal" for="dispatcher" style="text-align:left; padding:0 0 0 0;">Dispatcher</label>
             </div>			
 			<div class="clear"></div>
-			
+			<div style="width:110px; float:left;">&nbsp;</div>
+            <div style="float:left;">
+                <cfinput type="radio" name="groupBy" value="customer" id="customer"  style="width:15px; padding:0px 0px 0 0px;"/>
+                <label class="normal" for="customer" style="text-align:left; padding:0 0 0 0;">Customer</label>
+            </div>			
+			 <div class="clear"></div>
             <div style="width:110px; float:left;">&nbsp;</div>
             <div style="float:left;">
                 <cfinput type="radio" name="groupBy" value="#variables.freightBroker#" id="#variables.freightBroker#" style="width:15px; padding:0px 0px 0 0px;"/>
@@ -69,14 +81,12 @@
             <h2>Date</h2>
             <label>From</label>
 	        <cfinput class="sm-input" name="dateFrom" id="dateFrom" value="#dateformat(Now()-30,'mm/dd/yyy')#" validate="date" required="yes" message="Please enter a valid date in Date From" type="datefield" />
-            <div class="clear"></div>
-            
-        	<label>To</label>
+        	<label style="margin-left: -54px;">To</label>
 	        <cfinput class="sm-input" name="dateTo" id="dateTo" value="#dateformat(Now(),'mm/dd/yyy')#" validate="date" required="yes" message="Please enter a valid date in Date To" type="datefield" />
             <div class="clear"></div>
             
 			<div width="100%">
-				<div width="50%" style="float:left;">
+				<div width="50%" style="float:left;margin-top:9px;">
 					<h2>Commission</h2>
 					<label>Deduction %</label>
 					<cfinput class="sm-input" name="deductionPercent" id="deductionPercent" value="#NumberFormat(request.qGetSystemSetupOptions.DeductionPercentage,'0.00')#" validate="float" required="yes" message="Please enter a valid percentage in Deduction %"/>
@@ -85,7 +95,7 @@
 					<label>Commission %</label>
 					<cfinput class="sm-input" name="commissionPercent" id="commissionPercent" value="#NumberFormat(0,'0.00')#" validate="float" required="yes" message="Please enter a valid percentage in Commission %"/>
 				</div>
-				<div width="50%" style="float:left;">
+				<div width="50%" style="float:left;margin-top:9px;">
 					<h2 style="margin-left:50px">Margin Range</h2>
 					<label>From </label>
 					<cfinput class="sm-input" name="marginFrom" id="marginFrom" value="#DollarFormat(0)#" validate="float" required="yes" message="Please enter a valid amount in Margin From"/>
@@ -99,7 +109,7 @@
 			<div class="clear"></div>
 			<cfset loadStatus=request.qGetSystemSetupOptions.ARANDAPEXPORTSTATUSID>
 			
-			<h2>Load Status</h2>
+			<h2 style="margin-top:14px;">Load Status</h2>
             <label>Status From</label>
 			<cfinvoke component="#variables.objloadGateway#" method="getLoadStatus" returnvariable="request.qLoadStatus" /> 			
    			<select name="loadStatus" id="StatusTo">
@@ -115,7 +125,13 @@
 					<option value="#request.qLoadStatus.value#" <cfif loadStatus EQ  request.qLoadStatus.value>selected="selected"</cfif>>#request.qLoadStatus.Text#</option>
 				</cfloop>
 			</select>
-            
+			<div class="clear"></div>
+            <h2 style="margin-top:12px;">Type</h2>
+			<label>Report Type</label>
+	        <cfselect name="reportType" id="reportType">
+				<option value="Sales">Sales</option>
+				<option value="Commission">Commission</option>
+			</cfselect>
 	</fieldset>
 	</div>
 	<div class="form-con">
@@ -141,7 +157,7 @@
             </cfselect>
             <div class="clear"></div>
             
-         <h2>Dispatcher</h2>
+         <h2 style="margin-top:14px;">Dispatcher</h2>
             <label>From </label>
 	        <cfselect name="dispatcherFrom" id="dispatcherFrom">
             	<option value="########">########</option>
@@ -160,8 +176,28 @@
                 <option value="ZZZZ" selected="selected">ZZZZ</option>
             </cfselect>
             <div class="clear"></div>
-           
-			<h2>Equipment</h2>
+			
+			<h2 style="margin-top:14px;">Customer</h2>
+			<label>From </label>
+			<cfselect name="customerFrom" id="customerFrom">
+				<option value="########">########</option>
+				<cfloop query="request.qryCustomersList">
+				<option value="#request.qryCustomersList.customerid#">#request.qryCustomersList.customername#</option>
+				</cfloop>
+				<option value="ZZZZ">ZZZZ</option>
+			</cfselect>
+			<div class="clear"></div>
+			<label>To </label>
+			<cfselect name="customerTo" id="customerTo">
+				<option value="########">########</option>
+				<cfloop query="request.qryCustomersList">
+				<option value="#request.qryCustomersList.customerid#">#request.qryCustomersList.customername#</option>
+				</cfloop>
+				<option value="ZZZZ" selected="selected">ZZZZ</option>
+			</cfselect>
+			<div class="clear"></div>
+			
+			<h2 style="margin-top:14px;">Equipment</h2>
 			<label>From </label>
 			<cfselect name="equipmentFrom" id="equipmentFrom">
 				<option value="########">########</option>
@@ -182,16 +218,9 @@
 			<div class="clear"></div>
 			<cfinput type="hidden" name="repUrl" id="repUrl" value="ss">
 			<cfinput type="hidden" name="freightBroker" id="freightBroker" value="#variables.freightBroker#">            
-			<h2>Type</h2>
-			<label>Report Type</label>
-	        <cfselect name="reportType" id="reportType">
-				<option value="Sales">Sales</option>
-				<option value="Commission">Commission</option>
-			</cfselect>
 			
-            <div class="clear"></div>
             
-        <div class="right" style="margin-top:5px;">
+        <div class="right" style="margin-top:39px;">
 			<div style="cursor:pointer;width:27px;background-color: ##bfbcbc;float: left;margin: 1px 0;text-align: center;">
 				<cfif request.qGetSystemSetupOptions.emailType EQ "Load Manager Email">
 					<img id="salesReportImg" style="vertical-align:bottom;" src="images/black_mail.png" data-action="view">
@@ -223,7 +252,8 @@
 				// if(!$('##sReport').data('allowmail')) {
 				// 	alert('You must setup your email address in your profile before you can email reports.');					
 				// } else {
-					getCommissionReport('#session.URLToken#', 'mail');
+					var dsn='#dsn#';
+					getCommissionReport('#session.URLToken#', 'mail',dsn);
 				// }
 				/*
 				var action =  $(this).data('action');
@@ -241,8 +271,9 @@
 				}
 				*/
 			 });
-			 $('##sReport').click(function(){				
-				getCommissionReport('#session.URLToken#', 'view');
+			 $('##sReport').click(function(){	
+				var dsn='#dsn#';
+				getCommissionReport('#session.URLToken#', 'view',dsn);
 				/*
 				var action =  $('##salesReportImg').data('action');
 				if(action == 'mail')

@@ -47,7 +47,7 @@
 	<input type="Password" id="Password" name="LoginPassword" class="field">
 	<div class="clear"></div>
 	<label class="user">&nbsp;</label>
-	<label class="fpass"><a href="index.cfm?event=lostPassword&#Session.URLToken#">Forgot your password?</a></label>
+	<label class="fpass"><a href="index.cfm?event=lostPassword&#Session.URLToken#&type=c">Forgot your password?</a></label>
 	<input name="btnSubmit" type="submit" class="loginbttn" value="Login">
 	<div class="clear"></div>	
 </form>

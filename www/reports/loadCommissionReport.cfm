@@ -4,12 +4,15 @@
 <!--- Return the current request timeout. --->
 <cfdump var="#LOCAL.RequestMonitor.GetRequestTimeout()#" />--->
 
-<cfinclude template="../webroot/Application.cfm">
+<cfif structkeyExists(url,"dsn")>
+<!--- Decrypt String --->
+<cfset TheKey = 'NAMASKARAM'>
+<cfset dsn = Decrypt(ToString(ToBinary(url.dsn)), TheKey)>
+</cfif>
 <cfsetting requestTimeOut = "24000">
 <cfset groupBy = url.groupBy>
 <cfset orderDateFrom = url.orderDateFrom>
 <cfset orderDateTo = url.orderDateTo>
-<cfset deductionPercentage = url.deductionPercentage>
 <cfset salesRepFrom = url.salesRepFrom>
 <cfset salesRepFromForQuery = url.salesRepFrom>
 <cfset salesRepTo = url.salesRepTo>
@@ -18,6 +21,10 @@
 <cfset dispatcherFromForQuery = url.dispatcherFrom>
 <cfset dispatcherTo = url.dispatcherTo>
 <cfset dispatcherToForQuery = url.dispatcherTo>
+<cfset customerFrom = url.customerLimitFrom>
+<cfset customerFromForQuery = url.customerLimitFrom>
+<cfset customerTo = url.customerLimitTo>
+<cfset customerToForQuery = url.customerLimitTo>
 <cfset marginRangeFrom = url.marginRangeFrom>
 <cfset marginRangeTo = url.marginRangeTo>
 <cfset deductionPercentage = url.deductionPercentage>
@@ -30,7 +37,6 @@
 <cfset equipmentTo= url.equipmentTo>
 <cfset equipmentToForQuery= url.equipmentTo>
 <cfset freightBroker= url.freightBroker>
-
 <cfif salesRepFrom eq "AAAA">
 	<cfset salesRepFrom = "########">
     <cfset salesRepFromForQuery = "">
@@ -49,6 +55,14 @@
     <cfset dispatcherToForQuery = "">
 </cfif>
 
+<cfif customerFrom eq "AAAA">
+	<cfset customerFrom = "########">
+    <cfset customerFromForQuery = "(BLANK)">
+</cfif>
+<cfif customerTo eq "AAAA">
+	<cfset customerTo = "########">
+    <cfset customerToForQuery = "(BLANK)">
+</cfif>
 <cfif equipmentFrom eq "AAAA">
 	<cfset equipmentFrom = "########">
     <cfset equipmentFromForQuery = "(BLANK)">
@@ -66,12 +80,14 @@
 <cfelseif groupBy eq "Carrier">	
 	<cfset groupBy = "Carrier">
 	<cfset groupsBy = "Carrier">	
+<cfelseif groupBy eq "CustName">	
+	<cfset groupBy = "CustName">
+	<cfset groupsBy = "CUSTOMERNAME">		
 <cfelse>
 	<cfset groupBy = "Dispatcher">
 	<cfset groupsBy = "DISPATCHER">
 </cfif>
-
-<cfstoredproc procedure="USP_GetLoadsForCommissionReport" datasource="#Application.dsn#">
+<cfstoredproc procedure="USP_GetLoadsForCommissionReport" datasource="#dsn#">
   <cfprocparam value="#groupsBy#" cfsqltype="cf_sql_varchar">
   <cfprocparam value="#groupBy#" cfsqltype="cf_sql_varchar">
   <cfprocparam value="#orderDateFrom#" cfsqltype="cf_sql_varchar">
@@ -85,6 +101,8 @@
   <cfprocparam value="#deductionPercentage#" cfsqltype="cf_sql_varchar">
   <cfprocparam value="#equipmentFromForQuery#" cfsqltype="cf_sql_varchar">
   <cfprocparam value="#equipmentToForQuery#" cfsqltype="cf_sql_varchar">
+  <cfprocparam value="#customerFromForQuery#" cfsqltype="cf_sql_varchar">
+  <cfprocparam value="#customerToForQuery#" cfsqltype="cf_sql_varchar">
   <cfprocresult name="qCommissionReportLoads">
 </cfstoredproc>
 <cfset tempRootPath = expandPath("../reports/loadCommissionReport.cfr")> 
@@ -98,6 +116,8 @@
 			<cfreportParam name="salesRepTo" value="#salesRepTo#">
 			<cfreportParam name="dispatcherFrom" value="#dispatcherFrom#">
 			<cfreportParam name="dispatcherTo" value="#dispatcherTo#">
+			<cfreportParam name="customerFrom" value="#customerFrom#">
+			<cfreportParam name="customerTo" value="#customerTo#">
 			<cfreportParam name="marginRangeFrom" value="#marginRangeFrom#">
 			<cfreportParam name="marginRangeTo" value="#marginRangeTo#">
 			<cfreportParam name="paramgroupBy" value="#groupsBy#">

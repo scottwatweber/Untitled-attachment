@@ -1,11 +1,12 @@
 <cfscript>
 	variables.objAgentGateway = getGateway("gateways.agentgateway", MakeParameters("dsn=#Application.dsn#,pwdExpiryDays=#Application.pwdExpiryDays#"));
 </cfscript>
-<cfif request.event neq 'login' AND request.event neq 'customerlogin'>
+<cfif request.event neq 'login' AND request.event neq 'customerlogin' AND request.event neq 'lostPassword' AND request.event neq "recoveryEmailSuccess">
 		<cfif (not isdefined("session.passport.isLoggedIn") or not(session.passport.isLoggedIn))>
 			<!--- <cfset request.content = includeTemplate("views/security/loginform.cfm", true) />
+			
 			<cfset includeTemplate("views/templates/maintemplate.cfm") />  --->
-			<cflocation url="index.cfm?event=login&AlertMessageID=2" addtoken="no">
+			<cflocation url="index.cfm?event=login&AlertMessageID=2&reinit=true" addtoken="no">
 		<cfelse>
 		<cfswitch expression="#request.event#">
 			<cfcase value="agent">

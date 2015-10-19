@@ -13,8 +13,8 @@
 		<cfargument name="TotalMiles" default="0">
 		<cfargument name="State" default="">
 		<cfargument name="datasource" default="">
-		
-		<cfquery name="qryInsertLoadIFTAMiles" datasource="#arguments.datasource#">
+		<cfargument name="loadid" default="">
+		<cfquery name="qryInsertLoadIFTAMiles" datasource="#arguments.datasource#" result="ss">
 			insert into LoadIFTAMiles
 			(
 				loadNumber,
@@ -22,7 +22,8 @@
 				nonTollMiles,
 				totalMiles,
 				state,
-				dateCreated
+				dateCreated,
+				loadid
 			) 
 			VALUES
 			(
@@ -31,9 +32,11 @@
 				<cfqueryparam value="#arguments.nonTollMiles#" cfsqltype="cf_sql_double">,
 				<cfqueryparam value="#arguments.totalMiles#" cfsqltype="cf_sql_double">,
 				<cfqueryparam value="#arguments.state#" cfsqltype="cf_sql_varchar">,
-				<cfqueryparam value="#now()#" cfsqltype="cf_sql_timestamp">
+				<cfqueryparam value="#now()#" cfsqltype="cf_sql_timestamp">,
+				<cfqueryparam value="#arguments.loadid#" cfsqltype="cf_sql_varchar">
 			)
 		</cfquery>
+		
 	</cffunction>
 
 	<!--- delete IFT Miles function --->
@@ -50,8 +53,7 @@
 
 	<cffunction name="promilesCalculation" access="public" returntype="any">
 		<cfargument name="frmstruct" type="struct" required="yes">
-		<cfparam name="arguments.frmstruct.dsn" default="Iz0lOkkK">
-		<!--- <cfdump var="#arguments#" /><cfabort /> --->
+		
 		<cfif structKeyExists(session,"empid")>
 			<cfquery name="getProMileDetails" datasource="#Application.dsn#">
 					select PCMilerUsername,PCMilerPassword,companyCode from Employees
@@ -63,7 +65,6 @@
 			<cfset variables.Password=getProMileDetails.PCMilerPassword>
 			<cfset variables.CompanyCode=getProMileDetails.companyCode>
 		</cfif>
-		<Cfset variables.decryptedvar = decrypt(toString(toBinary(arguments.frmstruct.dsn)), 'load')>
 		
 		<cfif isdefined("arguments.frmstruct.fifthConAdd") and Len(trim(arguments.frmstruct.fifthConAdd)) gt 3> 
 			<cfset variables.desinationValue = arguments.frmstruct.fifthConAdd>
@@ -90,7 +91,7 @@
 				<cfset variables.desinationValue = arguments.frmstruct.secShpAdd>
 			</cfif>
 		<cfelse>
-			<cfset variables.desinationValue = arguments.frmstruct.consigneestate>
+			<cfset variables.desinationValue =  "#arguments.frmstruct.consigneecity#, #arguments.frmstruct.consigneestate# #arguments.frmstruct.consigneeZipcode#">
 		</cfif>
 		
 		<cfoutput>
@@ -118,14 +119,26 @@
 										<AllowRelaxRestrictions>1</AllowRelaxRestrictions>
 									</Routing>
 								</Options>
+								<FuelPurchases>
+									<FuelPurchase>
+										<PurchaseState>#arguments.frmstruct.consigneecity#, #arguments.frmstruct.consigneestate# #arguments.frmstruct.consigneezipcode#</PurchaseState>										
+										<AmountPurchased>0.0</AmountPurchased>
+										<IsLiters>1</IsLiters>
+										<Station></Station>
+										<City>#arguments.frmstruct.shippercity#, #arguments.frmstruct.shipperstate# #arguments.frmstruct.shipperzipcode#</City>
+										<Invoice></Invoice>
+										<FuelCost>0.0</FuelCost>
+										<TypeOfFuel>DIESEL</TypeOfFuel>
+									</FuelPurchase>
+								</FuelPurchases>
 								<TripLegs>
 									<TripLeg>
-										<LocationText>#arguments.frmstruct.shippercity#</LocationText>
+										<LocationText>#arguments.frmstruct.shippercity#, #arguments.frmstruct.shipperstate# #arguments.frmstruct.shipperzipcode#</LocationText>
 									</TripLeg>
 									<cfset variables.locationContains = 0>
 									<cfif variables.desinationValue NEQ arguments.frmstruct.consigneestate>
 										<TripLeg>
-											<LocationText>#arguments.frmstruct.consigneestate#</LocationText>
+											<LocationText>#arguments.frmstruct.consigneecity#, #arguments.frmstruct.consigneestate# #arguments.frmstruct.consigneezipcode#</LocationText>
 										</TripLeg>
 										<cfset variables.locationContains = 1>
 									</cfif>
@@ -212,26 +225,34 @@
 			<cfhttpparam type="header" name="SOAPAction" value="http://promiles.com/RunTrip" />
 			<cfhttpparam type="xml" value="#trim(myVariable)#" />
 		</cfhttp>
-	
+		
 		<cfset soapResponse = xmlParse(httpResponse.fileContent) />
-			<cfinvoke  method="ConvertXmlToStruct" xmlNode="#soapResponse#" str="#structNew()#" returnvariable="xmlToStruct"/>
-			<cfif IsDefined('xmlToStruct.Body.RunTripResponse.RunTripResult.Results')>
-				<cfinvoke method="AddIFTATaxSummary" datasource="#application.dsn#" TaxSummaryDetails="#xmlToStruct.Body.RunTripResponse.RunTripResult.Results#" loadNum="#arguments.frmstruct.loadnumber#" returnvariable="response"/>
-				<cfset resultArray = xmlToStruct.Body.RunTripResponse.RunTripResult.Results.StateMileage.StateBreakoutRow>
-				<cfset nonTollMiles = arraynew(1)>
-				<cfset tollMiles = arraynew(1)>
-				<cfset totalMiles = arraynew(1)>
-				<!--- <cfset deleteLoadIFTAMiles(datasource="#variables.decryptedvar#")> --->
-				<cfif isStruct(resultArray)>
-					<cfset myStruct = resultArray>
-					<cfset resultArray = arraynew(1)>
-					<cfset ArrayAppend(resultArray,myStruct)>
-				</cfif>
-				<cfinvoke method="deleteLoadIFTAMiles" datasource="#application.dsn#" loadNum="#arguments.frmstruct.loadnumber#"/>
+		<cfinvoke  method="ConvertXmlToStruct" xmlNode="#soapResponse#" str="#structNew()#" returnvariable="xmlToStruct"/>
+		<cfif IsDefined('xmlToStruct.Body.RunTripResponse.RunTripResult.Results')>
+			<cfset xmlToStruct.Body.RunTripResponse.RunTripResult.Results.TaxSummary.FuelPurchases ="#xmlToStruct.Body.RunTripResponse.RunTripResult.FuelPurchases.FuelPurchase.AmountPurchased#">
+			<cfinvoke method="AddIFTATaxSummary" datasource="#application.dsn#" TaxSummaryDetails="#xmlToStruct.Body.RunTripResponse.RunTripResult.Results#" loadNum="#arguments.frmstruct.loadnumber#" returnvariable="response"/>
+			<cfset resultArray = xmlToStruct.Body.RunTripResponse.RunTripResult.Results.StateMileage.StateBreakoutRow>
+			<cfset nonTollMiles = arraynew(1)>
+			<cfset tollMiles = arraynew(1)>
+			<cfset totalMiles = arraynew(1)>
+			<!--- <cfset deleteLoadIFTAMiles(datasource="#variables.decryptedvar#")> --->
+			<cfif isStruct(resultArray)>
+				<cfset myStruct = resultArray>
+				<cfset resultArray = arraynew(1)>
+				<cfset ArrayAppend(resultArray,myStruct)>
+			</cfif>
+			
+			<cfinvoke method="deleteLoadIFTAMiles" datasource="#application.dsn#" loadNum="#arguments.frmstruct.loadnumber#"/>
+			<cfquery name="qryGetLoadid" datasource="#application.dsn#">
+				select loadid from loads where loadnumber=<cfqueryparam value="#arguments.frmstruct.loadnumber#" cfsqltype="cf_sql_integer">
+			</cfquery>
+			<cfif qryGetLoadid.recordcount>
 				<cfloop from="1" to="#arraylen(resultArray)#" index="i">
-				   <cfinvoke method="insertLoadIFTAMiles" loadNum="#arguments.frmstruct.loadnumber#" NonTollMiles="#resultArray[i].NonTollMiles#" TollMiles="#resultArray[i].TollMiles#" TotalMiles="#resultArray[i].TotalMiles#" State="#resultArray[i].State#" datasource="#variables.decryptedvar#"  returnvariable="xmlToStruct"/>
+				   <cfinvoke method="insertLoadIFTAMiles" loadNum="#arguments.frmstruct.loadnumber#" NonTollMiles="#resultArray[i].NonTollMiles#" TollMiles="#resultArray[i].TollMiles#" TotalMiles="#resultArray[i].TotalMiles#" State="#resultArray[i].State#"  datasource="#application.dsn#" loadid="#qryGetLoadid.loadid#"  returnvariable="xmlToStruct"/>
 				</cfloop>
 			</cfif>
+
+		</cfif>
 	</cffunction>
 
 	<!--- deleteIFTATaxSummary function --->
@@ -269,19 +290,65 @@
 		<cfargument name="TaxSummaryDetails" type="struct" required="true" />
 		<cfargument name="loadNum" type="numeric" required="true" />
 		<cfparam name="arguments.datasource" default="Iz0lOkkK">
-
 		<cfquery name="qInsertIFTATaxSummary" datasource="#arguments.datasource#" result="result">
-			INSERT INTO IFTATaxSummary(loadnumber, GallonsBurned, MPG, TotalIFTASurcharge, TotalIFTATax, TotalMileTax, TotalMiles, TotalTaxDue, TotalTaxableMiles)
+			INSERT INTO IFTATaxSummary(loadnumber
+			<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.GallonsBurned")>
+			,GallonsBurned
+			</cfif>
+			<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.MPG")>
+			, MPG
+			</cfif>
+			<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalIFTASurcharge")>
+			, TotalIFTASurcharge
+			</cfif>
+			<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalIFTATax")>
+			, TotalIFTATax
+			</cfif>
+			<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalMileTax")>
+			, TotalMileTax
+			</cfif>
+			<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalMiles")>
+			, TotalMiles
+			</cfif>
+			<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalTaxDue")>
+			, TotalTaxDue
+			</cfif>
+			<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalTaxableMiles")>
+			, TotalTaxableMiles
+			</cfif>
+			<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.FuelPurchases")>
+			, FuelPurchases
+			</cfif>
+			)
 			Values(
-				<cfqueryparam value="#arguments.loadNum#" cfsqltype="cf_sql_integer">,
-				<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.GallonsBurned#" cfsqltype="cf_sql_float">,
-				<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.MPG#" cfsqltype="cf_sql_float">,
-				<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalIFTASurcharge#" cfsqltype="cf_sql_float">,
-				<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalIFTATax#" cfsqltype="cf_sql_float">,
-				<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalMileTax#" cfsqltype="cf_sql_float">,
-				<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalMiles#" cfsqltype="cf_sql_float">,
-				<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalTaxDue#" cfsqltype="cf_sql_float">,
-				<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalTaxableMiles#" cfsqltype="cf_sql_float">
+				<cfqueryparam value="#arguments.loadNum#" cfsqltype="cf_sql_integer">
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.GallonsBurned")>
+					,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.GallonsBurned#" cfsqltype="cf_sql_float">
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.MPG")>
+					,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.MPG#" cfsqltype="cf_sql_float">
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalIFTASurcharge")>
+					,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalIFTASurcharge#" cfsqltype="cf_sql_float">
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalIFTATax")>
+					,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalIFTATax#" cfsqltype="cf_sql_float">
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalMileTax")>
+					,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalMileTax#" cfsqltype="cf_sql_float">
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalMiles")>
+					,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalMiles#" cfsqltype="cf_sql_float">
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalTaxDue")>
+					,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalTaxDue#" cfsqltype="cf_sql_float">
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalTaxableMiles")>
+					,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalTaxableMiles#" cfsqltype="cf_sql_float">
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.FuelPurchases")>
+					,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.FuelPurchases#" cfsqltype="cf_sql_varchar">
+				</cfif>	
 				)
 		</cfquery>
 		
@@ -297,14 +364,31 @@
 		<cfquery name="qUpdateIFTATaxSummary" datasource="#arguments.datasource#">
 			UPDATE IFTATaxSummary
 			SET
-				GallonsBurned = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.GallonsBurned#" cfsqltype="cf_sql_float">,
-				MPG = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.MPG#" cfsqltype="cf_sql_float">,
-				TotalIFTASurcharge = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalIFTASurcharge#" cfsqltype="cf_sql_float">,
-				TotalIFTATax = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalIFTATax#" cfsqltype="cf_sql_float">,
-				TotalMileTax = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalMileTax#" cfsqltype="cf_sql_float">,
-				TotalMiles = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalMiles#" cfsqltype="cf_sql_float">,
-				TotalTaxDue = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalTaxDue#" cfsqltype="cf_sql_float">,
-				TotalTaxableMiles = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalTaxableMiles#" cfsqltype="cf_sql_float">
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.GallonsBurned")>
+					GallonsBurned = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.GallonsBurned#" cfsqltype="cf_sql_float">,
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.MPG")>
+					MPG = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.MPG#" cfsqltype="cf_sql_float">,
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalIFTASurcharge")>
+					TotalIFTASurcharge = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalIFTASurcharge#" cfsqltype="cf_sql_float">,
+				</cfif>
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalIFTATax")>
+					TotalIFTATax = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalIFTATax#" cfsqltype="cf_sql_float">,
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalMileTax")>
+					TotalMileTax = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalMileTax#" cfsqltype="cf_sql_float">,
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalMiles")>
+					TotalMiles = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalMiles#" cfsqltype="cf_sql_float">,
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalTaxDue")>
+					TotalTaxDue = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalTaxDue#" cfsqltype="cf_sql_float">,
+				</cfif>	
+				<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.TotalTaxableMiles")>
+					TotalTaxableMiles = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.TotalTaxableMiles#" cfsqltype="cf_sql_float">,
+				</cfif>	
+				FuelPurchases = <cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.FuelPurchases#" cfsqltype="cf_sql_varchar">
 			
 			WHERE
 				loadnumber = <cfqueryparam value="#arguments.loadnum#" cfsqltype="cf_sql_float">
@@ -329,29 +413,171 @@
 		<cfargument name="loadNum" type="numeric" required="true" />
 		<cfargument name="TaxSummaryID" type="numeric" required="true" />
 		<cfparam name="arguments.datasource" default="Iz0lOkkK">
-
-		
-		<cfloop array="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow#" index="rowDetails">
-			<cfquery name="qInsertIFTATaxSummaryRows" datasource="#arguments.datasource#" result="result">
-				INSERT INTO IFTATaxSummaryRow(TaxSummaryID,loadnumber, FuelBurned, GallonsPurchased, IFTASurcharge, IFTATax, IFTATaxRate, MileTax, PurchaseDifferenceGallons, StateAbbreviation, TaxableMiles, TollMiles, TotalMiles)
-				Values(
-					<cfqueryparam value="#arguments.TaxSummaryID#" cfsqltype="cf_sql_integer">,
-					<cfqueryparam value="#arguments.loadNum#" cfsqltype="cf_sql_integer">,
-					<cfqueryparam value="#rowDetails.FuelBurned#" cfsqltype="cf_sql_float">,
-					<cfqueryparam value="#rowDetails.GallonsPurchased#" cfsqltype="cf_sql_float">,
-					<cfqueryparam value="#rowDetails.IFTASurcharge#" cfsqltype="cf_sql_float">,
-					<cfqueryparam value="#rowDetails.IFTATax#" cfsqltype="cf_sql_float">,
-					<cfqueryparam value="#rowDetails.IFTATaxRate#" cfsqltype="cf_sql_float">,
-					<cfqueryparam value="#rowDetails.MileTax#" cfsqltype="cf_sql_float">,
-					<cfqueryparam value="#rowDetails.PurchaseDifferenceGallons#" cfsqltype="cf_sql_float">,
-					<cfqueryparam value="#rowDetails.StateAbbreviation#" cfsqltype="cf_sql_varchar">,
-					<cfqueryparam value="#rowDetails.TaxableMiles#" cfsqltype="cf_sql_float">,
-					<cfqueryparam value="#rowDetails.TollMiles#" cfsqltype="cf_sql_float">,
-					<cfqueryparam value="#rowDetails.TotalMiles#" cfsqltype="cf_sql_float">
+		<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow")>
+			<cfif isarray(arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow)>
+			<cfloop array="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow#" index="rowDetails">
+				<cfquery name="qInsertIFTATaxSummaryRows" datasource="#arguments.datasource#" result="result">
+					INSERT INTO IFTATaxSummaryRow(loadnumber
+						<cfif isdefined("arguments.TaxSummaryID")>
+							,TaxSummaryID
+						</cfif>	
+						<cfif isdefined("rowDetails.FuelBurned")>
+							, FuelBurned
+						</cfif>	
+						<cfif isdefined("rowDetails.GallonsPurchased")>
+							, GallonsPurchased
+						</cfif>	
+						<cfif isdefined("rowDetails.IFTASurcharge")>
+							, IFTASurcharge
+						</cfif>	
+						<cfif isdefined("rowDetails.IFTATax")>
+							, IFTATax
+						</cfif>	
+						<cfif isdefined("rowDetails.IFTATaxRate")>
+							, IFTATaxRate
+						</cfif>	
+						<cfif isdefined("rowDetails.MileTax")>
+							, MileTax
+						</cfif>	
+						<cfif isdefined("rowDetails.PurchaseDifferenceGallons")>
+							, PurchaseDifferenceGallons
+						</cfif>	
+						<cfif isdefined("rowDetails.StateAbbreviation")>
+							, StateAbbreviation
+						</cfif>	
+						<cfif isdefined("rowDetails.TaxableMiles")>
+							, TaxableMiles
+						</cfif>	
+						<cfif isdefined("rowDetails.TollMiles")>
+							, TollMiles
+						</cfif>	
+						<cfif isdefined("rowDetails.TotalMiles")>
+						, TotalMiles
+						</cfif>
 					)
-			</cfquery>
-		</cfloop>
-		
+					Values(
+						<cfqueryparam value="#arguments.loadNum#" cfsqltype="cf_sql_integer">
+						<cfif isdefined("arguments.TaxSummaryID")>
+							,<cfqueryparam value="#arguments.TaxSummaryID#" cfsqltype="cf_sql_integer">
+						</cfif>	
+						<cfif isdefined("rowDetails.FuelBurned")>
+							,<cfqueryparam value="#rowDetails.FuelBurned#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("rowDetails.GallonsPurchased")>
+							,<cfqueryparam value="#rowDetails.GallonsPurchased#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("rowDetails.IFTASurcharge")>
+							,<cfqueryparam value="#rowDetails.IFTASurcharge#" cfsqltype="cf_sql_float">
+						</cfif>
+						<cfif isdefined("rowDetails.IFTATax")>
+							,<cfqueryparam value="#rowDetails.IFTATax#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("rowDetails.IFTATaxRate")>
+							,<cfqueryparam value="#rowDetails.IFTATaxRate#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("rowDetails.MileTax")>
+							,<cfqueryparam value="#rowDetails.MileTax#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("rowDetails.PurchaseDifferenceGallons")>
+							,<cfqueryparam value="#rowDetails.PurchaseDifferenceGallons#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("rowDetails.StateAbbreviation")>
+							,<cfqueryparam value="#rowDetails.StateAbbreviation#" cfsqltype="cf_sql_varchar">
+						</cfif>	
+						<cfif isdefined("rowDetails.TaxableMiles")>
+							,<cfqueryparam value="#rowDetails.TaxableMiles#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("rowDetails.TollMiles")>
+							,<cfqueryparam value="#rowDetails.TollMiles#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("rowDetails.TotalMiles")>
+							,<cfqueryparam value="#rowDetails.TotalMiles#" cfsqltype="cf_sql_float">
+						</cfif>	
+						)
+				</cfquery>
+			</cfloop>
+			<cfelse>
+				<cfquery name="qInsertIFTATaxSummaryRows" datasource="#arguments.datasource#" result="result">
+					INSERT INTO IFTATaxSummaryRow(loadnumber
+					<cfif isdefined("arguments.TaxSummaryID")>
+					,TaxSummaryID
+					</cfif>
+					<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.FuelBurned")>
+					, FuelBurned
+					</cfif>
+					<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.GallonsPurchased")>
+					, GallonsPurchased
+					</cfif>
+					<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.IFTASurcharge")>
+					, IFTASurcharge
+					</cfif>
+					<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.IFTATax")>
+					, IFTATax
+					</cfif>
+					<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.IFTATaxRate")>
+					, IFTATaxRate
+					</cfif>
+					<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.MileTax")>
+					, MileTax
+					</cfif>
+					<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.PurchaseDifferenceGallons")>
+					, PurchaseDifferenceGallons
+					</cfif>
+					<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.StateAbbreviation")>
+					, StateAbbreviation
+					</cfif>
+					<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.TaxableMiles")>
+					, TaxableMiles
+					</cfif>
+					<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.TollMiles")>
+					, TollMiles
+					</cfif>
+					<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.TotalMiles")>
+					, TotalMiles
+					</cfif>
+					)
+					Values(
+						<cfqueryparam value="#arguments.loadNum#" cfsqltype="cf_sql_integer">
+						<cfif isdefined("arguments.TaxSummaryID")>
+							,<cfqueryparam value="#arguments.TaxSummaryID#" cfsqltype="cf_sql_integer">
+						</cfif>	
+						<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.FuelBurned")>
+							,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.FuelBurned#" cfsqltype="cf_sql_float">
+						</cfif>
+						<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.GallonsPurchased")>
+							,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.GallonsPurchased#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.IFTASurcharge")>
+							,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.IFTASurcharge#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.IFTATax")>
+							,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.IFTATax#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.IFTATaxRate")>
+							,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.IFTATaxRate#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.MileTax")>
+							,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.MileTax#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.PurchaseDifferenceGallons")>
+							,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.PurchaseDifferenceGallons#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.StateAbbreviation")>
+							,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.StateAbbreviation#" cfsqltype="cf_sql_varchar">
+						</cfif>	
+						<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.TaxableMiles")>
+							,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.TaxableMiles#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.TollMiles")>
+							,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.TollMiles#" cfsqltype="cf_sql_float">
+						</cfif>	
+						<cfif isdefined("arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.TotalMiles")>
+							,<cfqueryparam value="#arguments.TaxSummaryDetails.TaxSummary.StateTaxSummary.TaxSummaryRow.TotalMiles#" cfsqltype="cf_sql_float">
+						</cfif>
+					)
+				</cfquery>
+			</cfif>
+		</cfif>	
 	</cffunction>
 
 	<!--- ConvertXmlToStruct function --->

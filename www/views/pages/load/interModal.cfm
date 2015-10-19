@@ -637,4 +637,36 @@
 		</table>
 	</div>
 	<div class="carrier-gap"></div>
+	<cfif  structkeyexists(url,"loadid") and len(trim(url.loadid)) gt 1>
+		<cfset loadID = url.loadid>
+		<cfif structkeyexists (session,"empid")>		
+			<cfif Session.empid neq "">
+				<cfinvoke component="#variables.objloadGateway#" method="checkEditLoadIdExists" loadid="#loadID#"  returnvariable="request.EditLoadIdDetails"/>
+				<cfif request.EditLoadIdDetails.recordcount>
+						 <script  type="text/javascript">
+							$(function() {
+								$('input').prop('readonly',true);
+								$('option:not(:selected)').attr('readonly', true);
+								$("input:checkbox").on('click',function(){
+								   $(this).prop('checked',!$(this).is(':checked'));
+								});
+								$( ".ui-datepicker-trigger" ).css( "display","none" );
+								$("textarea").prop('readonly', true);
+								$('input').unbind( "focus" );
+								$('textarea').unbind( "focus" );
+								return false;
+							});
+						</script>
+					<cfelse>
+						<cfinvoke component="#variables.objloadGateway#" method="insertUserEditingLoad" loadid="#loadID#" returnvariable="request.EditLoadIdDetails"/>
+					</cfif>
+				
+			</cfif>
+		</cfif>	
+		<cfif structkeyexists (session,"customerid")>
+			<cfif Session.customerid neq "">	
+				<cfinvoke component="#variables.objloadGateway#" method="insertUserEditingLoad" loadid="#loadID#" returnvariable="request.EditLoadIdDetails"/>
+			</cfif>
+		</cfif>
+	</cfif>	
 </cfoutput>

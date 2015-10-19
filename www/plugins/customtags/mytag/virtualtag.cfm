@@ -8,7 +8,7 @@
         </cfquery> 
         
         </cfsilent>   
-	    <select name="OfficeID1">
+	    <select name="OfficeID1" <cfif isDefined("attributes.tabindex")> tabindex="#attributes.tabindex#" </cfif>>
 	    <cfloop query="qrygetoffices">
 	        <option value="#qrygetoffices.officeid#" <cfif attributes.officeloc eq qrygetoffices.officeid> selected="selected" </cfif> >#qrygetoffices.location#</option>
 	    </cfloop>
@@ -49,7 +49,7 @@
           </cfif>
           ORDER BY CompanyName
      </cfquery>
-      <select name="CompanyID1">
+      <select name="CompanyID1" <cfif isDefined("attributes.tabindex")> tabindex="#attributes.tabindex#" </cfif> >
          <cfloop query="qrygetcompanies">
           <option value="#qrygetcompanies.CompanyID#" <cfif attributes.company eq qrygetcompanies.CompanyID>selected="selected" </cfif>>#qrygetcompanies.CompanyName#</option>
          </cfloop>

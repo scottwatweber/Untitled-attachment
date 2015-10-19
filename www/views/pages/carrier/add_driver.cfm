@@ -261,17 +261,7 @@ function ConfirmMessage(index,stopno){
 		$('##txt_custRateComm_'+index).val(percentagedata+"%");
 	}
 }
-function checkDateFormat(ele){
-	/*var reg = /^(0[1-9]|1[012])([\/])(0[1-9]|[12][0-9]|3[01])\2(\d{4})$/;*/
-	var reg =/((^(10|12|0?[13578])([/])(3[01]|[12][0-9]|0?[1-9])([/])((1[8-9]\d{2})|([2-9]\d{3}))$)|(^(11|0?[469])([/])(30|[12][0-9]|0?[1-9])([/])((1[8-9]\d{2})|([2-9]\d{3}))$)|(^(0?2)([/])(2[0-8]|1[0-9]|0?[1-9])([/])((1[8-9]\d{2})|([2-9]\d{3}))$)|(^(0?2)([/])(29)([/])([2468][048]00)$)|(^(0?2)([/])(29)([/])([3579][26]00)$)|(^(0?2)([/])(29)([/])([1][89][0][48])$)|(^(0?2)([/])(29)([/])([2-9][0-9][0][48])$)|(^(0?2)([/])(29)([/])([1][89][2468][048])$)|(^(0?2)([/])(29)([/])([2-9][0-9][2468][048])$)|(^(0?2)([/])(29)([/])([1][89][13579][26])$)|(^(0?2)([/])(29)([/])([2-9][0-9][13579][26])$))/;
-	var textValue=$(ele).val();
-	if(textValue.length){
-		if(!textValue.match(reg)){
-			alert('Please enter a date in mm/dd/yyyy format');
-			$(ele).focus();
-		}
-	}	
-}
+
 </script>
 
 <cfif isDefined("url.carrierid") and len(url.carrierid)>
@@ -427,9 +417,9 @@ function checkDateFormat(ele){
 	 <div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
 		 <div style="float: left; width: 20%;" id="divUploadedFiles">
 			 <cfif request.filesAttached.recordcount neq 0>
-				&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#url.carrierid#&attachTo=3&user=#session.adminusername#&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">View/Attach Files</a>
+				&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/multipleFileupload/MultipleUpload.cfm?id=#url.carrierid#&attachTo=3&user=#session.adminusername#&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">View/Attach Files</a>
 			<cfelse>
-				&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#url.carrierid#&attachTo=3&user=#session.adminusername#&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">Attach Files</a>
+				&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/multipleFileupload/MultipleUpload.cfm?id=#url.carrierid#&attachTo=3&user=#session.adminusername#&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">Attach Files</a>
 
 			</cfif>	
 
@@ -445,7 +435,7 @@ function checkDateFormat(ele){
 	<h1>Add New #variables.freightBroker#</h1>
 		 <div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
 			 <div style="float: left; width: 20%;" id="divUploadedFiles">
-				 	&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#tempLoadId#&attachTo=3&user=#session.adminusername#&newFlag=1&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">Attach Files</a>
+				 	&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/multipleFileupload/MultipleUpload.cfm?id=#tempLoadId#&attachTo=3&user=#session.adminusername#&newFlag=1&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">Attach Files</a>
 			</div>
 			<div style="float: left; width: 46%;"><h2 style="color:white;font-weight:bold;">#variables.freightBroker# Information</h2></div>
 			<div style="float: left; width: 34%;"><h2 style="color:white;font-weight:bold;">Remit Information</h2></div>

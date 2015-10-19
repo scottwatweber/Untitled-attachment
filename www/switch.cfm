@@ -23,6 +23,42 @@
 <!--------------------------------------------------------------------------------------------------------------------------------------------------------->
 <!--- INCLUDE THE EXTRA SWITCH PAGES --->
 <!--------------------------------------------------------------------------------------------------------------------------------------------------------->
+<cfif structkeyexists (session,"empid")>			
+	<cfif Session.empid neq "" >	
+		<cfif not((request.event eq 'addload' and structkeyexists(url,'loadid')) or (request.event eq 'nextStopLoad' ))>
+			<cfquery name="qryGetUserEditLoad" datasource="#Application.dsn#">
+				select * from UserEditingLoads
+				where 
+				user_id=<cfqueryparam cfsqltype="cf_sql_varchar" value="#Session.empid#">
+			</cfquery>
+			<cfloop query="#qryGetUserEditLoad#">
+				<cfquery name="qryDeleteUserEditLoad" datasource="#Application.dsn#">
+					delete  from UserEditingLoads
+					where 
+					user_id=<cfqueryparam cfsqltype="cf_sql_varchar" value="#Session.empid#">
+				</cfquery>
+			</cfloop>
+		</cfif>
+	</cfif>	
+</cfif>
+<cfif structkeyexists (session,"customerid")>
+	<cfif Session.customerid neq "">		
+		<cfif not((request.event eq 'addload' and structkeyexists(url,'loadid')) or (request.event eq 'nextStopLoad' ))>
+			<cfquery name="qryGetUserEditLoad " datasource="#Application.dsn#">
+				select * from UserEditingLoads
+				where 
+				user_id=<cfqueryparam cfsqltype="cf_sql_varchar" value="#Session.customerid#">
+			</cfquery>
+			<cfloop query="#qryGetUserEditLoad#">
+				<cfquery name="qryDeleteUserEditLoad" datasource="#Application.dsn#">
+					delete  from UserEditingLoads
+					where 
+					user_id=<cfqueryparam cfsqltype="cf_sql_varchar" value="#Session.customerid#">
+				</cfquery>
+			</cfloop>
+		</cfif>
+	</cfif>	
+</cfif>
 <cfinclude template="securityswitch.cfm" />
 <cfinclude template="agentswitch.cfm" />
 <cfinclude template="officeswitch.cfm" />

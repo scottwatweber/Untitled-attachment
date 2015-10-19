@@ -13,9 +13,7 @@ Page Purpose: Main Application page
 	Application.Name = strApplicationName;
 	Application.QBdsn = "LMaccessQB";
 	Application.gAPI='AIzaSyAMvv7YySXPntllOqj7509OH-9N3HgCJmw';
-
-	Application.dsn = "dev";
-		
+	Application.dsn = trim(listFirst(cgi.SCRIPT_NAME,'/'));	
 	Application.blnDebugMode = false;
 	Application.strWebsiteTitle = "Load Manager"; //Remember this does not effect the error template title
 	Application.strDeveloperEmailAddress = "ScottW@WeberSystems.com;scottnweber@gmail.com";
@@ -58,7 +56,7 @@ Page Purpose: Main Application page
 	<cfset request.fileUploadedtemp = request.webpath & "/fileupload/imgTemp/">  
 	<cfset request.fileUploadedPer = request.webpath & "/filesUpload/imgPrmnt/">
 
-  <cfset request.cfcpath = 'dev.www.gateways'>   
+  <cfset request.cfcpath = Application.dsn &'.www.gateways'>   
 
 <!---Sample URL is http://www.loadmanager.biz/cfmps/www/webroot/index.cfm?strDebugMode=EntelDebug2012041106--->
 <!---The 06 in the end is the hour of the current time in the timezone set on the server. This would need to change every hour.---> 

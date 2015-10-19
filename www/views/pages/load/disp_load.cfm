@@ -18,6 +18,7 @@
 	<cfreturn inputstring>
 </cffunction>
 <!---Functuin for triming input string--->
+
 <cfparam name="message" default="">
 <cfparam name="url.linkid" default="">
 
@@ -157,7 +158,7 @@
 	<cfset actionUrl = 'index.cfm?event=#url.event#&#session.URLToken#'>
 </cfif>
 
-
+<cfset csrfToken=CSRFGenerateToken() /> 
 <cfform id="dispLoadForm" name="dispLoadForm" action="#actionUrl#" method="post" preserveData="yes">
 	<cfinput id="pageNo" name="pageNo" value="1" type="hidden">
     <cfinput id="sortOrder" name="sortOrder" value="ASC"  type="hidden">
@@ -178,12 +179,13 @@
 	<cfinput id="txtBol" name="txtBol" value="" type="hidden">
 	<cfinput id="txtDispatcher" name="txtDispatcher" value="" type="hidden">
 	<cfinput id="txtAgent" name="txtAgent" value="" type="hidden">
+	<cfinput id="csfrToken" name="csfrToken" value="#csrfToken#" type="hidden">
 	<fieldset>
 <!---	<cfinput  name="searchText" type="text"/>--->
 	<input name="searchText"  style="width:380px;" type="text" placeholder="Load##, Status, Customer, PO##, BOL##, Carrier, City, State, Dispatcher or Agent" value="#variables.searchTextStored#" id="searchText"/>
 	<input name="" onclick="clearPreviousSearchHiddenFields()" type="submit" class="s-bttn" value="Search" style="width:56px;" />
-    <input name="rememberSearch" type="checkbox" class="s-bttn" value="" <cfif session.searchtext neq "">checked="true"</cfif> id="rememberSearch" style="width: 15px;margin-left: 15px;margin-top: 3px;" />
-	<div style="  margin-left: 6px; margin-top: 5px;float: left;color: ##3a5b96;;">Remember Search</div>
+    <input name="rememberSearch" type="checkbox" class="s-bttn" value="" <cfif session.searchtext neq "">checked="true"</cfif> id="rememberSearch" style="width: 15px;margin-left: 15px;margin-top: 3px;" onclick="rememberSearchSession(this);" />
+	<div style="margin-left: 6px; margin-top: 5px;float: left;color: ##3a5b96;;">Remember Search</div>
     <cfif isdefined('url.event') AND url.event eq 'exportData'>
         <label>Date From</label>
         <cfinput class="" name="orderDateFrom" id="orderDateFrom" value="#dateformat('01/01/1900','mm/dd/yyyy')#" type="datefield" style="width:55px;"/>
@@ -784,4 +786,3 @@
     </table>
 </cfif>
     </cfoutput>
-    

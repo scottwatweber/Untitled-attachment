@@ -279,13 +279,25 @@ function addressChanged(stopid, callFrom){
 				shipperAddress += "+" + trim(elem.options[elem.selectedIndex].text);
 		}
 	}
+
+	if(stopid !=""){
+		if(stopid ==2){
+			var previousStopidVal = document.getElementById("milse").value;
+		} else{
+			var previousStopid = stopid-1;
+			var previousStopidVal = document.getElementById("milse"+previousStopid).value;
+		}
+		document.getElementById("milse"+stopid).value = previousStopidVal;
+	}
+
 	shipperAddress='';
 	if(trim(shipperAddress) == "")
 	{
 		shipperAddress = trim(document.getElementById("shipperlocation"+stopid).value);
 		
-		if(trim(document.getElementById("shipperlocation"+stopid).value) == "")
-		return;
+		if(trim(document.getElementById("shipperlocation"+stopid).value) == ""){
+			return;
+		}
 		
 		shipperAddress += "+" + trim(document.getElementById("shippercity"+stopid).value);
 		var e = document.getElementById("shipperstate"+stopid);
@@ -296,9 +308,10 @@ function addressChanged(stopid, callFrom){
 	
 	
 	var consigneeAddress = document.getElementById("consigneelocation"+stopid).value;
-	if(trim(document.getElementById("consigneelocation"+stopid).value) == "")
+	if(trim(document.getElementById("consigneelocation"+stopid).value) == "") {
 		return;
-		
+	}
+
 	consigneeAddress += "+" + trim(document.getElementById("consigneecity"+stopid).value);
 	e = document.getElementById("consigneestate"+stopid);
 	if(trim(e.options[e.selectedIndex].text) != "Select")
@@ -442,13 +455,15 @@ function refreshMilesClicked(stopid){
 }
 
 
-function getCommissionReport(URLToken, action){
+function getCommissionReport(URLToken, action,dsn){
 	var url = "";
 	//url += document.getElementById('salesAgent').checked ? "groupBy=salesAgent":"groupBy=dispatcher";
 	if( document.getElementById('salesAgent').checked ) {
 		var groupBy='salesAgent';
 	} else if ( document.getElementById('dispatcher').checked ) {
 		var groupBy='dispatcher';
+	}else if ( document.getElementById('customer').checked ) {
+		var groupBy='CustName';	
 	} else if ( document.getElementById('Carrier') != null && document.getElementById('Carrier').checked ) {
 		var groupBy='Carrier';
 	} else if ( document.getElementById('Driver') != null && document.getElementById('Driver').checked ) {
@@ -472,6 +487,12 @@ function getCommissionReport(URLToken, action){
 	e = document.getElementById("dispatcherTo");
 	url += "&dispatcherTo="+trim(e.options[e.selectedIndex].text);
 	
+	e = document.getElementById("customerFrom");
+	url += "&customerFrom="+trim(e.options[e.selectedIndex].text);
+	
+	e = document.getElementById("customerTo");
+	url += "&customerTo="+trim(e.options[e.selectedIndex].text);
+	
 	e = document.getElementById("reportType");
 	var type = trim(e.options[e.selectedIndex].text);
 	url += "&reportType="+type;
@@ -487,6 +508,15 @@ function getCommissionReport(URLToken, action){
 	//Status Loads From To
 	e = document.getElementById("StatusFrom");
 	url += "&StatusFrom="+trim(e.options[e.selectedIndex].text);
+	
+	//customer From To
+	e = document.getElementById("customerFrom");
+	url += "&customerLimitFrom="+trim(e.options[e.selectedIndex].text);
+	
+	//customer From To
+	e = document.getElementById("customerTo");
+	url += "&customerLimitTo="+trim(e.options[e.selectedIndex].text);
+	
 	
 	//equipment From To
 	e = document.getElementById("equipmentFrom");
@@ -517,11 +547,11 @@ function getCommissionReport(URLToken, action){
 	//var action =  $('#salesReportImg').data('action');
 	if(action == 'view')
 	{
-		window.open('../reports/loadCommissionReport.cfm?'+url+'&'+URLToken);
+		window.open('../reports/loadCommissionReport.cfm?'+url+'&dsn='+dsn+'&'+URLToken);
 	}
 	else if(action == 'mail')
 	{
-		newwindow=window.open('index.cfm?event=loadMail&type='+type+'&'+url+'&'+URLToken+'','Map','height=400,width=750');
+		newwindow=window.open('index.cfm?event=loadMail&type='+type+'&'+url+'&dsn='+dsn+'&'+URLToken+'','Map','height=400,width=750');
 		if (window.focus) {newwindow.focus()}
 	}
 	
@@ -673,8 +703,9 @@ function sortTableBy(fieldName, formName){
 function showWarningEnableButton(flagWarning, stopid){
 	document.getElementById('milesUpdateMode'+stopid).value = "manual";
 	document.getElementById('warning'+stopid).style.display =flagWarning;
-	if(flagWarning == "block")
-		document.getElementById('refreshBtn'+stopid).disabled = false;
+	if(flagWarning == "block"){
+		//document.getElementById('refreshBtn'+stopid).disabled = false;
+	}
 }
 
 // Get customer Sales Persion and Dispatcher.
@@ -1253,7 +1284,8 @@ function AddStop(stopName,stopid)
 	
 	var prevStopId=stopid-1;
 	if(prevStopId==1){prevStopId=""}
-	
+	$('#consigneeValueContainer'+stopid).val($('#consigneeValueContainer'+prevStopId).val());
+	/*
 	$('#shipper'+stopid).val($('#shipper'+prevStopId).val());
 	$('#shipperValueContainer'+stopid).val($('#shipperValueContainer'+prevStopId).val());
 	$('#shipperName'+stopid).val($('#shipperName'+prevStopId).val());
@@ -1271,7 +1303,7 @@ function AddStop(stopName,stopid)
 	$('#shipIsPayer'+stopid).val($('#shipIsPayer'+prevStopId).val());
 	
 	$('#consignee'+stopid).val($('#consignee'+prevStopId).val());
-	$('#consigneeValueContainer'+stopid).val($('#consigneeValueContainer'+prevStopId).val());
+	
 	$('#consigneeName'+stopid).val($('#consigneeName'+prevStopId).val());
 	$('#consigneelocation'+stopid).val($('#consigneelocation'+prevStopId).val());
 	$('#consigneecity'+stopid).val($('#consigneecity'+prevStopId).val());
@@ -1284,7 +1316,7 @@ function AddStop(stopName,stopid)
 	$('#consigneeEmail'+stopid).val($('#consigneeEmail'+prevStopId).val());
 	$('#consigneeEmail'+stopid).val($('#consigneeEmail'+prevStopId).val());
 	$('#consigneeNameText'+stopid).val($('#consigneeNameText'+prevStopId).val());
-	$('#consigneeIsPayer'+stopid).val($('#consigneeIsPayer'+prevStopId).val());
+	$('#consigneeIsPayer'+stopid).val($('#consigneeIsPayer'+prevStopId).val());*/
 	addressChanged(stopid);
 	document.getElementById('shipperstate'+stopid).onchange();
 	
@@ -1308,10 +1340,32 @@ function deleteStop(stopName,stopNo,flag,stopID,aDsn,loadID)
 	 			{
 //	 				var deleteStops = new ajaxLoadCutomer();
 //	 				var confirmDeleteStop = deleteStops.deleteStops(aDsn,stopID,stopNo,loadID);
-                                        
+                    var frieghtBroker=$('#frieghtBroker').val();                    
+                    var PostTo123LoadBoard=$('#PostTo123LoadBoard').val();                    
+                    var loadBoard123=$('#loadBoard123').val();                    
+                    var Is123LoadBoardPst=$('#Is123LoadBoardPst').val();                    
                     var path = urlComponentPath+"loadgateway.cfc?method=ajaxDeleteStops";
+                    var  pathDeleteSingleLoad= urlComponentPath+"loadgateway.cfc?method=delete123LoadBoardWebserviceSeparate";
                     var confirmDeleteStop = "";
-                  
+					if (frieghtBroker==1 && PostTo123LoadBoard==1 && loadBoard123==1 && Is123LoadBoardPst==1){
+						var username=$('#loadBoard123Username').val(); 	
+						var password=$('#loadBoard123Password').val(); 	
+						$.ajax({
+							type: "get",
+							url: pathDeleteSingleLoad,		
+							dataType: "json",
+							async: false,
+							data: {
+								   dsn: aDsn,
+								loadStopId: stopID,
+								username:username,
+								password:password
+							  },
+							success: function(data){
+							  
+							}
+						});		
+					}	
                     $.ajax({
                         type: "get",
                         url: path,		
@@ -1324,12 +1378,13 @@ function deleteStop(stopName,stopNo,flag,stopID,aDsn,loadID)
                             LoadID: loadID
                           },
                         success: function(data){
-                          confirmDeleteStop = data.transaction;
-						  if(data.transaction)
-						  {
-							  document.getElementById(stopName).style.display='none';
-							  document.getElementById("milse").onchange();
-						  }
+							confirmDeleteStop = data.transaction;
+							if(data.transaction)
+							{
+							    document.getElementById(stopName).style.display='none';
+							    document.getElementById("milse").onchange();
+								
+							}
                         }
                       });							
 	 			}
@@ -1859,7 +1914,7 @@ function checkLoadNext(stopid)
 		stopidForMessage = stopid;
 
 	enableDisableMainCalcFields(false);
-  	var shipperName=document.getElementById('shipperName'+stopid).value;
+  /*	var shipperName=document.getElementById('shipperName'+stopid).value;
 	var shipperTitle=document.getElementById('shipper'+stopid).value;
 	var shipperIDContainer=document.getElementById('shipperValueContainer'+stopid).value;
 	if(shipperName=="" &&( shipperIDContainer=="" || shipperTitle==""))
@@ -1885,9 +1940,9 @@ function checkLoadNext(stopid)
 	    alert('Please enter pickup date for stop '+stopidForMessage);
 		enableDisableMainCalcFields(true);
 		return false;	
-	}
+	}*/
 	
-	var consigneeName=document.getElementById('consigneeName'+stopid).value;
+	/*var consigneeName=document.getElementById('consigneeName'+stopid).value;
 	var consigneeTitle=document.getElementById('consignee'+stopid).value;
 	var consigneeIDContainer=document.getElementById('consigneeValueContainer'+stopid).value;
 	if(consigneeName==""  &&(consigneeIDContainer=="" || consigneeTitle==""))
@@ -1904,9 +1959,9 @@ function checkLoadNext(stopid)
 	    alert('Please select  Consignee state for stop '+stopidForMessage);
 		enableDisableMainCalcFields(true);
 		return false;	
-	}
+	}*/
 	
-	var consigneeDeliveryDate = document.getElementById('consigneePickupDate'+stopid).value;
+/*	var consigneeDeliveryDate = document.getElementById('consigneePickupDate'+stopid).value;
 	
 	if(consigneeDeliveryDate=="" && $("#stop"+stopid).css("display") === 'block')
 	{
@@ -1914,17 +1969,17 @@ function checkLoadNext(stopid)
 	    alert('Please enter Consignee pickup date for stop '+stopidForMessage);
 		enableDisableMainCalcFields(true);
 		return false;	
-	}
+	}*/
 	var statusfreightBroker=document.getElementById('statusfreightBroker').value;
 	if(statusfreightBroker==1){
 		var PostTo123LoadBoardStatus =document.getElementById('PostTo123LoadBoard').value;
 		var loadnumber =document.getElementById('LoadNumber').value; 
 		if(PostTo123LoadBoardStatus==1){
 			var loardBoard123Exists=$("#loadBoard123").val();
-			if(loardBoard123Exists==0){
+			/*if(loardBoard123Exists==0){
 			  alert("You need to setup your user name and password for 123LoadBoard before you can post loads.");
 				$('#PostTo123LoadBoard').attr('checked', false);
-			}
+			}*/
 			var equipment = document.getElementById('equipment'+stopid).value;	
 			if(loadnumber == "" && equipment == "")
 			{
@@ -1935,7 +1990,23 @@ function checkLoadNext(stopid)
 			}
 		}
 	}	
-	var q = new Date();
+	/*var shipperPickUpDate=$("#shipperPickupDate"+stopid).val();
+	var consigneePickUpDate=$("#consigneePickupDate"+stopid).val();
+	if(shipperPickUpDate == "" )
+	{
+		$('#shipperPickupDate'+stopid).focus();
+	    alert('Please enter shipper pickup date for stop '+stopidForMessage);
+		enableDisableMainCalcFields(true);
+		return false;	
+	}
+	if(consigneePickUpDate == "")
+	{
+		$('#consigneePickupDate'+stopid).focus();
+	    alert('Please enter consignee pickup date for stop '+stopidForMessage);
+		enableDisableMainCalcFields(true);
+		return false;	
+	}*/
+	/*var q = new Date();
 	var m = q.getMonth();
 	var d = q.getDate();
 	var y = q.getFullYear();
@@ -1946,7 +2017,7 @@ function checkLoadNext(stopid)
 	var monthSplited=pickUpDateSpilted[0];
 	var yearSplited=pickUpDateSpilted[2];
 	var createDate=yearSplited+'-'+monthSplited+'-'+dateSplited;
-	mydate=new Date(createDate);
+	mydate=new Date(createDate);*/
 
 /*	if(loadnumber == "" && date>mydate)
 	{
@@ -1956,13 +2027,13 @@ function checkLoadNext(stopid)
 		return false;	
 	}
 	*/
-	var consigneePickUpDate=$("#consigneePickupDate"+stopid).val();
+	/*var consigneePickUpDate=$("#consigneePickupDate"+stopid).val();
 	var consigneePickUpDateSpilted=consigneePickUpDate.split('/');
 	var consigneedateSplited=consigneePickUpDateSpilted[1];
 	var consigneemonthSplited=consigneePickUpDateSpilted[0];
 	var consigneeyearSplited=consigneePickUpDateSpilted[2];
 	var consigneecreateDate=consigneeyearSplited+'-'+consigneemonthSplited+'-'+consigneedateSplited;
-	consigneeDate=new Date(consigneecreateDate);
+	consigneeDate=new Date(consigneecreateDate);*/
 	/*
 	if(loadnumber == "" && date>consigneeDate)
 	{
@@ -3157,7 +3228,7 @@ function updateTotalAndProfitFields(){
 	}
 }
 
-function carrierReportOnClick(loadid,URLToken) {
+function carrierReportOnClick(loadid,URLToken,dsn) {
 	var minimumMargin = document.getElementById('minimumMargin').value;
 	var percentageProfit = document.getElementById('percentageProfit').innerHTML;
 	var frieghtBrokerStatus = document.getElementById('frieghtBroker').value;
@@ -3168,7 +3239,7 @@ function carrierReportOnClick(loadid,URLToken) {
 	}
 	// Validation removed
 	//window.open('../reports/loadReportForCarrierConfirmation.cfm?loadid='+loadid+'&'+URLToken+'');
-	window.open('../reports/loadReportForDispatch.cfm?type='+frieghtBrokerName+'&loadid='+loadid+'&'+URLToken+'');
+	window.open('../reports/loadReportForDispatch.cfm?type='+frieghtBrokerName+'&loadid='+loadid+'&dsn='+dsn+'&'+URLToken+'');
 	/*if(Number(percentageProfit) >=  Number(minimumMargin) || Number(minimumMargin) == 0 ) {
 		window.open('../reports/loadReportForCarrierConfirmation.cfm?loadid='+loadid+'&'+URLToken+'');
 	} 
@@ -3203,8 +3274,8 @@ function BOLReportOnClick(loadid,URLToken) {
 	if (window.focus) {newwindow.focus()}
 }
 
-function CarrierWorkOrderImportOnClick(loadid,URLToken) {
-	window.open('../reports/CarrierWorkOrderImport.cfm?loadid='+loadid+'&'+URLToken+'');
+function CarrierWorkOrderImportOnClick(loadid,URLToken,dsn) {
+	window.open('../reports/CarrierWorkOrderImport.cfm?loadid='+loadid+'&dsn='+dsn+'&'+URLToken+'');
 }
 
 function CarrierMailWorkOrderImportOnClick(loadid,URLToken) {
@@ -3212,8 +3283,8 @@ function CarrierMailWorkOrderImportOnClick(loadid,URLToken) {
 	if (window.focus) {newwindow.focus()}
 }
 
-function CarrierWorkOrderExportOnClick(loadid,URLToken) {
-	window.open('../reports/CarrierWorkOrderExport.cfm?loadid='+loadid+'&'+URLToken+'');
+function CarrierWorkOrderExportOnClick(loadid,URLToken,dsn) {
+	window.open('../reports/CarrierWorkOrderExport.cfm?loadid='+loadid+'&dsn='+dsn+'&'+URLToken+'');
 }
 
 function CarrierMailWorkOrderExportOnClick(loadid,URLToken) {
@@ -3221,8 +3292,8 @@ function CarrierMailWorkOrderExportOnClick(loadid,URLToken) {
 	if (window.focus) {newwindow.focus()}
 }
 
-function CustomerReportOnClick(loadid,URLToken) {
-	window.open('../reports/CustomerInvoiceReport.cfm?loadid='+loadid+'&'+URLToken+'');
+function CustomerReportOnClick(loadid,URLToken,dsn) {
+	window.open('../reports/CustomerInvoiceReport.cfm?loadid='+loadid+'&dsn='+dsn+'&'+URLToken+'');
 }
 
 function CustomerMailReportOnClick(loadid,URLToken,customerID) {
@@ -3518,4 +3589,239 @@ xmlhttp.onreadystatechange=function()
   }
 xmlhttp.open("GET","checkloadNoexists.cfm?val="+valGt+"&varDsn="+varDsn,true);
 xmlhttp.send();
+}
+
+function rememberSearchSession(data){
+	var isChecked = $(data).prop('checked');
+	var searchText = $("#searchText").val();
+	var csfrToken = $("#csfrToken").val();
+	var getPath=urlComponentPath.split("/");
+	var path = "/"+getPath[1]+"/www/webroot/sessionSettingajax.cfm?checked="+isChecked+"&searchText="+searchText+"&csfrToken="+csfrToken;
+    $.ajax({
+		type: "get",
+		url: path,	
+		success: function(data){
+		}, error: function(err){
+			console.log(err);
+		}
+    });
+}
+function validationMaintenance(dsName){
+	var milesInterval=document.getElementById("milesInterval").value;
+	var description=document.getElementById("description").value;
+	var editid=document.getElementById("editid").value;
+	var dateInterval=document.getElementById("dateInterval").value;
+	var intRegex = /[0-9 -()+]+$/;
+	if (description==""){
+		alert('please enter Description');
+		document.getElementById("description").focus();
+		return false;
+	}
+	if(dateInterval ==0 && milesInterval ==""){
+		alert('please enter MilesInterval or DateInterval');
+		document.getElementById("milesInterval").focus();
+		return false;
+	}
+	if(milesInterval!=""){
+		if (!milesInterval.match(intRegex)){
+			alert('please enter miles interval in numbers');
+			document.getElementById("milesInterval").focus();
+			return false;
+		}	
+	}	
+	var path = urlComponentPath+"equipmentgateway.cfc?method=getDescriptionDuplicate&dsName="+dsName+"&description="+description+"&editid="+editid;
+	$.ajax({
+		type: "get",
+		url: path,	
+		success: function(data){
+			if(data==1){
+				$("#frmMaintenance").submit();
+			}else{
+				$("#errorShow").show();
+				return false;
+			}
+		}, error: function(err){
+			console.log(err);
+			return false;
+		}
+    });
+}
+
+function getmaintenancesetUpValues(dsName){
+	var description=document.getElementById("description").value;
+	var path = urlComponentPath+"equipmentgateway.cfc?method=getMaintenanceInformationAjax&EquipmentMaintSetupId="+description+"&dsName="+dsName;
+	$.ajax({
+		type: "get",
+		url: path,	
+		success: function(data){
+			if(data!=1){
+				var returnedData = $.parseJSON($.trim(data));
+				for(dataIndex=0;dataIndex < returnedData.DATA.length;dataIndex++){
+					for(columnsIndex=0;columnsIndex < returnedData.COLUMNS.length;columnsIndex++){
+						if (columnsIndex==1){
+							$('#MilesInterval').val(returnedData.DATA[dataIndex][2]);
+							$('#DateInterval option').each(function() {
+								if($(this).val() == returnedData.DATA[dataIndex][3]) {
+									$(this).prop("selected", true);
+								}
+							});
+							$('#Notes').val(returnedData.DATA[dataIndex][4]);
+						 }
+					}
+				}	
+			}else{
+				$("#MilesInterval").val('');
+				$("#DateInterval").val(0);
+				$("#Notes").val('');
+			}
+		}, error: function(err){
+			console.log(err);
+			return false;
+		}
+    });
+}
+
+function checkValidation(){
+	var description=$("#description").val();
+	var milesInterval=document.getElementById("MilesInterval").value;
+	var dateInterval=document.getElementById("DateInterval").value;
+	var Date=document.getElementById("Date").value;
+	var intRegex = /[0-9 -()+]+$/;
+	if(description==""){
+		alert('Please select the description');	
+		return false;
+	}
+	if(dateInterval ==0 && milesInterval =="" && Date == ""){
+		alert('please enter milesInterval or dateinterval or nextdate');
+		document.getElementById("MilesInterval").focus();
+		return false;
+	}
+	if(milesInterval!=""){
+		if (!milesInterval.match(intRegex)){
+			alert('please enter miles interval in numbers');
+			document.getElementById("MilesInterval").focus();
+			return false;
+		}	
+	}	
+}
+function checkDateFormatAll(ele){
+	/*var reg = /^(0[1-9]|1[012])([\/])(0[1-9]|[12][0-9]|3[01])\2(\d{4})$/;*/
+	var reg =/((^(10|12|0?[13578])([/])(3[01]|[12][0-9]|0?[1-9])([/])((1[8-9]\d{2})|([2-9]\d{3}))$)|(^(11|0?[469])([/])(30|[12][0-9]|0?[1-9])([/])((1[8-9]\d{2})|([2-9]\d{3}))$)|(^(0?2)([/])(2[0-8]|1[0-9]|0?[1-9])([/])((1[8-9]\d{2})|([2-9]\d{3}))$)|(^(0?2)([/])(29)([/])([2468][048]00)$)|(^(0?2)([/])(29)([/])([3579][26]00)$)|(^(0?2)([/])(29)([/])([1][89][0][48])$)|(^(0?2)([/])(29)([/])([2-9][0-9][0][48])$)|(^(0?2)([/])(29)([/])([1][89][2468][048])$)|(^(0?2)([/])(29)([/])([2-9][0-9][2468][048])$)|(^(0?2)([/])(29)([/])([1][89][13579][26])$)|(^(0?2)([/])(29)([/])([2-9][0-9][13579][26])$))/;
+	var textValue=$(ele).val();
+	if(textValue.length){
+		if(!textValue.match(reg)){
+			alert('Please enter a date in mm/dd/yyyy format');
+			$(ele).focus();
+		}
+	}	
+}
+function deleteEquipmaintTrans(ele,id,dsName,equipMaintId){
+	var equipmentId=document.getElementById("equipmentId").value;
+	var path = urlComponentPath+"equipmentgateway.cfc?method=deleteEquipmentsMainTransaction&equipMainID="+id+"&dsName="+dsName+"&equipmentId="+equipmentId+"&equipMaintId="+equipMaintId;
+	if(confirm("Are you sure to delete it ?")){
+		$.ajax({
+			type: "get",
+			url: path,	
+			success: function(data){
+				$(ele).parent().parent().remove();
+				location.reload();
+				
+			}, error: function(err){
+				console.log(err);
+				return false;
+			}
+		});
+    }
+    else{
+        return false;
+    }
+}
+function checkValidationTransaction(){
+	var Odometer=$("#Odometer").val();
+	var Date=$("#Date").val();
+	var intRegex = /[0-9 -()+]+$/;
+	if (!Odometer.match(intRegex) ){
+		alert('Please enter odometer in digits');
+		$("#Odometer").focus();
+		return false;
+	}	
+	if(Date==""){
+		alert('Please enter the Date');	
+		$("#Date").focus();
+		return false;
+	}
+}
+function popitupEquip(url) {
+	newwindow=window.open(url,'Map','height=600,width=600');
+	if (window.focus) {newwindow.focus()}
+	return false;
+}
+function exportTaxSummary(){
+	var DateFrom=document.getElementById("DateFrom").value;
+	var DateTo=document.getElementById("DateTo").value;
+	if(DateFrom==""){
+		alert('please enter a date for datefrom field');
+		return false;
+	}
+	if(DateTo==""){
+		alert('please enter a date for dateto field');
+		return false;
+	}
+	document.getElementById('exportLink').className = 'busyButton';
+	$("#disptaxSummary").submit();
+	document.getElementById('exportLink').className = 'exportbutton';
+	/*$.ajax({
+		type: "get",
+		 url: "index.cfm?event=iftaDownload&dsn="+dsn+"&DateFrom="+DateFrom+"&DateTo="+DateTo+"&getExcel",	
+		 dataType: "html",	
+		success: function(response){
+			
+		}, error: function(err){
+			console.log(err);
+			return false;
+		}
+    });*/
+}
+function showHideIcons(ele,stopId){
+	var checkClass=$(ele).hasClass( "fa-plus-circle" );
+	if (checkClass){
+		$(ele).removeClass("fa-plus-circle");
+		$(ele).addClass("fa-minus-circle");
+		$(ele).parent().parent().find(".InfoShipping"+stopId).slideDown();
+	} else {
+		$(ele).removeClass("fa-minus-circle");
+		$(ele).addClass("fa-plus-circle");
+		$(ele).parent().parent().find(".InfoShipping"+stopId).slideUp();
+		if(stopId ==1) {
+			var stopId="";
+		}
+		$("#span_Shipper"+stopId).hide();
+	}
+}
+function showHideConsineeIcons(ele,stopId){
+	var checkClass=$(ele).hasClass( "fa-plus-circle" );
+	if (checkClass){
+		$(ele).removeClass("fa-plus-circle");
+		$(ele).addClass("fa-minus-circle");
+		$(ele).parent().parent().find(".InfoConsinee"+stopId).slideDown();
+	}else{
+		$(ele).removeClass("fa-minus-circle");
+		$(ele).addClass("fa-plus-circle");
+		$(ele).parent().parent().find(".InfoConsinee"+stopId).slideUp();
+		if(stopId==1){
+			var stopId="";
+		}
+		$("#span_Consignee"+stopId).hide();
+	}
+}
+function checkDateFormat(ele){
+	/*var reg = /^(0[1-9]|1[012])([\/])(0[1-9]|[12][0-9]|3[01])\2(\d{4})$/;*/
+	var reg =/((^(10|12|0?[13578])([/])(3[01]|[12][0-9]|0?[1-9])([/])((1[8-9]\d{2})|([2-9]\d{3}))$)|(^(11|0?[469])([/])(30|[12][0-9]|0?[1-9])([/])((1[8-9]\d{2})|([2-9]\d{3}))$)|(^(0?2)([/])(2[0-8]|1[0-9]|0?[1-9])([/])((1[8-9]\d{2})|([2-9]\d{3}))$)|(^(0?2)([/])(29)([/])([2468][048]00)$)|(^(0?2)([/])(29)([/])([3579][26]00)$)|(^(0?2)([/])(29)([/])([1][89][0][48])$)|(^(0?2)([/])(29)([/])([2-9][0-9][0][48])$)|(^(0?2)([/])(29)([/])([1][89][2468][048])$)|(^(0?2)([/])(29)([/])([2-9][0-9][2468][048])$)|(^(0?2)([/])(29)([/])([1][89][13579][26])$)|(^(0?2)([/])(29)([/])([2-9][0-9][13579][26])$))/;
+	var textValue=$(ele).val();
+	if(textValue.length){
+		if(!textValue.match(reg)){
+			alert('Please enter a date in mm/dd/yyyy format');
+			$(ele).focus();
+		}
+	}	
 }

@@ -1,4 +1,3 @@
-<cfinclude template="../webroot/Application.cfm">
 <cfsetting requestTimeOut = "24000">
 <cfset groupBy = url.groupBy>
 <cfset orderDateFrom = url.orderDateFrom>
@@ -27,7 +26,11 @@
 <cfset salesRepToId = url.salesRepToId>
 <cfset dispatcherFromId= url.dispatcherFromId>
 <cfset dispatcherToId= url.dispatcherToId>
-<cfset urlMail = 'groupBy=#url.groupBy#&orderDateFrom=#url.orderDateFrom#&orderDateTo=#url.orderDateTo#&deductionPercentage=#url.deductionPercentage#&salesRepFrom=#url.salesRepFrom#&salesRepTo=#url.salesRepTo#&dispatcherFrom=#url.dispatcherFrom#&dispatcherTo=#url.dispatcherTo#&marginRangeFrom=#url.marginRangeFrom#&marginRangeTo=#url.marginRangeTo#&commissionPercentage=#url.commissionPercentage#&reportType=#url.reportType#&statusTo=#url.statusTo#&statusFrom=#url.statusFrom#&equipmentFrom=#url.equipmentFrom#&equipmentTo=#url.equipmentTo#&salesRepFromId=#url.salesRepFromId#&salesRepToId=#url.salesRepToId#&dispatcherFromId=#url.dispatcherFromId#&dispatcherToId=#url.dispatcherToId#'>
+<cfset customerFrom = url.customerLimitFrom>
+<cfset customerFromForQuery = url.customerLimitFrom>
+<cfset customerTo = url.customerLimitTo>
+<cfset customerToForQuery = url.customerLimitTo>
+<cfset urlMail = 'groupBy=#url.groupBy#&orderDateFrom=#url.orderDateFrom#&orderDateTo=#url.orderDateTo#&deductionPercentage=#url.deductionPercentage#&salesRepFrom=#url.salesRepFrom#&salesRepTo=#url.salesRepTo#&dispatcherFrom=#url.dispatcherFrom#&dispatcherTo=#url.dispatcherTo#&marginRangeFrom=#url.marginRangeFrom#&marginRangeTo=#url.marginRangeTo#&commissionPercentage=#url.commissionPercentage#&reportType=#url.reportType#&statusTo=#url.statusTo#&statusFrom=#url.statusFrom#&equipmentFrom=#url.equipmentFrom#&equipmentTo=#url.equipmentTo#&salesRepFromId=#url.salesRepFromId#&salesRepToId=#url.salesRepToId#&dispatcherFromId=#url.dispatcherFromId#&dispatcherToId=#url.dispatcherToId#&customerLimitFrom=#url.customerLimitFrom#&customerLimitTo=#customerLimitTo#'>
 <cfif salesRepFrom eq "AAAA">
 	<cfset salesRepFrom = "########">
     <cfset salesRepFromForQuery = "">
@@ -54,15 +57,30 @@
 	<cfset equipmentTo = "########">
     <cfset equipmentToForQuery = "(BLANK)">
 </cfif>
-
+<cfif customerFrom eq "AAAA">
+	<cfset customerFrom = "########">
+    <cfset customerFromForQuery = "(BLANK)">
+</cfif>
+<cfif customerTo eq "AAAA">
+	<cfset customerTo = "########">
+    <cfset customerToForQuery = "(BLANK)">
+</cfif>
 <cfif groupBy eq "salesAgent">
 	<cfset groupBy = "Sales Agent">
 	<cfset groupsBy = "SALESAGENT">
+<cfelseif groupBy eq "Driver">	
+	<cfset groupBy = "Driver">
+	<cfset groupsBy = "Driver">
+<cfelseif groupBy eq "Carrier">	
+	<cfset groupBy = "Carrier">
+	<cfset groupsBy = "Carrier">	
+<cfelseif groupBy eq "CustName">	
+	<cfset groupBy = "CustName">
+	<cfset groupsBy = "CUSTOMERNAME">		
 <cfelse>
 	<cfset groupBy = "Dispatcher">
 	<cfset groupsBy = "DISPATCHER">
 </cfif>
-	
 <cfparam name="MailTo" default="">
 <cfparam name="MailFrom" default="">
 <cfparam name="Subject" default="">
@@ -81,7 +99,6 @@
 
 <cfinvoke component="#variables.objloadGateway#" AuthLevelId="1" method="getSalesPerson" returnvariable="request.qSalesPerson" />
 <cfinvoke component="#variables.objloadGateway#" AuthLevelId="3" method="getSalesPerson" returnvariable="request.qDispatcher" />
-	
 <cfif groupBy eq "Sales Agent" and (salesRepFromId eq salesRepToId)>
 	<cfloop query="request.qSalesPerson">
 		<cfif salesRepFromId eq request.qSalesPerson.EmployeeID>
@@ -100,7 +117,12 @@
 	
 <cfif IsDefined("form.send")>
 	<cfif form.MailTo is not "" AND form.MailFrom is not "" AND form.Subject is not "">
-			<cfstoredproc procedure="USP_GetLoadsForCommissionReport" datasource="#Application.dsn#">
+			<cfif structkeyExists(form,"dsn")>
+				<!--- Decrypt String --->
+				<cfset TheKey = 'NAMASKARAM'>
+				<cfset dsn = Decrypt(ToString(ToBinary(form.dsn)), TheKey)>
+			</cfif>
+			<cfstoredproc procedure="USP_GetLoadsForCommissionReport" datasource="#dsn#">
 				<cfprocparam value="#groupsBy#" cfsqltype="cf_sql_varchar">
 				<cfprocparam value="#groupBy#" cfsqltype="cf_sql_varchar">
 				<cfprocparam value="#orderDateFrom#" cfsqltype="cf_sql_varchar">
@@ -114,6 +136,8 @@
 				<cfprocparam value="#deductionPercentage#" cfsqltype="cf_sql_varchar">
 				<cfprocparam value="#equipmentFromForQuery#" cfsqltype="cf_sql_varchar">
 				<cfprocparam value="#equipmentToForQuery#" cfsqltype="cf_sql_varchar">
+				 <cfprocparam value="#customerFromForQuery#" cfsqltype="cf_sql_varchar">
+				<cfprocparam value="#customerToForQuery#" cfsqltype="cf_sql_varchar">
 				<cfprocresult name="qCommissionReportLoads">
 			</cfstoredproc>
 		<cfoutput>
@@ -127,6 +151,8 @@
 					<cfreportParam name="salesRepTo" value="#salesRepTo#">
 					<cfreportParam name="dispatcherFrom" value="#dispatcherFrom#">
 					<cfreportParam name="dispatcherTo" value="#dispatcherTo#">
+					<cfreportParam name="customerFrom" value="#customerFrom#">
+					<cfreportParam name="customerTo" value="#customerTo#">
 					<cfreportParam name="marginRangeFrom" value="#marginRangeFrom#">
 					<cfreportParam name="marginRangeTo" value="#marginRangeTo#">
 					<cfreportParam name="paramgroupBy" value="#groupBy#">
@@ -235,6 +261,9 @@
 			</cfif>
 			<label style="margin-top: 3px;">Subject:</label>
 			<input style="width:500px;" type="Text" name="Subject" class="mid-textbox-1" id="Subject" value="#Subject#">
+			<cfif structkeyExists(url,"dsn")>
+				<input  type="hidden" name="dsn" value="#url.dsn#">
+			</cfif>	
 			<div class="clear"></div>
 			<label style="margin-top: 3px;">Mesage:</label>
 			<textarea style="width:500px;height:180px;" class="addressChange" rows="" name="body" id="body" cols="">#body#</textarea>

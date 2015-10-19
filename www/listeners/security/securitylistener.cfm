@@ -14,43 +14,41 @@ THIS TEMPLATE IS DEPENDANT ON THE EXISTANCE OF variables.objSecurityGateway
 		var siteUserBean = GetBean("beans.siteuserbean");
 		var trackUserLoginLog = variables.objSecurityGateway.UserLoginLog(strUsername=arguments.strUsername, strPassword=arguments.strPassword, rstCurrentSiteUser = rstCurrentSiteUser);
 		structReturn.IsLoggedIn = False; // Default Guilty until proven innocent
-		
-		//Check if the user exists with those credentials
-		if (rstCurrentSiteUser.RecordCount GT 0) {
-			siteUserBean = fetchCurrentSiteUser(intSiteUserID=rstCurrentSiteUser.pkiadminUserID);
+			//Check if the user exists with those credentials
+			if (rstCurrentSiteUser.RecordCount) {
+				siteUserBean = fetchCurrentSiteUser(intSiteUserID=rstCurrentSiteUser.pkiadminUserID);
 
-			// NOW... Is the user enabled? --->
-			if (siteUserBean.getEnabled()) {
-				structReturn.IsLoggedIn = True;
-				structReturn.CurrentSiteUser = siteUserBean;
-				// Check if the user's password has expired.
-				structReturn.PasswordAlmostExpired = False;
-				if ((siteUserBean.getPasswordExpiry() LT DateAdd('d', 14, Now())) And Not siteUserBean.getPasswordPermanent())
-					structReturn.PasswordAlmostExpired = True;
-				
-				structReturn.PasswordExpired = False;
-				if ((siteUserBean.getPasswordExpired() Or siteUserBean.getPasswordExpiry() LT Now()) And Not siteUserBean.getPasswordPermanent())
-					structReturn.PasswordExpired = True;
+				// NOW... Is the user enabled? --->
+				if (siteUserBean.getEnabled()) {
+					structReturn.IsLoggedIn = True;
+					structReturn.CurrentSiteUser = siteUserBean;
+					// Check if the user's password has expired.
+					structReturn.PasswordAlmostExpired = False;
+					if ((siteUserBean.getPasswordExpiry() LT DateAdd('d', 14, Now())) And Not siteUserBean.getPasswordPermanent())
+						structReturn.PasswordAlmostExpired = True;
+					
+					structReturn.PasswordExpired = False;
+					if ((siteUserBean.getPasswordExpired() Or siteUserBean.getPasswordExpiry() LT Now()) And Not siteUserBean.getPasswordPermanent())
+						structReturn.PasswordExpired = True;
+				}
+				else {
+					structReturn.LoginError = "User is not enabled!";
+				}
+					
 			}
 			else {
-				structReturn.LoginError = "User is not enabled!";
-			}
-		}
-		else {
-		
-			// User Does not Exist, return failure.
-
-			if(session.limitover neq '')
-			{
 			
-			structReturn.LoginError = "Allowed Login Limit exceeded!";
-			
+				// User Does not Exist, return failure.
+				if( StructKeyExists(session,"limitover") && session.limitover neq '')
+				{
+				structReturn.LoginError = "Allowed Login Limit exceeded!";
+				}
+				else
+				{
+				structReturn.LoginError = "Invalid username or password!";
+				}
+				
 			}
-			else
-			{
-			structReturn.LoginError = "Invalid username or password!";
-			}
-		}
 		
 		return structReturn;
 	</cfscript>	
@@ -70,7 +68,7 @@ THIS TEMPLATE IS DEPENDANT ON THE EXISTANCE OF variables.objSecurityGateway
 		structReturn.IsLoggedIn = False; // Default Guilty until proven innocent
 		
 		//Check if the user exists with those credentials
-		if (rstCurrentSiteUser.RecordCount GT 0) {
+		if (rstCurrentSiteUser.RecordCount) {
 			siteUserBean = fetchCurrentSiteUser(intSiteUserID=rstCurrentSiteUser.pkiadminUserID);
 
 			// NOW... Is the user enabled? --->

@@ -232,7 +232,7 @@ Looks good, right? However, there are some issues. There are HTML tags in the bo
 	
 });
 function popitup(url) {
-	newwindow=window.open(url,'Map','height=600,width=600');
+	newwindow=window.open(url,'Map','height=600,width=900');
 	if (window.focus) {newwindow.focus()}
 	return false;
 }
@@ -258,9 +258,9 @@ function popitup(url) {
 	<div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
 		<div style="float: left; width: 40%;" id="divUploadedFiles">
 			<cfif request.filesAttached.recordcount neq 0>
-			&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#url.agentId#&attachTo=4&user=#session.adminusername#&dsn=#dsn#&attachtype=Agent')"><img style="vertical-align:bottom;" src="images/attachment.png">View/Attach Files</a>
+			&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/multipleFileupload/MultipleUpload.cfm?id=#url.agentId#&attachTo=4&user=#session.adminusername#&dsn=#dsn#&attachtype=Agent')"><img style="vertical-align:bottom;" src="images/attachment.png">View/Attach Files</a>
 			<cfelse>
-				&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#url.agentId#&attachTo=4&user=#session.adminusername#&dsn=#dsn#&attachtype=Agent')"><img style="vertical-align:bottom;" src="images/attachment.png">Attach Files</a>
+				&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload//multipleFileupload/MultipleUpload.cfm?id=#url.agentId#&attachTo=4&user=#session.adminusername#&dsn=#dsn#&attachtype=Agent')"><img style="vertical-align:bottom;" src="images/attachment.png">Attach Files</a>
 			</cfif>	
 		</div>
 		<div style="float: left; width: 60%;"><h2 style="color:white;font-weight:bold;">Agent Information</h2></div>
@@ -269,7 +269,7 @@ function popitup(url) {
 <cfset tempLoadId = #createUUID()#>
 <cfset session.checkUnload ='add'>
 <h1>Add New Agent</h1>
-		<a href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#tempLoadId#&attachTo=4&user=#session.adminusername#&newFlag=1&dsn=#dsn#&attachtype=Agent')">Attach Files
+		<a href="##" onclick="popitup('../fileupload/multipleFileupload/MultipleUpload.cfm?id=#tempLoadId#&attachTo=4&user=#session.adminusername#&newFlag=1&dsn=#dsn#&attachtype=Agent')">Attach Files
 		<img src="images/Paperclip.png"></a>
 </cfif>
 <div class="white-con-area">
@@ -357,7 +357,7 @@ function popitup(url) {
 		<input type="checkbox" name="verifySMTP" id="verifySMTP" style="width:12px;" />
 		<div class="clear"></div>
 		<div class="clear"  style="border-top: 1px solid ##E6E6E6;">&nbsp;</div> 
-		<label>Transcore 360</label>
+		<label>DAT Load Board</label>
 		<input type="checkbox" name="integratewithTran360" id="integratewithTran360"  <cfif integratewithTran360 EQ true>checked="checked"</cfif>   style="width:12px;" />
 		<div class="clear"></div>
 		<label>User Name</label> 

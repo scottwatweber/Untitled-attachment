@@ -38,12 +38,13 @@
 		</cfif>
 	</cfquery>
 </cfoutput>
+
 <cfoutput>
 [
 	<cfset isFirstIteration='yes'>
 	<cfloop query="qrygetFilterCarriers">
 		<cfif isFirstIteration EQ 'no'>,</cfif>
-		<cfif TRIM(qrygetFilterCarriers.InsExpDate) EQ ''>
+		<cfif NOT len(TRIM(qrygetFilterCarriers.InsExpDate)) OR NOT len(TRIM(qGetNewDeliveryDate.NewDeliveryDate))>
 			<cfset insuranceExpired = 'yes'>
 		<cfelseif url.loadid NEQ "">
 			<cfset dateDif = DateCompare(DateFormat(qrygetFilterCarriers.InsExpDate,'yyyy/mm/dd'), DateFormat(qGetNewDeliveryDate.NewDeliveryDate,'yyyy/mm/dd'))>
@@ -55,6 +56,7 @@
 		<cfelse>
 			<cfset insuranceExpired = 'no'>
 		</cfif>
+		<cfset qrygetFilterCarriers.Address = REReplace(qrygetFilterCarriers.Address, "\r\n|\n\r|\n|\r", "<br />", "all")>
 		<cfset isFirstIteration='no'>
 			{
 				"label": "#replace(TRIM(qrygetFilterCarriers.carrierName),'"','&apos;','all')#",

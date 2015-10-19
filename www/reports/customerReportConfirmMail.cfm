@@ -6,8 +6,11 @@
 <cfparam name="body" default="">
 <cfset loadID = "">
 <cfset customerID = "">
+<cfset loadStatus = "">
 <cfif  structkeyexists(url,"loadid") and len(trim(url.loadid)) gt 1>
 	<cfset loadID = url.loadid>
+	<cfinvoke component="#variables.objloadGateway#" method="getAllLoads" loadid="#loadID#" stopNo="0" returnvariable="request.qLoads" />
+	<cfset loadStatus=request.qLoads.STATUSTYPEID>
 </cfif>
 <cfif  structkeyexists(url,"customerID") and len(trim(url.customerID)) gt 1>
 	<cfset customerID = url.customerID>
@@ -33,9 +36,15 @@
 <cfset FA_SSL=request.qcurAgentdetails.useSSL>
 <cfset FA_TLS=request.qcurAgentdetails.useTLS>
 <cfset MailFrom=request.qcurAgentdetails.EmailID>
-
 <cfset Subject = request.qGetSystemSetupOptions.CustInvHead>
-	
+<cfset variables.status=''>
+<cfif loadStatus eq 'EBE06AA0-0868-48A9-A353-2B7CF8DA9F45'>
+	<cfset variables.status='Rate Quote'>				
+<cfelseif (loadStatus eq 'EBE06AA0-0868-48A9-A353-2B7CF8DA9F44') or (loadStatus eq 'B54D5427-A82E-4A7A-BAA1-DA95F4061EBE') or (loadStatus eq '74151038-11EA-47F7-8451-D195D73DE2E4') or(loadStatus eq 'C4C98C6D-018A-41BD-8807-58D0DE1BB0F8') or(loadStatus eq 'E62ACAA8-804B-4B00-94E0-3FE7B081C012') or(loadStatus eq 'C980CD90-F7CD-4596-B254-141EAEC90186')>
+	<cfset variables.status='Rate Confirmation'>						
+<cfelseif (loadStatus eq '6419693E-A04C-4ECE-B612-36D3D40CFC70') or (loadStatus eq 'CE991E00-404D-486F-89B7-6E16C61676F3') or (loadStatus eq '5C075883-B216-49FD-B0BF-851DCB5744A4') or (loadStatus eq 'C126B878-9DB5-4411-BE4D-61E93FAB8C95')>
+	<cfset variables.status='Invoice'>				
+</cfif>	
 <cfif IsDefined("form.send")>
 	<cfif form.MailTo is not "" AND form.MailFrom is not "" AND form.Subject is not "">
 		<cfquery name="careerReport" datasource="#Application.dsn#">
@@ -64,21 +73,45 @@
 					<cfmail from='"#SmtpUsername#" <#SmtpUsername#>' subject="#form.Subject#" to="#form.MailTo#"  CC="#request.qGetCompanyInformation.email#" type="text/plain" server="#SmtpAddress#" username="#SmtpUsername#" password="#SmtpPassword#" port="#SmtpPort#" usessl="#FA_SSL#" usetls="#FA_TLS#" >
 				#form.body#
 						 <cfmailparam
-							file="#careerReport.loadnumber#.Document.pdf"
+							file="#careerReport.loadnumber#.#variables.status#.pdf"
 							type="application/pdf"
 							content="#genPDF#"
 							/>
-
+							<cfif structkeyexists(form,"billingDocument")>
+								<cfquery name="qrygetFileAttachments" datasource="#Application.dsn#">
+									select * from FileAttachments where linked_Id=<cfqueryparam cfsqltype="cf_sql_varchar" value="#url.loadid#"> and	BILLINGATTACHMENTS=<cfqueryparam cfsqltype="cf_sql_bit" value="1">
+							   </cfquery>	
+							   <cfif qrygetFileAttachments.recordcount>
+									<cfloop query="qrygetFileAttachments">
+											<cfset variables.path=expandpath('../')&'fileupload\img\#qrygetFileAttachments.attachmentFileName#'>
+											<cfmailparam disposition="attachment" 
+										file="#variables.path#" type ="application/msword,application/docx,application/pdf,application/octet-stream,applicatio n/msword,text/plain,binary/octet-stream, image/pjpeg,  image/gif, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-word.document.12, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>
+										 
+									</cfloop>
+								</cfif>
+							</cfif>	
 					</cfmail>
 				<cfelse>
 					<cfmail from='"#SmtpUsername#" <#SmtpUsername#>' subject="#form.Subject#" to="#form.MailTo#" type="text/plain" server="#SmtpAddress#" username="#SmtpUsername#" password="#SmtpPassword#" port="#SmtpPort#" usessl="#FA_SSL#" usetls="#FA_TLS#" >
 				#form.body#
 						 <cfmailparam
-							file="#careerReport.loadnumber#.Invoice.pdf"
+							file="#careerReport.loadnumber#.#variables.status#.pdf"
 							type="application/pdf"
 							content="#genPDF#"
 							/>
-
+							<cfif structkeyexists(form,"billingDocument")>
+								<cfquery name="qrygetFileAttachments" datasource="#Application.dsn#">
+									select * from FileAttachments where linked_Id=<cfqueryparam cfsqltype="cf_sql_varchar" value="#url.loadid#"> and	BILLINGATTACHMENTS=<cfqueryparam cfsqltype="cf_sql_bit" value="1">
+							   </cfquery>	
+							   <cfif qrygetFileAttachments.recordcount>
+									<cfloop query="qrygetFileAttachments">
+											<cfset variables.path=expandpath('../')&'fileupload\img\#qrygetFileAttachments.attachmentFileName#'>
+											<cfmailparam disposition="attachment" 
+										file="#variables.path#" type ="application/msword,application/docx,application/pdf,application/octet-stream,applicatio n/msword,text/plain,binary/octet-stream, image/pjpeg,  image/gif, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-word.document.12, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>
+										 
+									</cfloop>
+								</cfif>
+							</cfif>	
 					</cfmail>
 				
 				</cfif>	
@@ -90,7 +123,7 @@
 					setTimeout(function(){ 
 						var emailDisplayStatus='<cfoutput>#request.qGetSystemSetupOptions.AutomaticEmailReports#</cfoutput>';
 						if(emailDisplayStatus == '1'){
-							window.opener.document.getElementById('dispatchHiddenValue').value="Emailed Customer Invoice >";
+							window.opener.document.getElementById('dispatchHiddenValue').value="Emailed #variables.status# >";
 							window.opener.document.getElementById('dispatchNotes').focus();
 						}	
 						window.close(); 
@@ -143,7 +176,13 @@
 	<div class="white-mid" style=" border-top: 5px solid rgb(130, 187, 239);width: 100%;">
 		<div class="form-con" style="width:auto;">
 			<fieldset>
-			<div style="color:##000000;font-size:14px;font-weight:bold;margin-bottom:20px;margin-top:10px;">Customer Invoice Mail</div>
+			<div style="color:##000000;font-size:14px;font-weight:bold;margin-bottom:20px;margin-top:10px;">#variables.status# Mail</div>
+			<div class="clear"></div>
+			<cfif variables.status eq 'Invoice'>
+				<input id="billingDocument" class="" type="checkbox" value="" name="billingDocument" style="width: 10px; margin-left: 95px;" checked>
+				<span style="font-size: 12px;">	Include all billing documents as attachments </span>
+				<div class="clear"></div>
+			</cfif>	
 			<div class="clear"></div>
 			<label style="margin-top: 3px;">To:</label>
 			<input style="width:500px;" type="Text" name="MailTo" class="mid-textbox-1" id="MailTo" value="#MailTo#">

@@ -51,7 +51,13 @@
     <cfelse>
     	<cfset simple_notes = false>
     </cfif>
-
+	
+	<cfif isdefined("FORM.commodityWeight")>
+		<cfset commodityWeight = true>
+    <cfelse>
+    	<cfset commodityWeight = false>
+    </cfif>
+	
 	<cfif isdefined("FORM.chkValidMCNumber")>
 		<cfset requireValidMCNumber = true>
     <cfelse>
@@ -153,7 +159,7 @@
     <cfelse>
     	<cfset printReports = false>
     </cfif>
-	<cfinvoke component="#variables.objloadGateway#" method="setSystemSetupOptions" longMiles="#FORM.longMiles#" shortMiles="#FORM.shortMiles#" deductionPercentage="#FORM.deductionPercentage#" ARAndAPExportStatusID="#FORM.loadStatus#" showExpiredInsuranceCarriers="#showExpCarriers#" companyName="#Form.txtcompName#" companyLogoName="#serverFileName#" dispatch_notes="#dispatch_notes#" carrier_notes="#carrier_notes#" pricing_notes="#pricing_notes#" simple_notes="#simple_notes#"  requireValidMCNumber="#requireValidMCNumber#" integratewithPEP="#integratewithPEP#"  PEPsecretKey="#form.PEPsecretKey#"  PEPcustomerKey="#form.PEPcustomerKey#"   CarrierTerms="#form.CarrierTerms#"  Triger_loadStatus="#form.Triger_loadStatus#" AllowLoadentry="#AllowLoadentry#" showReadyArriveDat="#showReadyArriveDat#" integratewithITS="#integratewithITS#" ITSUserName="#ITSUserName#" ITSPassword="#ITSPassword#" userDef1="#userDef1#" userDef2="#userDef2#" userDef3="#userDef3#" userDef4="#userDef4#" userDef5="#userDef5#" userDef6="#userDef6#" googleMapsPcMiler="#googleMapsPcMiler#" minimumMargin="#minimumMargin#" CarrierHead="#form.CarrierHead#" CustInvHead="#form.CustInvHead#" BOLHead="#form.BOLHead#" WorkImpHead="#form.WorkImpHead#" WorkExpHead="#form.WorkExpHead#" SalesHead="#form.SalesHead#" minimunLoadNumber="#form.minimunLoadNumber#" statusDispatchNote="#statusDispatchNote#" emailreports="#emailReports#" printReports="#printReports#" returnvariable="systemConfigUpdated" />
+	<cfinvoke component="#variables.objloadGateway#" method="setSystemSetupOptions" longMiles="#FORM.longMiles#" shortMiles="#FORM.shortMiles#" deductionPercentage="#FORM.deductionPercentage#" ARAndAPExportStatusID="#FORM.loadStatus#" showExpiredInsuranceCarriers="#showExpCarriers#" companyName="#Form.txtcompName#" companyLogoName="#serverFileName#" dispatch_notes="#dispatch_notes#" carrier_notes="#carrier_notes#" pricing_notes="#pricing_notes#" simple_notes="#simple_notes#"  requireValidMCNumber="#requireValidMCNumber#" integratewithPEP="#integratewithPEP#"  PEPsecretKey="#form.PEPsecretKey#"  PEPcustomerKey="#form.PEPcustomerKey#"   CarrierTerms="#form.CarrierTerms#"  Triger_loadStatus="#form.Triger_loadStatus#" AllowLoadentry="#AllowLoadentry#" showReadyArriveDat="#showReadyArriveDat#" integratewithITS="#integratewithITS#" ITSUserName="#ITSUserName#" ITSPassword="#ITSPassword#" userDef1="#userDef1#" userDef2="#userDef2#" userDef3="#userDef3#" userDef4="#userDef4#" userDef5="#userDef5#" userDef6="#userDef6#" googleMapsPcMiler="#googleMapsPcMiler#" minimumMargin="#minimumMargin#" CarrierHead="#form.CarrierHead#" CustInvHead="#form.CustInvHead#" BOLHead="#form.BOLHead#" WorkImpHead="#form.WorkImpHead#" WorkExpHead="#form.WorkExpHead#" SalesHead="#form.SalesHead#" minimunLoadNumber="#form.minimunLoadNumber#" statusDispatchNote="#statusDispatchNote#" emailreports="#emailReports#" printReports="#printReports#" CustomerTerms="#CustomerTerms#" loadNumberAssignment="#form.LoadNumberAssignment#" commodityWeight="#commodityWeight#" returnvariable="systemConfigUpdated" />
 </cfif>
 <cfinvoke component="#variables.objloadGateway#" method="getSystemSetupOptions" returnvariable="request.qGetSystemSetupOptions" />
 <cfinvoke component="#variables.objloadGateway#" method="getLoadStatus" returnvariable="request.qLoadStatus" /> 
@@ -183,7 +189,7 @@
 <cfset dsn = ToBase64(Encrypted)>
 <div class="white-con-area" style="height: 40px;background-color: ##82bbef;">
 		<div style="float: left; min-height: 40px; width: 43%;" id="divUploadedFiles">
-			&nbsp;<a style="display:block;font-size: 13px;padding-left: 10px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=systemsetup&attachTo=10&user=#session.adminusername#&dsn=#dsn#&attachtype=systemSetup&freightBroker=#variables.freightBrokerVal#')">
+			&nbsp;<a style="display:block;font-size: 13px;padding-left: 10px;color:white;" href="##" onclick="popitup('../fileupload/multipleFileupload/MultipleUpload.cfm?id=systemsetup&attachTo=10&user=#session.adminusername#&dsn=#dsn#&attachtype=systemSetup&freightBroker=#variables.freightBrokerVal#')">
 			<img style="vertical-align:bottom;" src="images/attachment.png">
 			File Cabinet</a>
 		</div>
@@ -239,9 +245,18 @@
         <label>Selected Name</label>
         <input type="text" name="txtcompName" id="txtcompName" value="#request.qGetSystemSetupOptions.companyName#">
         <div class="clear"></div>
-		
-		<label>Require Valid MC##</label>
+		<div>
+			<div style="float:left;width:50%;">
+				<label>Require Valid MC##</label>
 		<input type="checkbox" name="chkValidMCNumber" id="chkValidMCNumber" <cfif request.qGetSystemSetupOptions.requireValidMCNumber EQ true>checked="checked"</cfif>  style="width:12px;" />
+				<div class="clear"></div>
+			</div>
+			<div style="float:left;width:50%;">
+				<label>Commodity Weight</label>
+				<input type="checkbox" name="commodityWeight" id="commodityWeight" <cfif request.qGetSystemSetupOptions.commodityWeight EQ true>checked="checked"</cfif>  style="width:12px;" />
+				<div class="clear"></div>
+			</div>
+		</div>
 		<div class="clear"  style="border-top: 1px solid ##E6E6E6;" ></div>
 		<label>Integrate with post everywhere loadboard</label>
 		<input type="checkbox" name="integratewithPEP" id="integratewithPEP" <cfif request.qGetSystemSetupOptions.integratewithPEP EQ true>checked="checked"</cfif> style="width:12px;" />
@@ -298,6 +313,21 @@
 		<label style="margin-top:12px;">Starting Load##</label> 
 		<input type="text" name="minimunLoadNumber" id="minimunLoadNumber" value="#request.qGetSystemSetupOptions.MinimumLoadStartNumber#" style="margin-top:10px;"/>
 		<div class="clear" style="border-top: 1px solid ##E6E6E6;" >&nbsp;</div>	
+		
+		<label style="margin-top:12px;">Customer Terms</label> 
+		<cftextarea name="CustomerTerms" style="height:200px;width:400px" >#request.qGetSystemSetupOptions.CustomerTerms#</cftextarea>
+		<div class="clear" style="border-top: 1px solid ##E6E6E6;" >&nbsp;</div>	
+		<label style="margin-top:12px;"> Load Number assignment</label> 
+		<select name="LoadNumberAssignment" id="LoadNumberAssignment" style="margin-top:16px;">
+			 <option value="0">Select Status</option> 
+			 <cfset variables.loadValue=1>
+			<cfloop query="request.qLoadStatus">
+				<option value="#variables.loadValue#" <cfif request.qGetSystemSetupOptions.loadNumberAssignment eq variables.loadValue> selected="selected" </cfif>>#request.qLoadStatus.Text#</option>
+				<cfset variables.loadValue++>
+			</cfloop>
+		</select>
+		<div class="clear" style="border-top: 1px solid ##E6E6E6;" >&nbsp;</div>	
+		<div class="clear"></div>		
 		
 		</fieldset>
 		</div>
@@ -381,7 +411,7 @@
 		<div class="clear"></div>
 		<div>
          	<div class="clear"></div>
-			<label>#variables.freightBrokerVal# terms</label> 
+			<label style="margin-top: 37px;">#variables.freightBrokerVal# terms</label> 
 			<cftextarea name="CarrierTerms" style="height:200px;width:400px" >#request.qGetSystemSetupOptions.CarrierTerms#</cftextarea>
 			<div class="clear"></div>
          </div>

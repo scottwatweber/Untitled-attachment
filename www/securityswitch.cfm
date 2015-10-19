@@ -7,12 +7,14 @@
 	variables.objSecurityGateway = getGateway("gateways.security.securitygateway", MakeParameters("dsn=#Application.dsn#,pwdExpiryDays=#Application.pwdExpiryDays#"));
 	variables.objloadGateway = getGateway("gateways.loadgateway", MakeParameters("dsn=#Application.dsn#,pwdExpiryDays=#Application.pwdExpiryDays#"));
 	variables.objAgentGateway = getGateway("gateways.agentgateway", MakeParameters("dsn=#Application.dsn#,pwdExpiryDays=#Application.pwdExpiryDays#"));
+	variables.objequipmentGateway = getGateway("gateways.equipmentgateway", MakeParameters("dsn=#Application.dsn#,pwdExpiryDays=#Application.pwdExpiryDays#"));
 	variables.objPrivilegeXmlGateway = getGateway("gateways.security.privilegexmlgateway", MakeParameters("xmlFilePath=#ExpandPath('#request.strBase#../config/privileges.xml')#"));
 </cfscript>
 
 <!--------------------------------------------------------------------------------------------------------------------------------------------------------->
 <!--- MAIN SECTION - DEFINE YOUR EVENTS HERE --->
 <!--------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!--- <cfdump var="#request.event#" /><cfabort /> --->
 
 <cfswitch expression="#request.event#">
 	<cfcase value="noPrivileges">
@@ -39,16 +41,27 @@
 			<cfthrow errorcode="1001" message="Password Missing" detail="The Password has not been specified on the previous page" />
 		</cfif>
 		<cfset session.passport = doLogin(strUsername=FORM.txtUsername, strPassword=FORM.txtLoginPassword) />
+		
         <cfif session.passport.isLoggedIn>
 			<cfset session.AdminUserName = FORM.txtUsername>
+			 
             <cfinvoke component="#variables.objAgentGateway#" method="getUserRoleByUserName" returnvariable="request.qUserRole">
             	<cfinvokeargument name="userName" value="#session.AdminUserName#">
             </cfinvoke>
             <cfinvoke component="#variables.objAgentGateway#" method="GetUserInfoUserName" returnvariable="request.qUserInfo">
             	<cfinvokeargument name="userName" value="#session.AdminUserName#">
             </cfinvoke>
-            <!---USP_GetUserInfoUserName--->
-            
+           	<cfif structkeyexists (session,"empid")>
+				<cfif Session.empid neq "">
+					<cfset cookie.userLogginID = Session.empid>
+					<!--- set your session var like normal --->
+					<cfif NOT ListFindNoCase(Application.userLoggedInCount, Session.empid)>
+						<cfset Application.userLoggedInCount = ListAppend(Application.userLoggedInCount,
+						Session.empid)>
+					</cfif>
+				</cfif>	
+			</cfif>
+			<!---USP_GetUserInfoUserName--->
             <cfset session.currentUserType = request.qUserRole.RoleValue>
             <cfset session.UserFullName = request.qUserInfo.Name>
             <cfset session.rightsList = request.qUserRole.userRights>
@@ -62,7 +75,7 @@
 				</cfif>
 			</cfif>
 		<cfelse>
-			<cflocation url="index.cfm?event=login&AlertMessageID=1" addtoken="yes" />
+			<cflocation url="index.cfm?event=login&AlertMessageID=1&reinit=true" addtoken="yes" />
 		</cfif>
 
 	</cfcase>
@@ -89,6 +102,17 @@
             	SELECT * FROM Customers 
             	WHERE CUSTOMERNAME = <cfqueryparam value="#session.AdminUserName#" cfsqltype="cf_sql_varchar">
             </cfquery>
+			<cfif structkeyexists (session,"customerid")>
+				<cfif Session.customerid neq "">
+					<cfset cookie.userLogginID = Session.customerid>
+					<!--- set your session var like normal --->
+					<cfif NOT ListFindNoCase(Application.userLoggedInCount, Session.customerid)>
+						<cfset Application.userLoggedInCount = ListAppend(Application.userLoggedInCount,
+						Session.customerid)>
+					</cfif>
+				</cfif>	
+			</cfif>
+			
             <!---USP_GetUserInfoUserName--->
             
             <cfset session.currentUserType = request.qUserRole.RoleValue>
@@ -120,40 +144,82 @@
 		<cfset includeTemplate("views/templates/maintemplate.cfm") />
 	</cfcase>
     
-	<cfcase value="lostpassword">
+	<cfcase value="lostpassword">		
 		<!--- <cfset request.SubHeading = "Lost Password"> --->
 		<cfset request.content = includeTemplate("views/security/lostpassword.cfm", true) />
 		<cfset includeTemplate("views/templates/maintemplate.cfm") />
 	</cfcase>
     
+    <cfcase value="recoveryEmailSuccess">
+		<cfset request.content = includeTemplate("views/security/recoveryEmailSuccess.cfm", true) />
+		<cfset includeTemplate("views/templates/maintemplate.cfm") />
+	</cfcase>
+
 	<cfcase value="lostpassword:process">
-		<cfset NewPassword = GenerateRandomPassword()>
-		<cfset request.UserDetails = variables.objSecurityGateway.checkLostPassword("#form.txtEmailAddress#","#NewPassword#")>
-		<cfif request.UserDetails.recordcount GT 0>
+		<!--- <cfset NewPassword = GenerateRandomPassword()> --->
+		<!--- <cfset request.UserDetails = variables.objSecurityGateway.checkLostPassword("#form.txtEmailAddress#","#NewPassword#")> --->
+		
+		<cfset SmtpAddress='smtpout.secureserver.net'>
+		<cfset SmtpUsername='no-reply@loadmanager.com'>
+		<cfset SmtpPort='3535'>
+		<cfset SmtpPassword='wsi11787'>
+		<cfset FA_SSL=0>
+		<cfset FA_TLS=1>
+		
+		<cfif StructKeyExists(url,'type') and url.type eq 'c'>
+			<cfset request.CustomerDetails = variables.objSecurityGateway.checkCustomerLostPassword("#form.txtEmailAddress#")>
 			
-            <cfmail to="#form.txtEmailAddress#" from="#Application.strEmailFromAddress#" subject="Lost Password Retrieval" type="html">
-				<table>
-					<tr>
-						<td>Dear #request.UserDetails.sFirstName# #request.UserDetails.sLastName#</td>
-					</tr>
-					<tr>
-						<td>&nbsp;</td>
-					</tr>
-					<tr>
-						<td>You entered the "Lost Password" section of the system and have asked us to retrieve your password. If you have received this email in error please contact the system administrator immediately.</td>
-					</tr>
-					<tr>
-						<td>Username: #request.UserDetails.sUsername#</td>
-					</tr>
-					<tr>
-						<td>Password: #NewPassword#</td>
-					</tr>
-				</table>
-			</cfmail>
-            
-			<cflocation url="index.cfm?event=login&AlertMessageID=4" addtoken="yes" />
+			<cfif request.CustomerDetails.recordcount GT 0>
+				<cfmail from="#SmtpUsername#" subject="Lost Password Retrieval" to="#form.txtEmailAddress#" type="html" server="#SmtpAddress#" username="#SmtpUsername#" password="#SmtpPassword#" port="#SmtpPort#" usessl="#FA_SSL#" usetls="#FA_TLS#" >
+					<table>
+						<tr>
+							<td>Dear #request.CustomerDetails.CustomerName#</td>
+						</tr>
+						<tr>
+							<td>&nbsp;</td>
+						</tr>
+						<tr>
+							<td>You entered the "Lost Password" section of the system and have asked us to retrieve your password. If you have received this email in error please contact the system administrator immediately.</td>
+						</tr>
+						<tr>
+							<td>Username: #request.CustomerDetails.userName#</td>
+						</tr>
+						<tr>
+							<td>Password: #request.CustomerDetails.Password#</td>
+						</tr>
+					</table>
+				</cfmail>
+				<cflocation url="index.cfm?event=recoveryEmailSuccess&Success=y&type=c" addtoken="yes" />
+			<cfelse>
+				<cflocation url="index.cfm?event=lostpassword&Failed=y&type=c" addtoken="yes" />
+			</cfif>
 		<cfelse>
-			<cflocation url="index.cfm?event=lostpassword&Failed=y" addtoken="yes" />
+			<cfset request.UserDetails = variables.objSecurityGateway.checkLostPassword("#form.txtEmailAddress#")>
+			
+			<cfif request.UserDetails.recordcount GT 0>
+				<cfmail from="#SmtpUsername#" subject="Lost Password Retrieval" to="#form.txtEmailAddress#" type="html" server="#SmtpAddress#" username="#SmtpUsername#" password="#SmtpPassword#" port="#SmtpPort#" usessl="#FA_SSL#" usetls="#FA_TLS#" >
+					<table>
+						<tr>
+							<td>Dear #request.UserDetails.Name#</td>
+						</tr>
+						<tr>
+							<td>&nbsp;</td>
+						</tr>
+						<tr>
+							<td>You entered the "Lost Password" section of the system and have asked us to retrieve your password. If you have received this email in error please contact the system administrator immediately.</td>
+						</tr>
+						<tr>
+							<td>Username: #request.UserDetails.loginid#</td>
+						</tr>
+						<tr>
+							<td>Password: #request.UserDetails.Password#</td>
+						</tr>
+					</table>
+				</cfmail>
+				<cflocation url="index.cfm?event=recoveryEmailSuccess&Success=y" addtoken="yes" />
+			<cfelse>
+				<cflocation url="index.cfm?event=lostpassword&Failed=y" addtoken="yes" />
+			</cfif>
 		</cfif>
 	</cfcase>
     
@@ -177,13 +243,60 @@
 	</cfcase>
     
 	<cfcase value="logout:process">
+		<cfif structkeyexists(Session,"empid") and len(trim(Session.empid))>			
+			<cfquery name="qGetUserLoggedInCount" datasource="#Application.dsn#">
+				select cutomerId,currenttime 
+				from userLoggedInCount
+				where cutomerId = <cfqueryparam cfsqltype="cf_sql_varchar" value="#Session.empid#">
+			</cfquery>	
+			
+			<cfif qGetUserLoggedInCount.recordcount>
+				<cfquery name="qUpdateIsLoggin" datasource="#Application.dsn#" result="a">
+					delete from userLoggedInCount
+					where 	cutomerId = <cfqueryparam cfsqltype="cf_sql_varchar" value="#Session.empid#">						
+				</cfquery>
+			</cfif>
+			<cfset listPos = ListFindNoCase(Application.userLoggedInCount, Session.empid)>
+			<cfif listPos>
+				<cfset Application.userLoggedInCount = ListDeleteAt(Application.userLoggedInCount, listPos)>
+				<cfquery name="update" datasource="#Application.dsn#">
+					UPDATE SystemConfig
+					set
+					userCount =  <cfqueryparam cfsqltype="cf_sql_integer" value="#ListLen(Application.userLoggedInCount)#" />
+				</cfquery>
+				<cfset structDelete(cookie, "userLogginID") />
+			</cfif>				
+		</cfif>
+		<!--- set your session var like normal --->
+		<cfif structkeyexists(Session,"customerid") and len(trim(Session.customerid))>		
+				<cfquery name="qGetUserLoggedInCount" datasource="#Application.dsn#">
+					select cutomerId,currenttime 
+					from userLoggedInCount
+					where cutomerId = <cfqueryparam cfsqltype="cf_sql_varchar" value="#Session.customerid#">
+				</cfquery>			
+				<cfif qGetUserLoggedInCount.recordcount>
+					<cfquery name="qUpdateIsLoggin" datasource="#Application.dsn#">
+						delete from userLoggedInCount
+						where 	cutomerId = <cfqueryparam cfsqltype="cf_sql_varchar" value="#Session.customerid#">						
+					</cfquery>
+				</cfif>
+				<cfset listPos = ListFindNoCase(Application.userLoggedInCount, Session.customerid)>
+				
+				<cfif listPos>
+					<cfset Application.userLoggedInCount = ListDeleteAt(Application.userLoggedInCount, listPos)>
+					<cfset structDelete(cookie, "userLogginID") />
+				</cfif>
+		</cfif>	
+		
+		
 		<cfset logoutvar = logoutuser()>
 		<cfset structDelete(session, "passport") />
+		<cfset session.searchtext="" />
 		<cfif StructKeyExists(session,"CustomerID") AND session.CustomerID NEQ "">
 			<cfset structDelete(session, "CustomerID") />
 			<cflocation url="index.cfm?event=customerlogin&AlertMessageID=3" addtoken="yes" />
 		<cfelse>
-			<cflocation url="index.cfm?event=login&AlertMessageID=3" addtoken="yes" />
+			<cflocation url="index.cfm?event=login&AlertMessageID=3&reinit=true" addtoken="yes" />
 		</cfif>
 	</cfcase>
 	<cfcase value="DashboardDefault">
@@ -658,9 +771,11 @@
 	</cfcase>
     
 	<cfcase value="systemsetup">
-    	<cfset request.subnavigation = includeTemplate("views/admin/sysSetupSubnav.cfm", true) />
-    	<cfset request.content = includeTemplate("webroot/systemSetup.cfm", true) />
-        <cfset includeTemplate("views/templates/maintemplate.cfm") />
+		<cfif StructKeyExists(session,"adminusername")>
+			<cfset request.subnavigation = includeTemplate("views/admin/sysSetupSubnav.cfm", true) />
+			<cfset request.content = includeTemplate("webroot/systemSetup.cfm", true) />
+			<cfset includeTemplate("views/templates/maintemplate.cfm") />
+		</cfif>
 	</cfcase>
 	
 	<cfcase value="companyinfo">

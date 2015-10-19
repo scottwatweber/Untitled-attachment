@@ -9,6 +9,7 @@ Changing 571 Line Extra line comment of consigneeZipcode already use in getdista
 <cfparam name="SubjectWorkImpHead" default="">
 <cfparam name="SubjectWorkExpHead" default="">
 <cfparam name="SubjectCustInvHead" default="">--->
+<cfset includeTemplate("views/pages/load/cleanJavaScriptData.cfm") />
   <cfparam name="url.loadid" default="0">
 <cfinvoke component="#variables.objloadGateway#" method="getCompanyInformation" returnvariable="request.qGetCompanyInformation" />
 <!---<cfinvoke component="#variables.objloadGateway#" method="getSystemSetupOptions" returnvariable="request.qGetSystemSetupOptions" />--->
@@ -18,13 +19,13 @@ Changing 571 Line Extra line comment of consigneeZipcode already use in getdista
 <cfinvoke component="#variables.objloadGateway#" method="getcurAgentMaildetails" returnvariable="request.qcurMailAgentdetails" employeID="#session.empid#" />
 <cfset tickBegin = GetTickCount()>
 <cfoutput>
-  <cfsilent>
+  
   <cfif request.qcurMailAgentdetails.recordcount gt 0 and (request.qcurMailAgentdetails.SmtpAddress eq "" or request.qcurMailAgentdetails.SmtpUsername eq "" or request.qcurMailAgentdetails.SmtpPort eq "" or request.qcurMailAgentdetails.SmtpPassword eq "" or request.qcurMailAgentdetails.SmtpPort eq 0)>
 	  <cfset mailsettings = "false">
   <cfelse>
 	  <cfset mailsettings = "true">
   </cfif>
- 
+ <cfset variables.statusDispatch='Customer Invoice'>
   <cfif request.qSystemSetupOptions.freightBroker>
 		<cfset variables.freightBroker = "Carrier">
 		<cfset variables.freightBrokerShortForm = "Carr">
@@ -73,6 +74,7 @@ Changing 571 Line Extra line comment of consigneeZipcode already use in getdista
   <cfparam name="ConsineeCustomerStopName" default="">
   <cfparam name="shipperCustomerID" default="">
   <cfparam name="consigneeCustomerID" default="">
+  <cfparam name="Invoicenumber" default="">
   <!---<cfparam name="ShipCustomerStopId" default="">--->
   <cfparam name="consigneeLoadStopId" default="">
   <cfparam name="totalProfit" default="0">
@@ -136,6 +138,9 @@ Changing 571 Line Extra line comment of consigneeZipcode already use in getdista
   <cfparam name="request.LoadStopInfoShipper.userDef4" default="">
   <cfparam name="request.LoadStopInfoShipper.userDef5" default="">
   <cfparam name="request.LoadStopInfoShipper.userDef6" default="">
+  <cfparam name="variables.flagstatus" default="0">
+  <cfparam name="variables.flagstatusConsignee" default="0">
+  <cfparam name="weight1" default="0">
 
 
   
@@ -163,13 +168,14 @@ Changing 571 Line Extra line comment of consigneeZipcode already use in getdista
   <cfinvoke component="#variables.objloadGateway#" AuthLevelId="3" method="getloadSalesPerson" returnvariable="request.qDispatcher" />
   <cfinvoke component="#variables.objloadGateway#" AuthLevelId="4" method="getloadSalesPerson" returnvariable="request.qBookedBy" />
   
+  
   <cfset NoOfStopsToShow = 0>
 <!---  <cfajaxproxy cfc="#request.cfcpath#.loadgateway" jsclassname="ajaxLoadCutomer">--->
   <cfset loadID = "">
   <cfif  structkeyexists(url,"loadid") and len(trim(url.loadid)) gt 1>
-    <cfset loadID = url.loadid>
-    <cfelseif structkeyexists(url,"loadToBeCopied") and len(trim(url.loadToBeCopied)) gt 1>
-    <cfset loadID = url.loadToBeCopied>
+		<cfset loadID = url.loadid>
+  <cfelseif structkeyexists(url,"loadToBeCopied") and len(trim(url.loadToBeCopied)) gt 1>
+		<cfset loadID = url.loadToBeCopied>
   </cfif>
   <cfset DispatchNotesToShow = request.qSystemSetupOptions.DispatchNotes>
   <cfset CarrierNotesToShow = request.qSystemSetupOptions.CarrierNotes>
@@ -198,6 +204,8 @@ Changing 571 Line Extra line comment of consigneeZipcode already use in getdista
     <cfset Dispatcher=request.qLoads.DISPATCHERID>
     <cfset Notes=request.qLoads.NEWNOTES>
 	<cfset posttoTranscore=request.qLoads.IsTransCorePst>
+	<cfset Invoicenumber=request.qLoads.invoiceNumber>
+	<cfset weight1=request.qLoads.weight>
     <cfset posttoloadboard=request.qLoads.ISPOST>
     <cfset postto123loadboard=request.qLoads.postto123loadboard>
     <cfset ARExported=request.qLoads.ARExportedNN>
@@ -252,8 +260,8 @@ Changing 571 Line Extra line comment of consigneeZipcode already use in getdista
     <!--- <cfdump var="#request.ShipperStop#"><cfabort> --->
     <cfset ShipCustomerStopName=request.ShipperStop.ShipperStopName>
     <cfset shipperCustomerID=request.ShipperStop.shipperCustomerID>
-    <cfset shiplocation=request.ShipperStop.shipperLocation>
-    <cfset session.AllInfo.shiplocation=request.ShipperStop.shipperLocation>
+    <cfset shiplocation=trim(request.ShipperStop.shipperLocation)>
+    <cfset session.AllInfo.shiplocation=trim(request.ShipperStop.shipperLocation)>
     <cfset shipcity=request.ShipperStop.ShipperCity>
     <cfset shipstate1=request.ShipperStop.shipperState>
     <cfset shipzipcode=request.ShipperStop.shipperPostalcode>
@@ -278,9 +286,9 @@ Changing 571 Line Extra line comment of consigneeZipcode already use in getdista
 		<cfset shipIsPayer = 0>
 	</cfif>
 	<cfset shipBlind=request.ShipperStop.ShipperBlind>
-    <cfset shipInstructions=request.ShipperStop.ShipperInstructions>
-    <cfset session.AllInfo.shipInstructions=request.ShipperStop.ShipperInstructions>
-    <cfset Shipdirection =request.ShipperStop.ShipperDirections>
+    <cfset shipInstructions=trim(request.ShipperStop.ShipperInstructions)>
+    <cfset session.AllInfo.shipInstructions=trim(request.ShipperStop.ShipperInstructions)>
+    <cfset Shipdirection =trim(request.ShipperStop.ShipperDirections)>
     <cfset consigneeLoadStopId=request.qLoads.consigneeLoadStopID>
     <cfset loadCustomerName = request.qLoads.CustomerName>
     <!---<cfinvoke component="#variables.objloadGateway#" method="getAllstop" CustomerStopID="#request.qLoads.CONSIGNEEID#" returnvariable="request.ConsineeStop" />--->
@@ -288,8 +296,8 @@ Changing 571 Line Extra line comment of consigneeZipcode already use in getdista
 	<cfinvoke component="#variables.objloadGateway#" method="getLoadStopInfo" StopNo="0"  LoadType="2" loadID="#loadID#" returnvariable="request.LoadStopInfoConsignee" />
     <cfset ConsineeCustomerStopName=request.ConsineeStop.consigneeStopName>
     <cfset consigneeCustomerID=request.ConsineeStop.consigneeCustomerID>
-    <cfset consigneelocation=request.ConsineeStop.consigneeLocation>
-    <cfset session.AllInfo.consigneelocation=request.ConsineeStop.consigneeLocation>
+    <cfset consigneelocation=trim(request.ConsineeStop.consigneeLocation)>
+    <cfset session.AllInfo.consigneelocation=trim(request.ConsineeStop.consigneeLocation)>
     <cfset consigneecity=request.ConsineeStop.consigneecity>
     <cfset consigneestate1=request.ConsineeStop.consigneeState>
     <cfset consigneezipcode=request.ConsineeStop.consigneepostalcode>
@@ -314,9 +322,9 @@ Changing 571 Line Extra line comment of consigneeZipcode already use in getdista
 		<cfset consigneeIsPayer = 0>
 	</cfif>
 	<cfset ConsBlind=request.ConsineeStop.consigneeBlind>
-    <cfset consigneeInstructions=request.ConsineeStop.consigneeInstructions>
-    <cfset session.AllInfo.consigneeInstructions=request.ConsineeStop.consigneeInstructions>
-    <cfset consigneedirection=request.ConsineeStop.consigneeDirections>
+    <cfset consigneeInstructions=trim(request.ConsineeStop.consigneeInstructions)>
+    <cfset session.AllInfo.consigneeInstructions=trim(request.ConsineeStop.consigneeInstructions)>
+    <cfset consigneedirection=trim(request.ConsineeStop.consigneeDirections)>
     <!--- Bookedwith attributes contains same info in Shipper and Consignee we can use anyone of them --->
     <cfset bookedwith1=request.ConsineeStop.consigneeBookedWith>
     <cfset session.AllInfo.bookedwith1 = request.ConsineeStop.consigneeBookedWith>
@@ -330,11 +338,66 @@ Changing 571 Line Extra line comment of consigneeZipcode already use in getdista
     <cfset milse=request.ConsineeStop.consigneeMILES>
     <cfset editid=loadID>
   </cfif>
-  </cfsilent>
+ 
+	<cfif ShipCustomerStopName neq "" or shiplocation neq "" or shipcity neq "" or (shipstate1 neq 0 AND shipstate1 neq "") or shipzipcode neq "" or shipcontactPerson neq "" or shipPhone neq "" or shipfax neq "" or shipemail neq "" or shipPickupNo neq "" or shippickupDate neq "" or shippickupTime neq "" or shiptimeIn neq "" or shiptimeOut neq "" or shipInstructions neq "" or Shipdirection neq "">
+		<cfset variables.flagstatus=1>
+	</cfif>
+	<cfif ConsineeCustomerStopName neq "" or consigneelocation neq "" or consigneecity neq "" or (consigneestate1 neq 0 AND consigneestate1 neq "") or consigneezipcode neq "" or consigneecontactPerson neq "" or consigneePhone neq "" or consigneefax neq "" or consigneeemail neq "" or consigneePickupNo neq "" or consigneepickupDate neq "" or consigneepickupTime neq "" or consigneetimeIn neq "" or consigneetimeOut neq "" or consigneeInstructions neq "" or consigneedirection neq "">
+		<cfset variables.flagstatusConsignee=1>
+	</cfif> 
 <script type="text/javascript">
   $(document).ready(function(){
     setStopValue();
-  })
+	var loadidExists='<cfoutput>#loadID#</cfoutput>';
+	var shipperValue='<cfoutput>#clean_javascript_data(ShipCustomerStopName)#</cfoutput>';
+	var shiplocation='<cfoutput>#clean_javascript_data(shiplocation)#</cfoutput>';
+	var shipcity='<cfoutput>#clean_javascript_data(shipcity)#</cfoutput>';
+	var shipstate1='<cfoutput>#clean_javascript_data(shipstate1)#</cfoutput>';
+	var shipzipcode='<cfoutput>#clean_javascript_data(shipzipcode)#</cfoutput>';
+	var shipcontactPerson='<cfoutput>#clean_javascript_data(shipcontactPerson)#</cfoutput>';
+	var shipPhone='<cfoutput>#clean_javascript_data(shipPhone)#</cfoutput>';
+	var shipfax='<cfoutput>#clean_javascript_data(shipfax)#</cfoutput>';
+	var shipemail='<cfoutput>#clean_javascript_data(shipemail)#</cfoutput>';
+	var shipPickupNo='<cfoutput>#clean_javascript_data(shipPickupNo)#</cfoutput>';
+	var shippickupDate='<cfoutput>#clean_javascript_data(shippickupDate)#</cfoutput>';
+	var shippickupTime='<cfoutput>#clean_javascript_data(shippickupTime)#</cfoutput>';
+	var shiptimeOut='<cfoutput>#clean_javascript_data(shiptimeOut)#</cfoutput>';
+	var shiptimeIn='<cfoutput>#clean_javascript_data(shiptimeIn)#</cfoutput>';
+	var shipInstructions="<cfoutput>#clean_javascript_data(shipInstructions)#</cfoutput>";
+	var Shipdirection='<cfoutput>#clean_javascript_data(Shipdirection)#</cfoutput>';
+	
+	var consineeValue='<cfoutput>#clean_javascript_data(ConsineeCustomerStopName)#</cfoutput>';	
+	var consigneelocation='<cfoutput>#clean_javascript_data(consigneelocation)#</cfoutput>';
+	var consigneecity='<cfoutput>#clean_javascript_data(consigneecity)#</cfoutput>';
+	var consigneestate1='<cfoutput>#clean_javascript_data(consigneestate1)#</cfoutput>';
+	var consigneezipcode='<cfoutput>#clean_javascript_data(consigneezipcode)#</cfoutput>';
+	var consigneecontactPerson='<cfoutput>#clean_javascript_data(consigneecontactPerson)#</cfoutput>';
+	var consigneePhone='<cfoutput>#clean_javascript_data(consigneePhone)#</cfoutput>';
+	var consigneefax='<cfoutput>#clean_javascript_data(consigneefax)#</cfoutput>';
+	var consigneeemail='<cfoutput>#clean_javascript_data(consigneeemail)#</cfoutput>';
+	var consigneePickupNo='<cfoutput>#clean_javascript_data(consigneePickupNo)#</cfoutput>';
+	var consigneetimeIn='<cfoutput>#clean_javascript_data(consigneetimeIn)#</cfoutput>';
+	var consigneetimeOut='<cfoutput>#clean_javascript_data(consigneetimeOut)#</cfoutput>';
+	var consigneepickupTime='<cfoutput>#clean_javascript_data(consigneepickupTime)#</cfoutput>';
+	var consigneepickupDate='<cfoutput>#clean_javascript_data(consigneepickupDate)#</cfoutput>';
+	var consigneeInstructions='<cfoutput>#clean_javascript_data(consigneeInstructions)#</cfoutput>';
+	var consigneedirection='<cfoutput>#clean_javascript_data(consigneedirection)#</cfoutput>';
+	if(loadidExists !=""){
+		if (shipstate1=='<![CDATA[0]]>'){
+			shipstate1='<![CDATA[]]>';
+		}
+		if(shipperValue !="<![CDATA[]]>" || shiplocation !="<![CDATA[]]>" || shipcity !="<![CDATA[]]>" || shipstate1 !='<![CDATA[]]>' || shipzipcode !="<![CDATA[]]>" || shipPhone !="<![CDATA[]]>" || shipfax !="<![CDATA[]]>" || shipemail !="<![CDATA[]]>" || shipPickupNo !="<![CDATA[]]>" || shippickupDate !="<![CDATA[]]>" || shippickupTime !="<![CDATA[]]>" || shiptimeIn !="<![CDATA[]]>" || shiptimeOut !="<![CDATA[]]>" || shipInstructions!="<![CDATA[]]>"){
+			$(".InfoShipping1").show();
+		}else{
+			$(".InfoShipping1").hide();
+		}
+		if(consineeValue !="<![CDATA[]]>" || consigneelocation !="<![CDATA[]]>" || consigneecity !="<![CDATA[]]>" || consigneestate1 !="<![CDATA[]]>" || consigneezipcode !="<![CDATA[]]>" || consigneecontactPerson !="<![CDATA[]]>" || consigneePhone !="<![CDATA[]]>" || consigneefax !="<![CDATA[]]>" || consigneeemail !="<![CDATA[]]>" || consigneePickupNo !="<![CDATA[]]>" || consigneetimeIn !="<![CDATA[]]>" || consigneetimeOut !="<![CDATA[]]>" || consigneetimeOut !="<![CDATA[]]>" || consigneepickupTime !="<![CDATA[]]>" || consigneepickupDate !="<![CDATA[]]>" || consigneeInstructions !="<![CDATA[]]>"|| consigneedirection!="<![CDATA[]]>"){
+			$(".InfoConsinee1").show();
+		}else{
+			$(".InfoConsinee1").hide();
+		}
+	}	
+  });
 var initialization=false;
 function changeValueStatus(){
 	if(initialization==true){
@@ -347,9 +410,9 @@ function changeValueStatus(){
 		initialization=true;
 	}	
 }
-<!--
+
 function popitup(url) {
-	newwindow=window.open(url,'Map','height=600,width=600');
+	newwindow=window.open(url,'Map','height=600,width=800');
 	if (window.focus) {newwindow.focus()}
 	return false;
 }
@@ -682,9 +745,11 @@ function showfullmap(url,form, type, dsn) {
 	if(type == 'promiles'){
 		data += "&dsn="+dsn;
 	}	
-		
-	url = 'index.cfm?event=' + url + '&' +'loadNum=#loadnumber#&' + data;	
-
+	if(type == 'promiles'){	
+		url = 'index.cfm?event=' + url + '&' +'loadNum=#loadnumber#&' + data;	
+	} else {
+		url = '../views/pages/load/' + url + '?' +'loadNum=#loadnumber#&' + data;
+	}
 	/*  newwindow=window.open(url,'name','height=560,width=802,directories=no,menubar=no,resizable=no,scrollbars=yes,status=no,toolbar=no');*/
 	
 	
@@ -737,7 +802,7 @@ function getCommodityByCarrId(){
 	}
   
   function setStopValue(){
-      var shownStopArray = [];
+	  var shownStopArray = [];
       var nonShownStopArray = [];
       for(i=2;i<11;i++){
         ($('##stop'+i).css('display')=="block" ? shownStopArray.push(i):nonShownStopArray.push(i));
@@ -829,13 +894,13 @@ function getCommodityByCarrId(){
 		<div style="float: left; min-height: 40px; width: 43%;" id="divUploadedFiles">
 		
 			<cfif request.filesAttached.recunt neq 0>
-				&nbsp;<a style="display:block;font-size: 13px;padding-left: 10px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#url.loadid#&attachTo=1&user=#session.adminusername#&dsn=#dsn#&attachtype=Load')">
+				&nbsp;<a style="display:block;font-size: 13px;padding-left: 10px;color:white;" href="##" onclick="popitup('../fileupload/multipleFileupload/MultipleUpload.cfm?id=#url.loadid#&attachTo=1&user=#session.adminusername#&dsn=#dsn#&attachtype=Load')">
 				<img style="vertical-align:bottom;" src="images/attachment.png">
 				View/Attach Files
 					</a>
 			<cfelse>
 
-				&nbsp;<a style="display:block;font-size: 13px;padding-left: 10px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#url.loadid#&attachTo=1&user=#session.adminusername#&dsn=#dsn#&attachtype=Load')">
+				&nbsp;<a style="display:block;font-size: 13px;padding-left: 10px;color:white;" href="##" onclick="popitup('../fileupload/multipleFileupload/MultipleUpload.cfm?id=#url.loadid#&attachTo=1&user=#session.adminusername#&dsn=#dsn#&attachtype=Load')">
 				<img style="vertical-align:bottom;" src="images/attachment.png">
 				Attach Files
 				</a> 
@@ -852,7 +917,7 @@ function getCommodityByCarrId(){
 		<cfset session.checkUnload ='add'>
 		<div class="white-con-area" style="height: 40px;background-color: ##82bbef;">
 			<div style="float: left; min-height: 40px; width: 43%;" id="divUploadedFiles">
-					&nbsp;<a style="display:block;font-size: 13px;padding-left: 10px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#tempLoadId#&attachTo=1&user=#session.adminusername#&newFlag=1&dsn=#dsn#&attachtype=Load')">
+					&nbsp;<a style="display:block;font-size: 13px;padding-left: 10px;color:white;" href="##" onclick="popitup('../fileupload/multipleFileupload/MultipleUpload.cfm?id=#tempLoadId#&attachTo=1&user=#session.adminusername#&newFlag=1&dsn=#dsn#&attachtype=Load')">
 					<img style="vertical-align:bottom;" src="images/attachment.png">
 					Attach Files</a>
 			</div>
@@ -878,6 +943,9 @@ function getCommodityByCarrId(){
 	<input type="hidden" name="trans360Password" id="trans360Password" value="#request.qcurAgentdetails.trans360Password#">
 	<input type="hidden" name="Triger_loadStatus" id="Triger_loadStatus" value="#request.qSystemSetupOptions.Triger_loadStatus#">
 	<input type="hidden" name="IsTransCorePst" id="IsTransCorePst" value="#posttoTranscore#">
+<cfelse>
+	<input type="hidden" name="IsTransCorePst" id="IsTransCorePst" value="0">
+	<input type="hidden" name="posttoTranscore" id="posttoTranscore" value="">
   </cfif>
  <cfif request.qSystemSetupOptions.IntegrateWithITS EQ 1 >
 	<input type="hidden" name="integratewithITS" id="integratewithITS" value="#request.qSystemSetupOptions.IntegrateWithITS#">
@@ -988,23 +1056,12 @@ function getCommodityByCarrId(){
                 </cfloop>--->
                 
               </select>
-			   <cfif request.qSystemSetupOptions.freightBroker>
-				  <div class="clear"></div>
-						<div class="load_opt" style="padding-left: 70px;">Post to ITS<input style="margin-right: 8px !important;" name="posttoITS" ID="posttoITS" type="checkbox" tabindex=6 class="small_chk" <cfif posttoITS is 1> checked="checked" </cfif> value="" />
-				  </div>
-				  <div class="clear"></div>  
-						<div class="load_opt" style="padding-left: 70px;">Post Everywhere?<input style="margin-right: 8px !important;" name="posttoloadboard" ID="posttoloadboard" type="checkbox" tabindex=6 class="small_chk" <cfif posttoloadboard is 1> checked="checked" </cfif> value="1" />
-				  </div>
-				  <div class="clear"></div>
-						<div class="load_opt" style="padding-left: 70px;">Post Transcore 360?<input style="margin-right: 8px !important;" name="posttoTranscore" ID="posttoTranscore" type="checkbox" tabindex=6 class="small_chk" <cfif posttoTranscore is 1> checked="checked" </cfif> value="#posttoTranscore#" />
-				  </div>
-				  <div class="clear"></div>
-						<div class="load_opt" style="padding-left: 70px;">Post 123Load Board?<input style="margin-right: 8px !important;" name="PostTo123LoadBoard" ID="PostTo123LoadBoard" type="checkbox" tabindex=6 class="small_chk" <cfif PostTo123LoadBoard is 1>checked="checked" </cfif> value="#PostTo123LoadBoard#" />
-				  </div>
-				  <div class="clear"></div>
-				   <input name="statusfreightBroker" ID="statusfreightBroker" type="hidden" value="1" />
-			 </cfif>
-			
+			  <label class="space_it_little">Notes</label>
+				<!---<input name="Notes" type="text" tabindex=5 value="#Notes#" class="mid-textbox"/>--->
+				<textarea class="medium-textbox <cfif NotesToShow eq true>applynotesPl</cfif>" name="Notes" tabindex=5 cols="" rows="" style="margin-left: 6px;
+<cfif not request.qSystemSetupOptions.freightBroker>width: 394px;<cfelse>width: 224px;</cfif>"><cfif url.loadToBeCopied EQ 0>#Notes#</cfif></textarea>
+				<div class="clear"></div>
+			 
 			 <cfif not request.qSystemSetupOptions.freightBroker>
 				<input name="statusfreightBroker" ID="statusfreightBroker" type="hidden" value="0" />
 			 </cfif>
@@ -1049,21 +1106,35 @@ function getCommodityByCarrId(){
 							<input type="hidden"  id="BillDate_Static" value="#dateformat(BillDate,'mm/dd/yyy')#" />
 						</div>
                     </div>
+					 <label class="space_it">Invoice##</label>
+					 <input class="sm-input " tabindex=4 name="InvoiceNumber" id="InvoiceNumber" value="#Invoicenumber#" type="text" readonly/> 
                 </div>
-                <div class="clear"></div>
-				<label class="space_it_little">Notes</label>
-				<!---<input name="Notes" type="text" tabindex=5 value="#Notes#" class="mid-textbox"/>--->
-				<textarea class="medium-textbox <cfif NotesToShow eq true>applynotesPl</cfif>" name="Notes" tabindex=5 cols="" rows=""><cfif url.loadToBeCopied EQ 0>#Notes#</cfif></textarea>
 				<div class="clear"></div>
-				<div class="load_opt" style="text-align:right;padding:3px;">
-					Less than truck load&nbsp;<input name="IsPartial" ID="IsPartial" type="checkbox" tabindex=6 class="small_chk" <cfif IsPartial is 1> checked="checked" </cfif> value="" />
+				<cfif request.qSystemSetupOptions.freightBroker>
+						<div class="load_opt" style="padding-left: 34px;margin-top: 15px;">Post to ITS<input style="margin-right: 16px !important;" name="posttoITS" ID="posttoITS" type="checkbox" tabindex=6 class="small_chk" <cfif posttoITS is 1> checked="checked" </cfif> value="" />
+					</div>
+					<div class="clear"></div>  
+						<div class="load_opt" style="padding-left: 34px;">Post Everywhere?<input style="margin-right: 16px !important;" name="posttoloadboard" ID="posttoloadboard" type="checkbox" tabindex=6 class="small_chk" <cfif posttoloadboard is 1> checked="checked" </cfif> value="1" />
+					</div>
+					<div class="clear"></div>
+						<div class="load_opt" style="padding-left: 34px;">Post DAT Load Board?<input style="margin-right: 16px !important;" name="posttoTranscore" ID="posttoTranscore" type="checkbox" tabindex=6 class="small_chk" <cfif posttoTranscore is 1> checked="checked" </cfif> value="#posttoTranscore#" />
+					</div>
+					<div class="clear"></div>
+						<div class="load_opt" style="padding-left: 34px;">Post 123Load Board?<input style="margin-right: 16px !important;" name="PostTo123LoadBoard" ID="PostTo123LoadBoard" type="checkbox" tabindex=6 class="small_chk" <cfif PostTo123LoadBoard is 1>checked="checked" </cfif> value="#PostTo123LoadBoard#" />
+					</div>
+					<div class="clear"></div>
+					<input name="statusfreightBroker" ID="statusfreightBroker" type="hidden" value="1" />
+				</cfif>
+			
+				<div class="load_opt" style="<cfif not request.qSystemSetupOptions.freightBroker>padding-left: 58px;margin-top: 107px;margin-right: -20px;<cfelse>padding-left:34px;</cfif>">
+					Less than truck load&nbsp;<input name="IsPartial" ID="IsPartial" type="checkbox" tabindex=6 class="small_chk" <cfif IsPartial is 1> checked="checked" </cfif> value="" style="margin-right: 16px !important;" />
 				</div>
 				<div class="clear"></div>
 		 </div>
 			
           <div class="clear"></div>
 		  <input type="hidden" name="dispatchHiddenValue" id="dispatchHiddenValue" value=""/>
-          <label class="space_it_medium">Dispatch Notes</label>
+          <label class="space_it_medium" <cfif not request.qSystemSetupOptions.freightBroker> style="margin-top:-8px;"</cfif>>Dispatch Notes</label>
           <div class="clear"></div>
 		  <textarea class="carrier-textarea-big <cfif DispatchNotesToShow eq true>applynotesPl</cfif>" name="dispatchNotes" id="dispatchNotes" tabindex=7 cols="" rows=""><cfif url.loadToBeCopied EQ 0>#dispatchNotes#</cfif></textarea>
           <div class="clear"></div>
@@ -1115,15 +1186,33 @@ function getCommodityByCarrId(){
 				</div>
 				<input id="impWorkReportLink" style="width:110px !important;" type="button" class="black-btn tooltip" value="Import Work Order" <cfif CarrierWorkOrderImportOnClick eq "">disabled="disabled"</cfif> <cfif mailsettings>data-allowmail="true"<cfelse>data-allowmail="false"</cfif>/>
 				<!--- END: Prevent already transcore synced load update from Agent has no Transcore Login setup in their profile Date:20 Sep 2013  --->
-				<div style="cursor:pointer;width:27px;background-color: ##bfbcbc;float: left;margin: 3px 0;text-align: center;">
-					<img id="custInvReportImg" style="vertical-align:bottom;" src="images/black_mail.png" data-action="view">
-				</div>
-				<input id="custInvReportLink" style="width:110px !important;" type="button" class="black-btn tooltip" value="Quote/R.Conf/Inv"  <cfif customerReportOnClick eq ""> disabled="disabled"</cfif> <cfif mailsettings>data-allowmail="true"<cfelse>data-allowmail="false"</cfif>/>
+				<cfif loadStatus eq 'EBE06AA0-0868-48A9-A353-2B7CF8DA9F45'>
+					<cfset variables.statusDispatch='Rate Quote'>	
+					<div style="cursor:pointer;width:27px;background-color: ##bfbcbc;float: left;margin: 3px 0;text-align: center;">
+						<img id="custInvReportImg" style="vertical-align:bottom;" src="images/black_mail.png" data-action="view">
+					</div>
+					<input id="custInvReportLink" style="width:110px !important;" type="button" class="black-btn tooltip" value="Rate Quote"  <cfif customerReportOnClick eq ""> disabled="disabled"</cfif> <cfif mailsettings>data-allowmail="true"<cfelse>data-allowmail="false"</cfif>/>
+				<cfelseif (loadStatus eq 'EBE06AA0-0868-48A9-A353-2B7CF8DA9F44') or (loadStatus eq 'B54D5427-A82E-4A7A-BAA1-DA95F4061EBE') or (loadStatus eq '74151038-11EA-47F7-8451-D195D73DE2E4') or(loadStatus eq 'C4C98C6D-018A-41BD-8807-58D0DE1BB0F8') or(loadStatus eq 'E62ACAA8-804B-4B00-94E0-3FE7B081C012') or(loadStatus eq 'C980CD90-F7CD-4596-B254-141EAEC90186')>
+					<cfset variables.statusDispatch='Rate Confirmation'>	
+					<div style="cursor:pointer;width:27px;background-color: ##bfbcbc;float: left;margin: 3px 0;text-align: center;">
+						<img id="custInvReportImg" style="vertical-align:bottom;" src="images/black_mail.png" data-action="view">
+					</div>
+					<input id="custInvReportLink" style="width:110px !important;" type="button" class="black-btn tooltip" value="Rate Conf"  <cfif customerReportOnClick eq ""> disabled="disabled"</cfif> <cfif mailsettings>data-allowmail="true"<cfelse>data-allowmail="false"</cfif>/>
+				<cfelseif (loadStatus eq '6419693E-A04C-4ECE-B612-36D3D40CFC70') or (loadStatus eq 'CE991E00-404D-486F-89B7-6E16C61676F3') or (loadStatus eq '5C075883-B216-49FD-B0BF-851DCB5744A4') or (loadStatus eq 'C126B878-9DB5-4411-BE4D-61E93FAB8C95')>
+					<cfset variables.statusDispatch='Invoice'>	
+					<div style="cursor:pointer;width:27px;background-color: ##bfbcbc;float: left;margin: 3px 0;text-align: center;">
+						<img id="custInvReportImg" style="vertical-align:bottom;" src="images/black_mail.png" data-action="view">
+					</div>
+					<input id="custInvReportLink" style="width:110px !important;" type="button" class="black-btn tooltip" value="Invoice"  <cfif customerReportOnClick eq ""> disabled="disabled"</cfif> <cfif mailsettings>data-allowmail="true"<cfelse>data-allowmail="false"</cfif>/>
+				</cfif>
 				<!--- BEGIN: Prevent already transcore synced load update from Agent has no Transcore Login setup in their profile Date:20 Sep 2013  --->
 				<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
-					<input id="saveLoad" name="save" type="submit" class="green-btn"  onClick="alert('This Load has been posted to Transcore 360 Load board and can only be edited by users with a Transcore Login setup in their profile. However you can view the load details.'); return false;" value="Save" style="width:100px !important">
+					<input id="saveLoad" name="save" type="submit" class="green-btn"  onClick="alert('Any changes you make will not be updated to the DAT Load Board because you do not have credentials setup on your Agent Profile.');javascript:return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" style="width:100px !important;float:right;">
+				<cfelseif request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+						<input id="saveLoad" name="save" type="submit" class="green-btn"  onClick="alert('Any changes you make will not be updated to the 123Load Board because you do not have credentials setup on your Agent Profile.');javascript:return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" style="width:100px !important;float:right;">
+						<input name="notpostingTo123LoadBoard" value="1" type="hidden">
 				<cfelse>
-					<input id="saveLoad" name="save" type="submit" class="green-btn"  onClick="return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="yes" style="width:100px !important" />
+					<input id="saveLoad" name="save" type="submit" class="green-btn"  onClick="return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="yes" style="width:101px !important;float:right;" />
 				</cfif>
 				</div>
 				<div class="clear"></div>
@@ -1132,7 +1221,8 @@ function getCommodityByCarrId(){
 						<img id="expWorkReportImg" style="vertical-align:bottom;" src="images/black_mail.png" data-action="view">
 					</div>
 					<input id="expWorkReportLink" style="width:110px !important;" type="button" class="black-btn tooltip"  value="Export Work Order" <cfif CarrierWorkOrderExportOnClick eq "">disabled="disabled"</cfif> <cfif mailsettings>data-allowmail="true"<cfelse>data-allowmail="false"</cfif>/>
-					<cfif request.qSystemSetupOptions.googleMapsPcMiler AND request.qcurAgentdetails.proMilesStatus >
+					<!--- Promiles condition is blocked due to map issue using 1 EQ 2 --->
+					<cfif request.qSystemSetupOptions.googleMapsPcMiler AND request.qcurAgentdetails.proMilesStatus AND 1 EQ 2>
 						<div style="cursor:pointer;width:27px;float: left;margin: 3px 0;text-align: center;">&nbsp;</div>
 						<Cfset encryptedDsn = ToBase64(Encrypt(application.DSN, 'load')) >
 						<input style="width:110px !important;" name="map-button" type="button" class="black-btn" onClick="showfullmap('ProMile',this.form, 'promiles', '#encryptedDsn#');" value="ProMiles Map" />
@@ -1142,20 +1232,35 @@ function getCommodityByCarrId(){
 					</cfif>
 					<!--- BEGIN: Prevent already transcore synced load update from Agent has no Transcore Login setup in their profile Date:20 Sep 2013  --->
 					<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
-						<input name="saveexit" type="submit" class="green-btn"  onClick="alert('This Load has been posted to Transcore 360 Load board and can only be edited by users with a Transcore Login setup in their profile. However you can view the load details.'); return false;" value="Save & Exit" style="width:100px !important">
+						<input name="saveexit" type="submit" class="green-btn"  onClick="alert('Any changes you make will not be updated to the DAT Load Board because you do not have credentials setup on your Agent Profile.');javascript:return saveButExitPage('#url.loadid#');" onfocus="checkUnload();"  value="Save & Exit" style="width:100px !important">
+					<cfelseif request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+						<input name="saveexit" type="submit" class="green-btn"  onClick="alert('Any changes you make will not be updated to the 123Load Board because you do not have credentials setup on your Agent Profile.');javascript:return saveButExitPage('#url.loadid#');" onfocus="checkUnload();"  value="Save & Exit" style="width:100px !important">	
 					<cfelse>
 						<input name="saveexit" type="submit" class="green-btn" onclick="javascript:return saveButExitPage('#url.loadid#');" onFocus="checkUnload();" value="Save & Exit" disabled="yes" style="width:100px !important"/>
 					</cfif>
 					<div class="clear"></div>
 				</div>
-				<div style="border-bottom:1px solid ##e6e6e6; padding-top:7px;"></div>
+				<!---div style="border-bottom:1px solid ##e6e6e6; padding-top:7px;"></div--->
 				<!--- END: Prevent already transcore synced load update from Agent has no Transcore Login setup in their profile Date:20 Sep 2013  --->
 			<!---<input name="saveexit" type="button" class="green-btn" onclick="saveButExitPage('#url.loadid#');" onFocus="checkUnload();" value="Save & Exit"/>--->
 			<cfelse>
 				<!--- temploadid added for fileattachment --->
 				<input type="hidden" name="tempLoadId" value="#tempLoadId#">
-	            <input name="save" type="submit" class="green-btn" onClick="return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="yes" />
-        	    <input name="saveexit" type="submit" class="green-btn" onClick="return checkLoad();" onFocus="checkUnload();" value="Save & Exit" disabled="yes"/>
+				<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
+				<input name="save" type="submit" class="green-btn" onClick="alert('Any changes you make will not be updated to the DAT Load Board because you do not have credentials setup on your Agent Profile.');return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="yes" />
+				<cfelseif request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+				<input name="save" type="submit" class="green-btn" onClick="alert('Any changes you make will not be updated to the 123Load Board because you do not have credentials setup on your Agent Profile.');return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="yes" />
+				<cfelse>
+				<input name="save" type="submit" class="green-btn" onClick="return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="yes" />
+				</cfif>
+				
+				<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
+				<input name="saveexit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be updated to the DAT Load Board because you do not have credentials setup on your Agent Profile.');return saveButExitPage('2');" onFocus="checkUnload();" value="Save & Exit" disabled="yes"/>
+				<cfelseif request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+				<input name="saveexit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be updated to the 123Load Board because you do not have credentials setup on your Agent Profile.');return saveButExitPage('2');" onFocus="checkUnload();" value="Save & Exit" disabled="yes"/>
+				<cfelse>
+				<input name="saveexit" type="submit" class="green-btn" onClick="return saveButExitPage('2');" onFocus="checkUnload();" value="Save & Exit" disabled="yes"/>
+				</cfif>
 			</cfif>
 			<input type="hidden" name="loadToSaveWithoutExit" id="loadToSaveWithoutExit" value="0" />
             <input type="hidden" name="loadToSaveAndExit" id="loadToSaveAndExit" value="0" />
@@ -1166,7 +1271,7 @@ function getCommodityByCarrId(){
             <!---<input type="submit" name="loadToSaveToCarrierPageSubmit" id="loadToSaveToCarrierPageSubmit" onClick="return saveButToCarrierPage('#url.loadid#');" style="display:none;"/>--->
           </div>
           <div class="clear"></div>
-		  <div style="width:100%">
+		  <div class="calculationblock">
 			  <table style="border-collapse: collapse;border-spacing: 0;">
 				  <colgroup>
 					<col width="15%">
@@ -1177,13 +1282,13 @@ function getCommodityByCarrId(){
 					<col>
 				  </colgroup>
 				  <thead>
-					  <tr>
+					  <tr style="height: 25px;">
 						  <th>&nbsp;</th>
-						  <th><label class="custlabel" style="text-align: center;">Miles</label></th>
+						  <th><label class="custlabel" style="text-align: center;padding:0px; margin:0px;">Miles</label></th>
 						  <th>&nbsp;</th>
-						  <th><label class="custlabel2" style="text-align: center;">Rate</label></th>
+						  <th><label class="custlabel2" style="text-align: center;padding:0px; margin:0px;">Rate</label></th>
 						  <th>&nbsp;</th>
-						  <th><label class="custlabel1" style="text-align: left;">Total Amount</label></th>
+						  <th><label class="custlabel1" style="text-align: left;padding:0px; margin:0px;">Total Amount</label></th>
 					  </tr>
 				  </thead>
 				  <tbody>
@@ -1212,7 +1317,7 @@ function getCommodityByCarrId(){
             <cfelse>
             <cfset perc=0>
           </cfif>
-		  <div style="width:100%">
+		  <div class="calculationCustomerBlock">
 			  <table style="border-collapse: collapse;border-spacing: 0;">
 				  <colgroup>
 					<col width="15%">
@@ -1258,8 +1363,8 @@ function getCommodityByCarrId(){
 						  <td><input class="mid-textbox-1 disabledLoadInputs" style="text-align:right;" id="amountOfMilesProfit" name="amountOfMilesProfit" type="text" value="#DollarFormat(0)#" disabled /></td>
 					  </tr>
 					  <tr style="line-height: 2px;"><td colspan="6">&nbsp;</td></tr>
-<tr style="border-bottom: 1px solid grey; border-top: 1px solid grey; line-height: 2px;"><td colspan="6">&nbsp;</td></tr>
-<tr style="line-height: 3px;"><td colspan="6">&nbsp;</td></tr>
+						<tr style="border-bottom: 1px solid ##b3b3b3; border-top: 1px solid ##b3b3b3; line-height: 2px;"><td colspan="6">&nbsp;</td></tr>
+						<tr style="line-height: 3px;"><td colspan="6">&nbsp;</td></tr>
 					  <tr>
 						  <td><label>TOTAL</label></td>
 						  <td>
@@ -1347,10 +1452,16 @@ function getCommodityByCarrId(){
 		 <!--- OLD RATE BLOCK :: ends here!!--->
           <div class="clear"></div>
           
-          
-          <label class="space_it_medium margin_top">Pricing Notes</label>
+          <cfif not request.qSystemSetupOptions.commodityWeight>
+		  <div style="float:right">
+			<label style="margin-left: -59px; margin-top: 10px;">Weight</label>
+			<input id="weightStop1" type="text" name="weightStop1" value="#weight1#" tabindex="" style="margin-top: 6px; width: 50px;">
+		</div>	
+			<div class="clear"></div>
+		</cfif>	
+         <label class="space_it_medium margin_top" style="<cfif not request.qSystemSetupOptions.commodityWeight> margin-top: -3px; <cfelse> margin-top: 36px;</cfif>">Pricing Notes</label>
           <div class="clear"></div>
-          <textarea class="carrier-textarea-medium <cfif PricingNotesToShow eq true>applynotesPricing</cfif>" name="pricingNotes" tabindex=8 cols="" rows="">#PricingNotes#</textarea>          
+          <textarea class="carrier-textarea-medium <cfif PricingNotesToShow eq true>applynotesPricing</cfif>" name="pricingNotes" tabindex=8 cols="" rows="" style="margin-left:0px; width:391px;" >#PricingNotes#</textarea>          
           <!---Chek Boxes For City/State And Zip--->
           <!---<label class="ch-box" style="margin-left:80px;"><input name="CityState" id="CityState" type="checkbox" class="check" disabled="disabled" <!---<cfif ARExported is 1> checked="checked" </cfif>--->/>City/State</label>
             
@@ -1375,7 +1486,7 @@ function getCommodityByCarrId(){
 	  <input name="isPayer" id="isPayer" type="hidden" value="#isPayer#" />
 	  
 	  <div class="clear"></div>
-      <div align="center"><img src="images/border.jpg" alt="" border="0" /></div>
+      <!---div align="center"><img src="images/border.jpg" alt="" border="0" /></div--->
 		<div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
 			<div style="float: left; width: 100%;padding-left:18px;"><h2 style="color:white;font-weight:bold;">Customer</h2></div>
 		</div>
@@ -1478,7 +1589,7 @@ function getCommodityByCarrId(){
 			<div class="clear"></div>
 			<label class="space_it_medium margin_top">Notes</label>
           	<div class="clear"></div>
-          	<textarea class="carrier-textarea-medium" name="" tabindex=20 cols="" rows=""></textarea>
+          	<textarea class="carrier-textarea-medium" name="" tabindex=20 cols="" rows="" ></textarea>
 			<div class="clear"></div>
           	<label class="space_it_medium margin_top">Dispatch Notes</label>
           	<div class="clear"></div>
@@ -1513,17 +1624,37 @@ function getCommodityByCarrId(){
   <div class="gap"></div>
 	<!-- stop block-->
 	<div id="tabs1" class="tabsload ui-tabs ui-widget ui-widget-content ui-corner-all">
-		<ul class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all">
+		<ul class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all" style="height:27px;">
 			<li class="ui-state-default ui-corner-top ui-tabs-active ui-state-active"><a class="ui-tabs-anchor" href="##tabs-1">Stop 1</a></li>
 			<li class="ui-state-default ui-corner-top"><a class="ui-tabs-anchor" href="index.cfm?event=loadIntermodal&stopno=&loadID=#loadID#&#Session.URLToken#">Intermodal</a></li>
+			<div style="float: left;width: 23%; margin-left: 27px;">
+				<div class="form-con" style="width:103%" id="StopNo1">
+					<ul class="load-link" id="ulStopNo1" style="line-height:26px;">
+						<cfloop from="1" to="#totStops#" index='stpNoid'>
+							<cfif stpNoid is 1>
+								<li><a href="##StopNo#stpNoid#">###stpNoid#</a></li>
+
+								<cfelse>
+								<li><a href="##StopNo#stpNoid#">###stpNoid#</a></li>
+							</cfif>
+						</cfloop>
+						<!--- <li><a href="##">##2</a></li><li><a href="##">##3</a></li> --->
+					</ul>
+					<div class="clear"></div>
+				</div>
+			</div>
+			<div style="float: left; width: 56%; height:6px;">
+				<h2 id="loadNumber" style="color:white;font-weight:bold;margin-top: -11px;">Load###Ucase(loadnumber)#</h2>
+			</div>
 		</ul>
+		
 		<div id="tabs-1">
-			<div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
-				<div class="pg-title-carrier" id="StopNo1" style="float: left; min-height: 36px; width: 18%;padding:0px;">
+			<!---div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
+				<div class="pg-title-carrier" id="StopNo1" style="float:left; min-height: 36px; width: 18%;padding:0px;">
 					<h2 id="stopNumber" style="color:white;font-weight:bold;padding-left:5px;">Stop 1</h2>
 				</div>
-				<div style="float: left; min-height: 36px; width: 26%;">
-					<div class="form-con" style="width:100%">
+				<div style="float: left; min-height: 36px; width: 23%;">
+					<div class="form-con" style="width:103%">
 						<ul class="load-link" id="ulStopNo1" style="line-height:36px;">
 							<cfloop from="1" to="#totStops#" index='stpNoid'>
 								<cfif stpNoid is 1>
@@ -1534,321 +1665,339 @@ function getCommodityByCarrId(){
 							</cfloop>
 							<!--- <li><a href="##">##2</a></li><li><a href="##">##3</a></li> --->
 						</ul>
-						<span style="display:inline-block;margin-left:3px;" name="span_Shipper" id ="span_Shipper"></span>
+						<span style="display:inline-block;margin-left:28px;" name="span_Shipper" id ="span_Shipper"></span>
 						<div class="clear"></div>
 					</div>
 				</div>
 				<div style="float: left; width: 56%; min-height: 36px;">
 					<h2 id="loadNumber" style="color:white;font-weight:bold;">Load###Ucase(loadnumber)#</h2>
 				</div>
-			</div>
+			</div--->
 			<div class="white-con-area">
 				<!---<div class="white-top" style="text-align:center; background-color:##FFF; height:35px;">
 					<h2 id="loadNumber">Load###Ucase(loadnumber)#</h2>
 				</div>--->
 				<div class="white-mid">
-					<div id="ShipperInfo">
-						<div class="form-heading-carrier">
-							<!---<div class="pg-title-carrier" id="StopNo1">
-								<h2 id="stopNumber">Stop 1</h2>
+					<div>						
+						<div id="ShipperInfo"  style="clear:both">						
+							<div class="">
+								<div class="fa fa-<cfif not len(loadID) gt 1>minus<cfelse><cfif variables.flagstatus>minus<cfelse>plus</cfif></cfif>-circle PlusToggleButton" onclick="showHideIcons(this,1);" style="position:relative;"></div>
+								<span class="ShipperHead" style="margin-left: 6px;">Shipper</span>
 							</div>
-							<div class="form-con" >
-								<ul class="load-link" id="ulStopNo1">
-									<cfloop from="1" to="#totStops#" index='stpNoid'>
-										<cfif stpNoid is 1>
-											<li><a href="##StopNo#stpNoid#">###stpNoid#</a></li>
-										<cfelse>
-											<li><a href="##StopNo#stpNoid#">###stpNoid#</a></li>
-										</cfif>
-									</cfloop>
-								</ul>
-								<span style="display:inline-block;margin-left:3px;" name="span_Shipper" id ="span_Shipper"></span>
+							<div style="position: absolute;right: 0;line-height: 25px;width: 475px;">
+								<span style="display:inline-block;text-aligh:right;" name="span_Shipper" id="span_Shipper"></span>
+							</div>	
+							<div class="form-heading-carrier">
+								<!---<div class="pg-title-carrier" id="StopNo1">
+									<h2 id="stopNumber">Stop 1</h2>
+								</div>
+								<div class="form-con" >
+									<ul class="load-link" id="ulStopNo1">
+										<cfloop from="1" to="#totStops#" index='stpNoid'>
+											<cfif stpNoid is 1>
+												<li><a href="##StopNo#stpNoid#">###stpNoid#</a></li>
+											<cfelse>
+												<li><a href="##StopNo#stpNoid#">###stpNoid#</a></li>
+											</cfif>
+										</cfloop>
+									</ul>
+									<span style="display:inline-block;margin-left:3px;" name="span_Shipper" id ="span_Shipper"></span>
+									<div class="clear"></div>
+								</div>--->
+								<div class="rt-button">
+									 <!---input name="" type="button" class="bttn" value="Add Stop" /> <input name="" type="button" class="bttn" value="Delete Stop" /--->
+								</div>
 								<div class="clear"></div>
-							</div>--->
-							<div class="rt-button">
-								<!--- <input name="" type="button" class="bttn" value="Add Stop" /> <input name="" type="button" class="bttn" value="Delete Stop" /> --->
 							</div>
-							<div class="clear"></div>
-						</div>
-						<div class="form-con">
-							<cfset shipperStopId = "">
-							<cfset shipperStopNameList="">
-							<cfset tempList = "">
-							<input name="appDsn" id="appDsn" type="hidden" value="#application.dsn#">
-							<!---<cfloop query="request.qShipper">
-							<cfset tempList = "#request.qShipper.CustomerName# &nbsp;&nbsp;&nbsp; #request.qShipper.Location# &nbsp;&nbsp;&nbsp; #request.qShipper.City# &nbsp;&nbsp;&nbsp;#request.qShipper.StateCode# &nbsp;&nbsp;&nbsp;  #request.qShipper.ZipCode#">
-							<cfif isdefined('request.qShipper.Instructions') AND Trim(request.qShipper.Instructions) neq ''>
-							<cfset tempList = tempList & "&nbsp;&nbsp;&nbsp;  #Left(request.qShipper.Instructions,10)# ...">
-							</cfif>
-
-							<cfset shipperStopNameList = ListAppend(shipperStopNameList,tempList)>
-							</cfloop>--->
-
-							<fieldset>
-								<label class="big-text">Select Shipper</label>
-								<input name="shipper" id="shipper" value="#ShipCustomerStopName#" required="yes"  onkeyup="ChkUpdteShipr(this.value,'Shipper',''); showChangeAlert('shipper',''); " onchange="updateIsPayer(shipperValueContainer);"  title="Type text here to display list." tabindex="22"/><img src="images/clear.gif" style="height:14px;width:14px"  title="Click here to clear shipper information"  onclick="ChkUpdteShipr('','Shipper1','');">
-								<input type="hidden" name="shipperValueContainer" id="shipperValueContainer" value="#shipperCustomerID#"   required="yes" message="Please select a Shipper"/>
-								<input type="hidden" name="shipIsPayer" class="updateCreateAlert" id="shipIsPayer" value="#shipIsPayer#">
-								<!---<cfselect name="Shipper" id="Shipper" onchange="getShipperForm(this.value,'#application.DSN#'); addressChanged('');">
-								<option value="">CHOOSE A SHIPPER OR ENTER ONE BELOW</option>
-								<cfloop query="request.qShipper">
-								<option value="#request.qShipper.CustomerID#" <cfif IsDefined('request.qLoads') AND CustomerID EQ request.qLoads.shipperLoadStopID> selected="selected" </cfif> >
-								#request.qShipper.CustomerName# &nbsp;&nbsp;&nbsp; #request.qShipper.Location# &nbsp;&nbsp;&nbsp; #request.qShipper.City# &nbsp;&nbsp;&nbsp;#request.qShipper.StateCode# &nbsp;&nbsp;&nbsp;  #request.qShipper.ZipCode#
-								</option>
-								</cfloop>
-								</cfselect>--->
-								<div class="clear"></div>
-								<input type="hidden" name="shipperIsPayer" id="shipperIsPayer" value="#ShipIsPayer#">
-								<div class="clear"></div>
-								<label>Name*</label>
-								<input name="shipperName" id="shipperName" value="#ShipCustomerStopName#" onkeyup="ChkUpdteShipr(this.value,'Shipper',''); showChangeAlert('shipper',''); "   type="text" required="yes" message="Please Enter Shipper Information" tabindex="23" />
-								<input type="hidden" name="shipperNameText" id="shipperNameText" value="#ShipCustomerStopName#">
-								<input type="hidden" name="shipperUpAdd" id="shipperUpAdd" value="">
-								<div class="clear"></div>
-								<label>
-								Address
-								<div class="clear"></div>
-								<span class="float_right">
-								<cfif request.qSystemSetupOptions.googleMapsPcMiler AND request.qcurAgentdetails.proMilesStatus>
-								<a href="##" onclick="Mypopitup('create_map.cfm?loc='+thisFrom.shipperlocation.value+'&city='+thisFrom.shippercity.value+'&state='+thisFrom.shipperstate.value+' '+thisFrom.shipperZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+thisFrom.shipperName.value+'&loadNum=#loadnumber#' );"><img style="float:left;" align="absmiddle" src="./map.jpg" width="24" height="24" alt="ProMiles Map"  /></a>
-								<cfelse>
-								<a href="##" onclick="Mypopitup('create_map.cfm?loc='+thisFrom.shipperlocation.value+'&city='+thisFrom.shippercity.value+'&state='+thisFrom.shipperstate.value+' '+thisFrom.shipperZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+thisFrom.shipperName.value+'&loadNum=#loadnumber#' );"><img style="float:left;" align="absmiddle" src="./map.jpg" width="24" height="24" alt="Google Map"  /></a>
-								</cfif>
-								</span>
-
-								</label>
-								<textarea class="addressChange" rows="" name="shipperlocation" id="shipperlocation" cols="" onkeyup="showChangeAlert('shipper','');"   onkeydown="ChkUpdteShiprAddress(this.value,'Shipper','');" data-role=""  tabindex="24">#shiplocation#</textarea>
-								<div class="clear"></div>
-								<label>City</label>
-								<input class="addressChange" name="shippercity" id="shippercity" value="#shipcity#" type="text" data-role=""   onkeyup="showChangeAlert('shipper','');" onkeydown="ChkUpdteShiprCity(this.value,'Shipper','');" <cfif shipzipcode eq ''>tabindex="25"</cfif>/>
-								<div class="clear"></div>
-								<label>State</label>
-								<select name="shipperstate" id="shipperstate" onChange="addressChanged('');showChangeAlert('shipper','');loadState(this,'shipper','');" <cfif shipzipcode eq ''>tabindex="26"</cfif>>
-								<option value="">Select</option>
-								<cfloop query="request.qStates">
-								<option value="#request.qStates.statecode#" <cfif request.qStates.statecode is shipstate1> selected="selected" </cfif> >#request.qStates.statecode#</option>
-								<cfif request.qStates.statecode is shipstate1>
-								<cfset variables.stateName = #request.qStates.statecode#>
-								</cfif>
-								</cfloop>
-								</select>
-								<input type="hidden" name="shipperStateName" id="shipperStateName" value ="<cfif structKeyExists(variables,"stateName")>#stateName#</cfif>">
-
-								<div class="clear"></div>
-								<label>Zip</label>
-								<input name="shipperZipcode" id="shipperZipcode" value="#shipzipcode#" type="text" <cfif shipzipcode neq ''>tabindex="25"</cfif>/>
-								<div class="clear"></div>
-
-								<cfif shipzipcode neq ''>
-								<cfset currentTab = "25">
-								<cfelse>
-								<cfset currentTab = "26">	
-								</cfif>
-
-								<label>Contact</label>
-								<input name="shipperContactPerson" id="shipperContactPerson" value="#shipcontactPerson#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<label>Phone</label>
-								<input class="phoneFormatValid" name="shipperPhone" id="shipperPhone" value="#shipPhone#" type="text" onChange="ParseUSNumber(this);" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<label>Fax</label>
-								<input name="shipperFax" id="shipperFax" value="#shipfax#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<!--- 
-								<label>
-
-								<a href="##" onclick="popitup('create_map.cfm?loc='+shipperlocation.value+'&city='+shippercity.value+'&state='+shipperstate.value+' '+shipperZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+shipperName.value+'&loadNum='+document.getElementById('loadNumber').innerHTML);">Map</a>
-
-								</label>
-								<!---<img src="./map.jpg" onclick="popitup();" />--->
-								<div class="clear"></div>
-								--->
-
-								<script>
-									var thisFrom = document.forms["load"];
-									function Mypopitup(url) 
-										{
-										newwindow=window.open(url,'name','height=600,width=600');
-										if (window.focus) {newwindow.focus()}
-										return false;
-									}
-								</script>
-
-							</fieldset>
-						</div>
-
-						<div class="form-con">
-							<fieldset>
-								<label class="stopsLeftLabel">Email</label>
-								<input name="shipperEmail" id="shipperEmail" value="#shipemail#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<label class="stopsLeftLabel">Pickup##</label>
-								<input name="shipperPickupNo1" id="shipperPickupNo1" value="#shipPickupNo#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<label class="stopsLeftLabel">Pickup Date *</label>
-                                <div style="position:relative;float:left;">
-                                <div style="float:left;">
-                                  <input class="sm-input datefield" name="shipperPickupDate" id="shipperPickupDate" value="#dateformat(ShippickupDate,'mm/dd/yyyy')#" validate="date" required="yes" message="Please enter a valid date" type="datefield" tabindex="#evaluate(currentTab+1)#"/> </div></div> 
-								<!--- <input class="sm-input" name="shipperPickupDate" id="shipperPickupDate" value="#dateformat(ShippickupDate,'mm/dd/yyy')#" validate="date" required="yes" message="Please enter a valid date" type="datefield" /> --->
-								<!---  --->
-								<label class="sm-lbl">Pickup Time</label>
-								<input class="pick-input" name="shipperpickupTime" id="shipperpickupTime" value="#shippickupTime#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<label class="stopsLeftLabel">Time In</label>
-								<input class="sm-input" name="shipperTimeIn" id="shipperTimeIn" value="#shiptimeIn#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<label class="sm-lbl">Time Out</label>
-								<input class="pick-input" name="shipperTimeOut" id="shipperTimeOut" value="#shipTimeOut#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<label>&nbsp;</label>
-								<label class="ch-box">
-								<input name="shipBlind" id="shipBlind" type="checkbox" <cfif shipBlind is true> checked="checked" </cfif> class="check" tabindex="#evaluate(currentTab+1)#"/>
-								Ship Blind</label>
-								<div class="clear"></div>
-								<label class="space_it_medium margin_top">Instructions</label>
-          						<div class="clear"></div>
-								<textarea rows="" name="shipperNotes" id="shipperNotes" class="carrier-textarea-medium" cols="" tabindex="#evaluate(currentTab+1)#">#shipInstructions#</textarea>
-								<div class="clear"></div>
-								<label class="space_it_medium margin_top">Directions</label>
-          						<div class="clear"></div>
-								<textarea rows="" name="shipperDirection" id="shipperDirection" class="carrier-textarea-medium" cols="" tabindex="#evaluate(currentTab+1)#">#shipdirection#</textarea>
-								<!---<label>Instructions</label>
-								<textarea rows="" name="shipperNotes" id="shipperNotes" style="height:61px;" cols="" tabindex="#evaluate(currentTab+1)#">#shipInstructions#</textarea>
-								<div class="clear"></div>
-								<label>Directions</label>
-								<textarea rows="" name="shipperDirection" id="shipperDirection" style="height:62px;" cols="" tabindex="#evaluate(currentTab+1)#">#shipdirection#</textarea>--->
-								<div class="clear"></div>
-							</fieldset>
-						</div>
-					</div>
-					<div class="clear"></div>
-					<div align="center"><img border="0" alt="" src="images/line.jpg"></div>
-					<div class="clear"></div>
-					<span style="display:inline-block;margin-left:170px;" name="span_Consignee" id ="span_Consignee"></span>
-					<div id="ConsigneeInfo">
-						<div class="form-con">
-							<fieldset>
+							
+							<div class="form-con InfoShipping1" style="margin-top:-25px;">
 								<cfset shipperStopId = "">
 								<cfset shipperStopNameList="">
 								<cfset tempList = "">
-								<!---<cfloop query="request.qConsignee">
-								<cfset tempList = "#request.qConsignee.CustomerName# &nbsp;&nbsp;&nbsp; #request.qConsignee.Location# &nbsp;&nbsp;&nbsp; #request.qConsignee.City# &nbsp;&nbsp;&nbsp;#request.qConsignee.StateCode# &nbsp;&nbsp;&nbsp;  #request.qConsignee.ZipCode#">
-								<cfif isdefined('request.qConsignee.Instructions') AND Trim(request.qConsignee.Instructions) neq ''>
-								<cfset tempList = tempList & "&nbsp;&nbsp;&nbsp;  #Left(request.qConsignee.Instructions,10)# ...">
-								</cfif>                        
+								<input name="appDsn" id="appDsn" type="hidden" value="#application.dsn#">
+								<!---<cfloop query="request.qShipper">
+								<cfset tempList = "#request.qShipper.CustomerName# &nbsp;&nbsp;&nbsp; #request.qShipper.Location# &nbsp;&nbsp;&nbsp; #request.qShipper.City# &nbsp;&nbsp;&nbsp;#request.qShipper.StateCode# &nbsp;&nbsp;&nbsp;  #request.qShipper.ZipCode#">
+								<cfif isdefined('request.qShipper.Instructions') AND Trim(request.qShipper.Instructions) neq ''>
+								<cfset tempList = tempList & "&nbsp;&nbsp;&nbsp;  #Left(request.qShipper.Instructions,10)# ...">
+								</cfif>
 
 								<cfset shipperStopNameList = ListAppend(shipperStopNameList,tempList)>
 								</cfloop>--->
-								<label class="big-text">Select Consignee</label>
-								<input name="consignee" id="consignee"  value="#ConsineeCustomerStopName#" required="yes"    onkeyup="ChkUpdteShipr(this.value,'consignee',''); showChangeAlert('consignee',''); "     title="Type text here to display list." tabindex="#evaluate(currentTab+1)#"/><img src="images/clear.gif" style="height:14px;width:14px"  title="Click here to clear consignee information"  onclick="ChkUpdteShipr('','consignee1','');">
-								<input type="hidden" name="consigneeValueContainer" id="consigneeValueContainer" value="#consigneeCustomerID#" required="yes" message="Please select a Consignee"/>
-								<input type="hidden" name="consigneeIsPayer" class="updateCreateAlert" id="consigneeIsPayer" value="#consigneeIsPayer#">
-								<!---<cfselect name="Consignee" id="Consignee" onchange="getConsigneeForm(this.value,'#application.DSN#',load);  addressChanged('');">
-								<option value="">CHOOSE A SHIPPER OR ENTER ONE BELOW</option>
-								<cfloop query="request.qConsignee">
-								<option value="#request.qConsignee.CustomerID#" <cfif IsDefined('request.qLoads') AND CustomerID EQ request.qLoads.consigneeLoadStopID>  selected="selected" </cfif>>
-								#request.qConsignee.CustomerName# &nbsp;&nbsp;&nbsp; #request.qConsignee.Location# &nbsp;&nbsp;&nbsp; #request.qConsignee.City# &nbsp;&nbsp;&nbsp;#request.qConsignee.StateCode# &nbsp;&nbsp;&nbsp;  #request.qConsignee.ZipCode#
-								</option>
-								</cfloop>
-								</cfselect>--->
-								<div class="clear"></div>
-								<label>Name</label>
-								<input name="consigneeName" id="consigneeName" value="#ConsineeCustomerStopName#" type="text" required="yes"  message="Please enter Consignee Information" onkeyup="ChkUpdteShipr(this.value,'consignee',''); showChangeAlert('consignee',''); " tabindex="#evaluate(currentTab+1)#"/>
-								<input type="hidden" name="consigneeNameText" id="consigneeNameText" value="#ConsineeCustomerStopName#">
-								<div class="clear"></div>
-								<input type="hidden" name="consigneeUpAdd" id="consigneeUpAdd" value="">
-								<label>Address
-								<div class="clear"></div>
-								<span class="float_right">
-								<script>var thisFromC = document.forms["load"]; </script>
-								<cfif request.qSystemSetupOptions.googleMapsPcMiler AND request.qcurAgentdetails.proMilesStatus>
-								<a href="##" onclick="Mypopitup('create_map.cfm?loc='+thisFromC.consigneelocation.value+'&city='+thisFromC.consigneecity.value+'&state='+thisFromC.consigneeStateName.value+' '+thisFromC.consigneeZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+thisFromC.consigneeName.value+'&loadNum=#loadnumber#');"><img style="float:left;" align="absmiddle" src="./map.jpg" width="24" height="24" alt="ProMiles Map"  /></a>
-								<cfelse>
-								<a href="##" onclick="Mypopitup('create_map.cfm?loc='+thisFromC.consigneelocation.value+'&city='+thisFromC.consigneecity.value+'&state='+thisFromC.consigneeStateName.value+' '+thisFromC.consigneeZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+thisFromC.consigneeName.value+'&loadNum=#loadnumber#');"><img style="float:left;" align="absmiddle" src="./map.jpg" width="24" height="24" alt="Google Map"  /></a>
-								</cfif>
-								</span>
-								</label>
+								<fieldset>
+									<input name="shipper" style="margin-left:112px;" id="shipper" value="#ShipCustomerStopName#" onkeyup="ChkUpdteShipr(this.value,'Shipper',''); showChangeAlert('shipper',''); " onchange="updateIsPayer(shipperValueContainer);"  title="Type text here to display list." tabindex="22"/><img src="images/clear.gif" style="height:14px;width:14px;"  title="Click here to clear shipper information"  onclick="ChkUpdteShipr('','Shipper1','');">
+									<input type="hidden" name="shipperValueContainer" id="shipperValueContainer" value="#shipperCustomerID#"/>
+									<input type="hidden" name="shipIsPayer" class="updateCreateAlert" id="shipIsPayer" value="#shipIsPayer#">
+									<!---<cfselect name="Shipper" id="Shipper" onchange="getShipperForm(this.value,'#application.DSN#'); addressChanged('');">
+									<option value="">CHOOSE A SHIPPER OR ENTER ONE BELOW</option>
+									<cfloop query="request.qShipper">
+									<option value="#request.qShipper.CustomerID#" <cfif IsDefined('request.qLoads') AND CustomerID EQ request.qLoads.shipperLoadStopID> selected="selected" </cfif> >
+									#request.qShipper.CustomerName# &nbsp;&nbsp;&nbsp; #request.qShipper.Location# &nbsp;&nbsp;&nbsp; #request.qShipper.City# &nbsp;&nbsp;&nbsp;#request.qShipper.StateCode# &nbsp;&nbsp;&nbsp;  #request.qShipper.ZipCode#
+									</option>
+									</cfloop>
+									</cfselect>--->
+									<div class="clear"></div>
+									<input type="hidden" name="shipperIsPayer" id="shipperIsPayer" value="#ShipIsPayer#">
+									<div class="clear"></div>
+									<label>Name*</label>
+									<input name="shipperName" id="shipperName" value="#ShipCustomerStopName#" onkeyup="ChkUpdteShipr(this.value,'Shipper',''); showChangeAlert('shipper',''); "   type="text" tabindex="23" />
+									<input type="hidden" name="shipperNameText" id="shipperNameText" value="#ShipCustomerStopName#">
+									<input type="hidden" name="shipperUpAdd" id="shipperUpAdd" value="">
+									<div class="clear"></div>
+									<label>
+									Address
+									<div class="clear"></div>
+									<span class="float_right">
+									<cfif request.qSystemSetupOptions.googleMapsPcMiler AND request.qcurAgentdetails.proMilesStatus>
+									<a href="##" onclick="Mypopitup('create_map.cfm?loc='+thisFrom.shipperlocation.value+'&city='+thisFrom.shippercity.value+'&state='+thisFrom.shipperstate.value+' '+thisFrom.shipperZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+thisFrom.shipperName.value+'&loadNum=#loadnumber#' );"><img style="float:left;" align="absmiddle" src="./map.jpg" width="24" height="24" alt="ProMiles Map"  /></a>
+									<cfelse>
+									<a href="##" onclick="Mypopitup('create_map.cfm?loc='+thisFrom.shipperlocation.value+'&city='+thisFrom.shippercity.value+'&state='+thisFrom.shipperstate.value+' '+thisFrom.shipperZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+thisFrom.shipperName.value+'&loadNum=#loadnumber#' );"><img style="float:left;" align="absmiddle" src="./map.jpg" width="24" height="24" alt="Google Map"  /></a>
+									</cfif>
+									</span>
 
-								<textarea class="addressChange"  rows="" name="consigneelocation" id="consigneelocation" cols=""   data-role="" onkeydown="ChkUpdteShiprAddress(this.value,'consignee','');" onkeyup="showChangeAlert('consignee','');" tabindex="#evaluate(currentTab+1)#">#Consigneelocation#</textarea>
-								<div class="clear"></div>
-								<label>City</label>
-								<input class="addressChange" name="consigneecity" id="consigneecity" value="#Consigneecity#" type="text"  data-role="" onkeyup="showChangeAlert('consignee','');"  onkeydown="ChkUpdteShiprCity(this.value,'consignee','');" <cfif Consigneezipcode eq ''>tabindex="#evaluate(currentTab+1)#"</cfif>/>
-								<div class="clear"></div>
-								<label>State</label>
-								<select name="consigneestate" id="consigneestate" onChange="addressChanged('');showChangeAlert('consignee','');loadState(this,'consignee','');"  <cfif Consigneezipcode eq ''>tabindex="#evaluate(currentTab+1)#"</cfif>>
-								<option value="">Select</option>
-								<cfloop query="request.qStates">
-								<option value="#request.qStates.statecode#" <cfif request.qStates.statecode is Consigneestate1> selected="selected" </cfif> >#request.qStates.statecode#</option>
-								<cfif request.qStates.statecode is Consigneestate1>
-								<cfset variables.stateName = #request.qStates.statecode#>
-								</cfif>
-								</cfloop>
-								</select>
-								<input type="hidden" name="consigneeStateName" id="consigneeStateName" value ="<cfif structKeyExists(variables,"stateName")>#stateName#</cfif>">
-								<div class="clear"></div>
-								<label>Zip</label>
-								<cfinclude template="getdistance.cfm">
-								<input name="consigneeZipcode" id="consigneeZipcode" value="#Consigneezipcode#" type="text"  />  
-								<div class="clear"></div>
-								<label>Contact</label>
-								<input name="consigneeContactPerson" id="consigneeContactPerson" value="#ConsigneecontactPerson#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<label>Phone</label>
-								<input class="phoneFormatValid" name="consigneePhone" id="consigneePhone" value="#ConsigneePhone#" onChange="ParseUSNumber(this);" type="text" tabindex="#evaluate(currentTab+1)#" />
-								<div class="clear"></div>
-								<label>Fax</label>
-								<input name="consigneeFax" id="consigneeFax" value="#Consigneefax#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<!---
-								<label>
-								<a href="##" onclick="popitup('create_map.cfm?loc='+consigneelocation.value+'&city='+consigneecity.value+'&state='+consigneeStateName.value+' '+consigneeZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+consigneeName.value+'&loadNum='+document.getElementById('loadNumber').innerHTML);"><label>Map</label><img src="./map.jpg" width="15" height="15" align="Map"  /></a>
-								</label>
-								<div class="clear"></div>
-								--->
-							</fieldset>
+									</label>
+									<textarea class="addressChange" rows="" name="shipperlocation" id="shipperlocation" cols=""   onkeydown="ChkUpdteShiprAddress(this.value,'Shipper','');" data-role=""  tabindex="24">#shiplocation#</textarea>
+									<div class="clear"></div><!---onkeyup="showChangeAlert('shipper','');" changed for not coming saved message--->
+									<label>City</label>
+									<input class="addressChange" name="shippercity" id="shippercity" value="#shipcity#" type="text" data-role="" onkeydown="ChkUpdteShiprCity(this.value,'Shipper','');" <cfif len(url.loadid) gt 1> tabindex="26" <cfelse> tabindex="25" </cfif>/><!---onkeyup="showChangeAlert('shipper','');" changed for not coming saved message--->
+									<div class="clear"></div>
+									<label>State</label>
+									<select name="shipperstate" id="shipperstate" onChange="addressChanged('');loadState(this,'shipper','');" <cfif len(url.loadid) gt 1> tabindex="27" <cfelse> tabindex="26" </cfif>>
+									<option value="">Select</option>
+									<cfloop query="request.qStates">
+									<option value="#request.qStates.statecode#" <cfif request.qStates.statecode is shipstate1> selected="selected" </cfif> >#request.qStates.statecode#</option>
+									<cfif request.qStates.statecode is shipstate1>
+									<cfset variables.stateName = #request.qStates.statecode#>
+									</cfif>
+									</cfloop>
+									</select>
+									<input type="hidden" name="shipperStateName" id="shipperStateName" value ="<cfif structKeyExists(variables,"stateName")>#variables.stateName#</cfif>">
+
+									<div class="clear"></div>
+									<label>Zip</label>
+									<input name="shipperZipcode" id="shipperZipcode" value="#shipzipcode#" type="text" <cfif len(url.loadid) gt 1> tabindex="25" <cfelse> tabindex="27" </cfif>/>
+									<div class="clear"></div>
+									<!---for promiles--->
+									<input type="hidden" name="shipperAddressLocation1" id="shipperAddressLocation1" value="#shipcity#<cfif len(shipcity)>,</cfif> #shipstate1# #shipzipcode#"> 
+									<cfif len(url.loadid) gt 1>
+										<cfset currentTab = "27">
+                                    <cfelse>
+										<cfset currentTab = "27">
+									</cfif>
+									<label>Contact</label>
+									<input name="shipperContactPerson" id="shipperContactPerson" value="#shipcontactPerson#" type="text" tabindex="#evaluate(currentTab+1)#"/>
+									<div class="clear"></div>
+									<label>Phone</label>
+									<input class="phoneFormatValid" name="shipperPhone" id="shipperPhone" value="#shipPhone#" type="text" onChange="ParseUSNumber(this);" tabindex="#evaluate(currentTab+2)#"/>
+									<div class="clear"></div>
+									<label>Fax</label>
+									<input name="shipperFax" id="shipperFax" value="#shipfax#" type="text" tabindex="#evaluate(currentTab+3)#"/>
+									<div class="clear"></div>
+									<!--- 
+									<label>
+
+									<a href="##" onclick="popitup('create_map.cfm?loc='+shipperlocation.value+'&city='+shippercity.value+'&state='+shipperstate.value+' '+shipperZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+shipperName.value+'&loadNum='+document.getElementById('loadNumber').innerHTML);">Map</a>
+
+									</label>
+									<!---<img src="./map.jpg" onclick="popitup();" />--->
+									<div class="clear"></div>
+									--->
+
+									<script>
+										var thisFrom = document.forms["load"];
+										function Mypopitup(url) 
+											{
+											newwindow=window.open(url,'name','height=600,width=600');
+											if (window.focus) {newwindow.focus()}
+											return false;
+										}
+									</script>
+
+								</fieldset>		
+							</div>
+							
+							<div class="form-con InfoShipping1">				
+								<fieldset>
+									<label class="stopsLeftLabel">Pickup##</label>
+									<input name="shipperPickupNo1" id="shipperPickupNo1" value="#shipPickupNo#" type="text" tabindex="#evaluate(currentTab+4)#"/>
+									<div class="clear"></div>
+									<label class="stopsLeftLabel">Pickup Date *</label>
+									<div style="position:relative;float:left;">
+									<div style="float:left;">
+									  <input class="sm-input datefield" name="shipperPickupDate" id="shipperPickupDate" value="#dateformat(ShippickupDate,'mm/dd/yyyy')#"  type="datefield" tabindex="#evaluate(currentTab+5)#"/> </div></div> 
+									<!--- <input class="sm-input" name="shipperPickupDate" id="shipperPickupDate" value="#dateformat(ShippickupDate,'mm/dd/yyy')#" validate="date" required="yes" message="Please enter a valid date" type="datefield" /> --->
+									<!---  --->
+									<label class="sm-lbl">Pickup Time</label>
+									<input class="pick-input" name="shipperpickupTime" id="shipperpickupTime" value="#shippickupTime#" type="text" tabindex="#evaluate(currentTab+6)#"/>
+									<div class="clear"></div>
+									<label class="stopsLeftLabel">Time In</label>
+									<input class="sm-input" name="shipperTimeIn" id="shipperTimeIn" value="#shiptimeIn#" type="text" tabindex="#evaluate(currentTab+7)#"/>
+									<label class="sm-lbl">Time Out</label>
+									<input class="pick-input" name="shipperTimeOut" id="shipperTimeOut" value="#shipTimeOut#" type="text" tabindex="#evaluate(currentTab+8)#"/>
+									<div class="clear"></div>
+									<label class="stopsLeftLabel">Email</label>
+									<input name="shipperEmail" id="shipperEmail" value="#shipemail#" type="text" tabindex="#evaluate(currentTab+9)#" style="width:139px;"/>
+									<label class="ch-box">
+									<input name="shipBlind" id="shipBlind" type="checkbox" <cfif shipBlind is true> checked="checked" </cfif> class="check" tabindex="#evaluate(currentTab+10)#"/>
+									Ship Blind</label>
+									<div class="clear"></div>
+									<label class="space_it_medium margin_top">Instructions</label>
+									<div class="clear"></div>
+									<textarea rows="" name="shipperNotes" id="shipperNotes" class="carrier-textarea-medium" cols="" tabindex="#evaluate(currentTab+11)#">#shipInstructions#</textarea>
+									<div class="clear"></div>
+									<label class="space_it_medium margin_top">Directions</label>
+									<div class="clear"></div>
+									<textarea rows="" name="shipperDirection" id="shipperDirection" class="carrier-textarea-medium" cols="" tabindex="#evaluate(currentTab+12)#">#shipdirection#</textarea>
+									<!---<label>Instructions</label>
+									<textarea rows="" name="shipperNotes" id="shipperNotes" style="height:61px;" cols="" tabindex="#evaluate(currentTab+1)#">#shipInstructions#</textarea>
+									<div class="clear"></div>
+									<label>Directions</label>
+									<textarea rows="" name="shipperDirection" id="shipperDirection" style="height:62px;" cols="" tabindex="#evaluate(currentTab+1)#">#shipdirection#</textarea>--->
+									<div class="clear"></div>
+								</fieldset>
+							</div>
 						</div>
-						<div class="form-con">
-							<fieldset>
-								<label class="stopsLeftLabel">Email</label>
-								<input name="consigneeEmail" id="consigneeEmail" value="#Consigneeemail#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<label class="stopsLeftLabel">Delivery##</label>
-								<input name="consigneePickupNo" id="consigneePickupNo" value="#ConsigneePickupNo#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<label class="stopsLeftLabel">Delivery Date *</label>
-                              <div style="position:relative;float:left;">
-                              <div style="float:left;">
-                                <input class="sm-input datefield" name="consigneePickupDate" id="consigneePickupDate" value="#dateformat(ConsigneepickupDate,'mm/dd/yyyy')#" validate="date" message="Please enter a valid date" type="datefield" tabindex="#evaluate(currentTab+1)#"/> </div></div>
-								<!--- <input class="sm-input" name="consigneePickupDate" id="consigneePickupDate" value="#dateformat(ConsigneepickupDate,'mm/dd/yyy')#" validate="date" message="Please enter a valid date" type="datefield" /> --->
-								<label class="sm-lbl">Delivery Time</label>
-								<input class="pick-input" name="consigneepickupTime" id="consigneepickupTime" value="#ConsigneepickupTime#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<label class="stopsLeftLabel">Time In</label>
-								<input class="sm-input" name="consigneeTimeIn" id="consigneeTimeIn" value="#ConsigneetimeIn#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<label class="sm-lbl">Time Out</label>
-								<input class="pick-input" name="consigneeTimeOut" id="consigneeTimeOut" value="#ConsigneeTimeOut#" type="text" tabindex="#evaluate(currentTab+1)#"/>
-								<div class="clear"></div>
-								<label>&nbsp;</label>
-								<label class="ch-box">
-								<input name="ConsBlind" id="ConsBlind" type="checkbox" <cfif ConsBlind is true> checked="checked" </cfif> class="check" tabindex="#evaluate(currentTab+1)#"/>
-								Cons. Blind</label>
-								<div class="clear"></div>
-								<label class="space_it_medium margin_top">Instructions</label>
-          						<div class="clear"></div>
-								<textarea rows="" name="consigneeNotes" id="consigneeNotes" class="carrier-textarea-medium"cols="" tabindex="#evaluate(currentTab+1)#">#ConsigneeInstructions#</textarea>
-								<div class="clear"></div>
-								<label class="space_it_medium margin_top">Directions</label>
-          						<div class="clear"></div>
-								<textarea rows="" name="consigneeDirection" id="consigneeDirection" class="carrier-textarea-medium" cols="" tabindex="#evaluate(currentTab+1)#">#Consigneedirection#</textarea>
-								<!---<label>Instructions</label>
-								<textarea rows="" name="consigneeNotes" id="consigneeNotes" style="height:61px;" cols="" tabindex="#evaluate(currentTab+1)#">#ConsigneeInstructions#</textarea>
-								<div class="clear"></div>
-								<label>Directions</label>
-								<textarea rows="" name="consigneeDirection" id="consigneeDirection" style="height:62px;" cols="" tabindex="#evaluate(currentTab+1)#">#Consigneedirection#</textarea>--->
-								<div class="clear"></div>
-							</fieldset>
+						<div class="clear"></div>
+						<div align="center"><!---img border="0" alt="" src="images/line.jpg"--->
+							<div style="border-bottom:1px solid ##e6e6e6; padding-top:7px;margin-bottom: 8px;"></div>
 						</div>
-					</div>
-					<div align="center"><img src="images/line.jpg" alt="" border="0" /></div>
+						<div class="clear"></div>
+					</div>	
+					<div>
+						<div id="ConsigneeInfo" style="height:15px;">
+							<div class="" style="clear:both;">
+								<div class="fa fa-<cfif not len(loadID) gt 1>minus<cfelse><cfif variables.flagstatusConsignee>minus<cfelse>plus</cfif></cfif>-circle PlusToggleButton" onclick="showHideConsineeIcons(this,1);" style="position:absolute;left:-16px;margin-top: -4px;"></div>
+								<span class="ShipperHead" style="position:absolute;left:26px;margin-top: -10px;">Consignee</span>
+							</div>
+							<div style="position: absolute;right: 0;line-height: 31px;width: 648px;">
+								<span style="display:inline-block;margin-left:170px;" name="span_Consignee" id ="span_Consignee"></span>
+							</div>	
+							<div class="form-con InfoConsinee1" style="margin-top:-6px;">
+								<fieldset>
+									<cfset shipperStopId = "">
+									<cfset shipperStopNameList="">
+									<cfset tempList = "">
+									<!---<cfloop query="request.qConsignee">
+									<cfset tempList = "#request.qConsignee.CustomerName# &nbsp;&nbsp;&nbsp; #request.qConsignee.Location# &nbsp;&nbsp;&nbsp; #request.qConsignee.City# &nbsp;&nbsp;&nbsp;#request.qConsignee.StateCode# &nbsp;&nbsp;&nbsp;  #request.qConsignee.ZipCode#">
+									<cfif isdefined('request.qConsignee.Instructions') AND Trim(request.qConsignee.Instructions) neq ''>
+									<cfset tempList = tempList & "&nbsp;&nbsp;&nbsp;  #Left(request.qConsignee.Instructions,10)# ...">
+									</cfif>                        
+
+									<cfset shipperStopNameList = ListAppend(shipperStopNameList,tempList)>
+									</cfloop>--->
+									<input name="consignee" style="margin-left:112px;" id="consignee"  value="#ConsineeCustomerStopName#" onkeyup="ChkUpdteShipr(this.value,'consignee',''); showChangeAlert('consignee',''); "     title="Type text here to display list." tabindex="#evaluate(currentTab+13)#"/><img src="images/clear.gif" style="height:14px;width:14px"  title="Click here to clear consignee information"  onclick="ChkUpdteShipr('','consignee1','');">
+									<input type="hidden" name="consigneeValueContainer" id="consigneeValueContainer" value="#consigneeCustomerID#"  message="Please select a Consignee"/>
+									<input type="hidden" name="consigneeIsPayer" class="updateCreateAlert" id="consigneeIsPayer" value="#consigneeIsPayer#">
+									<!---<cfselect name="Consignee" id="Consignee" onchange="getConsigneeForm(this.value,'#application.DSN#',load);  addressChanged('');">
+									<option value="">CHOOSE A SHIPPER OR ENTER ONE BELOW</option>
+									<cfloop query="request.qConsignee">
+									<option value="#request.qConsignee.CustomerID#" <cfif IsDefined('request.qLoads') AND CustomerID EQ request.qLoads.consigneeLoadStopID>  selected="selected" </cfif>>
+									#request.qConsignee.CustomerName# &nbsp;&nbsp;&nbsp; #request.qConsignee.Location# &nbsp;&nbsp;&nbsp; #request.qConsignee.City# &nbsp;&nbsp;&nbsp;#request.qConsignee.StateCode# &nbsp;&nbsp;&nbsp;  #request.qConsignee.ZipCode#
+									</option>
+									</cfloop>
+									</cfselect>--->
+									<div class="clear"></div>
+									<label>Name</label>
+									<input name="consigneeName" id="consigneeName" value="#ConsineeCustomerStopName#" type="text" onkeyup="ChkUpdteShipr(this.value,'consignee',''); showChangeAlert('consignee',''); " tabindex="#evaluate(currentTab+14)#"/>
+									<input type="hidden" name="consigneeNameText" id="consigneeNameText" value="#ConsineeCustomerStopName#">
+									<div class="clear"></div>
+									<input type="hidden" name="consigneeUpAdd" id="consigneeUpAdd" value="">
+									<label>Address
+									<div class="clear"></div>
+									<span class="float_right">
+									<script>var thisFromC = document.forms["load"]; </script>
+									<cfif request.qSystemSetupOptions.googleMapsPcMiler AND request.qcurAgentdetails.proMilesStatus>
+									<a href="##" onclick="Mypopitup('create_map.cfm?loc='+thisFromC.consigneelocation.value+'&city='+thisFromC.consigneecity.value+'&state='+thisFromC.consigneeStateName.value+' '+thisFromC.consigneeZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+thisFromC.consigneeName.value+'&loadNum=#loadnumber#');"><img style="float:left;" align="absmiddle" src="./map.jpg" width="24" height="24" alt="ProMiles Map"  /></a>
+									<cfelse>
+									<a href="##" onclick="Mypopitup('create_map.cfm?loc='+thisFromC.consigneelocation.value+'&city='+thisFromC.consigneecity.value+'&state='+thisFromC.consigneeStateName.value+' '+thisFromC.consigneeZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+thisFromC.consigneeName.value+'&loadNum=#loadnumber#');"><img style="float:left;" align="absmiddle" src="./map.jpg" width="24" height="24" alt="Google Map"  /></a>
+									</cfif>
+									</span>
+									</label>
+
+									<textarea class="addressChange"  rows="" name="consigneelocation" id="consigneelocation" cols=""   data-role="" onkeydown="ChkUpdteShiprAddress(this.value,'consignee','');"  tabindex="#evaluate(currentTab+15)#">#Consigneelocation#</textarea>
+									<div class="clear"></div>
+									<label>City</label>
+									<input class="addressChange" name="consigneecity" id="consigneecity" value="#Consigneecity#" type="text"  data-role=""  onkeydown="ChkUpdteShiprCity(this.value,'consignee','');" <cfif len(trim(url.loadid)) gt 1> tabindex="#evaluate(currentTab+17)#" <cfelse> tabindex="#evaluate(currentTab+16)#"</cfif>/>
+									<div class="clear"></div>
+									<label>State</label>
+									<select name="consigneestate" id="consigneestate" onChange="addressChanged('');loadState(this,'consignee','');" <cfif len(trim(url.loadid)) gt 1> tabindex="#evaluate(currentTab+18)#"<cfelse> #evaluate(currentTab+17)#"</cfif>>
+									<option value="">Select</option>
+									<cfloop query="request.qStates">
+									<option value="#request.qStates.statecode#" <cfif request.qStates.statecode is Consigneestate1> selected="selected" </cfif> >#request.qStates.statecode#</option>
+									<cfif request.qStates.statecode is Consigneestate1>
+									<cfset variables.statecode = #request.qStates.statecode#>
+									</cfif>
+									</cfloop>
+									</select>
+									<input type="hidden" name="consigneeStateName" id="consigneeStateName" value ="<cfif structKeyExists(variables,"statecode")>#variables.statecode#</cfif>">
+									<div class="clear"></div>
+									<label>Zip</label>
+									<cfinclude template="getdistance.cfm">
+									<input name="consigneeZipcode" id="consigneeZipcode" value="#Consigneezipcode#" type="text" <cfif len(trim(url.loadid)) gt 1> tabindex="#evaluate(currentTab+16)#"<cfelse> tabindex="#evaluate(currentTab+18)#"</cfif> />  
+									<div class="clear"></div>
+									<label>Contact</label>
+									<input name="consigneeContactPerson" id="consigneeContactPerson" value="#ConsigneecontactPerson#" type="text" tabindex="#evaluate(currentTab+19)#"/>
+									<div class="clear"></div>
+									<label>Phone</label>
+									<input class="phoneFormatValid" name="consigneePhone" id="consigneePhone" value="#ConsigneePhone#" onChange="ParseUSNumber(this);" type="text" tabindex="#evaluate(currentTab+20)#" />
+									<div class="clear"></div>
+									<label>Fax</label>
+									<input name="consigneeFax" id="consigneeFax" value="#Consigneefax#" type="text" tabindex="#evaluate(currentTab+21)#"/>
+									<div class="clear"></div>
+									<!---
+									<label>
+									<a href="##" onclick="popitup('create_map.cfm?loc='+consigneelocation.value+'&city='+consigneecity.value+'&state='+consigneeStateName.value+' '+consigneeZipcode.value+'&stopNo='+document.getElementById('stopNumber').innerHTML+'&shipOrConsName='+consigneeName.value+'&loadNum='+document.getElementById('loadNumber').innerHTML);"><label>Map</label><img src="./map.jpg" width="15" height="15" align="Map"  /></a>
+									</label>
+									<div class="clear"></div>
+									--->
+								</fieldset>
+							</div>
+							<!---for promiles--->
+							<input type="hidden" name="consigneeAddressLocation1" id="consigneeAddressLocation1" value="#Consigneecity#<cfif len(Consigneecity)>,</cfif> #Consigneestate1# #Consigneezipcode#">
+							<div class="form-con InfoConsinee1" style="margin-top: 27px;">
+								<fieldset>
+								
+									<label class="stopsLeftLabel">Delivery##</label>
+									<input name="consigneePickupNo" id="consigneePickupNo" value="#ConsigneePickupNo#" type="text" tabindex="#evaluate(currentTab+22)#"/>
+									<div class="clear"></div>
+									<label class="stopsLeftLabel">Delivery Date *</label>
+								  <div style="position:relative;float:left;">
+								  <div style="float:left;">
+									<input class="sm-input datefield" name="consigneePickupDate" id="consigneePickupDate" value="#dateformat(ConsigneepickupDate,'mm/dd/yyyy')#" validate="date" message="Please enter a valid date" type="datefield" tabindex="#evaluate(currentTab+23)#"/> </div></div>
+									<!--- <input class="sm-input" name="consigneePickupDate" id="consigneePickupDate" value="#dateformat(ConsigneepickupDate,'mm/dd/yyy')#" validate="date" message="Please enter a valid date" type="datefield" /> --->
+									<label class="sm-lbl">Delivery Time</label>
+									<input class="pick-input" name="consigneepickupTime" id="consigneepickupTime" value="#ConsigneepickupTime#" type="text" tabindex="#evaluate(currentTab+24)#"/>
+									<div class="clear"></div>
+									<label class="stopsLeftLabel">Time In</label>
+									<input class="sm-input" name="consigneeTimeIn" id="consigneeTimeIn" value="#ConsigneetimeIn#" type="text" tabindex="#evaluate(currentTab+25)#"/>
+									<label class="sm-lbl">Time Out</label>
+									<input class="pick-input" name="consigneeTimeOut" id="consigneeTimeOut" value="#ConsigneeTimeOut#" type="text" tabindex="#evaluate(currentTab+26)#"/>
+									<div class="clear"></div>
+									<label class="stopsLeftLabel">Email</label>
+									<input name="consigneeEmail" id="consigneeEmail" value="#Consigneeemail#" type="text" tabindex="#evaluate(currentTab+27)#" style="width:139px;"/>
+									<label class="ch-box">
+									<input name="ConsBlind" id="ConsBlind" type="checkbox" <cfif ConsBlind is true> checked="checked" </cfif> class="check" tabindex="#evaluate(currentTab+28)#"/>
+									Cons. Blind</label>
+									<div class="clear"></div>
+									<label class="space_it_medium margin_top">Instructions</label>
+									<div class="clear"></div>
+									<textarea rows="" name="consigneeNotes" id="consigneeNotes" class="carrier-textarea-medium"cols="" tabindex="#evaluate(currentTab+29)#">#ConsigneeInstructions#</textarea>
+									<div class="clear"></div>
+									<label class="space_it_medium margin_top">Directions</label>
+									<div class="clear"></div>
+									<textarea rows="" name="consigneeDirection" id="consigneeDirection" class="carrier-textarea-medium" cols="" tabindex="#evaluate(currentTab+30)#">#Consigneedirection#</textarea>
+									<!---<label>Instructions</label>
+									<textarea rows="" name="consigneeNotes" id="consigneeNotes" style="height:61px;" cols="" tabindex="#evaluate(currentTab+1)#">#ConsigneeInstructions#</textarea>
+									<div class="clear"></div>
+									<label>Directions</label>
+									<textarea rows="" name="consigneeDirection" id="consigneeDirection" style="height:62px;" cols="" tabindex="#evaluate(currentTab+1)#">#Consigneedirection#</textarea>--->
+									<div class="clear"></div>
+								</fieldset>
+							</div>
+						</div>
+						<div class="clear"></div>
+						<div align="center"><!---img border="0" alt="" src="images/line.jpg"---><div style="border-bottom:1px solid ##e6e6e6; padding-top:7px;"></div></div>
+						<div class="clear"></div>
+					</div>	
 					<div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
 						<div class="pg-title-carrier" style="float: left; width: 100%;padding-left:18px;">
 							<h2 style="color:white;font-weight:bold;">#variables.freightBroker#</h2>
@@ -1922,7 +2071,7 @@ function getCommodityByCarrId(){
 							<div class="clear"></div>
 							<cfset CarrierFilter = "openCarrierFilter();">
 							<label class="stopsLeftLabel" style="width: 102px !important;">Choose #variables.freightBroker#</label>
-							<input name="selectedCarrier" id="selectedCarrierValue" class="carrier-box" style="margin-left: 0;width: 230px !important;" type="text" <cfif carrierLinksOnClick NEQ ''>disabled="disabled"</cfif> tabindex="#evaluate(currentTab+1)#" title="Type text here to display list."/>
+							<input name="selectedCarrier" id="selectedCarrierValue" class="carrier-box" style="margin-left: 0;width: 230px !important;" type="text" <cfif carrierLinksOnClick NEQ ''>disabled="disabled"</cfif> tabindex="#evaluate(currentTab+31)#" title="Type text here to display list."/>
 
 							<!---<a href="javascript:void(0);" onClick="#CarrierFilter#" <cfif CarrierFilter eq ""> disabled="disabled"</cfif>><img src="images/auto_suggest.gif" alt="Filter Carrier" /></a>--->
 							<!---
@@ -1962,7 +2111,7 @@ function getCommodityByCarrId(){
 							#formHTML#
 							</div>
 							<label class="stopsLeftLabel" style="width: 102px !important;">Satellite Office</label>
-							<select name="stOffice" id="stOffice" tabindex="#evaluate(currentTab+1)#">
+							<select name="stOffice" id="stOffice" tabindex="#evaluate(currentTab+32)#">
 							<option value="">Choose a Satellite Office Contact</option>
 							<cfloop query="request.qOffices">
 							<option value="#request.qOffices.CarrierOfficeID#" <cfif stofficeid is request.qOffices.CarrierOfficeID>selected ="selected"</cfif>>#request.qOffices.location#</option>
@@ -1976,11 +2125,11 @@ function getCommodityByCarrId(){
 							<div style="width:100%" class="carrierrightdiv">
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">Booked With</label>
-							<input name="bookedWith" value="#bookedWith1#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="bookedWith" value="#bookedWith1#" type="text" tabindex="#evaluate(currentTab+33)#" class="carriertextbox"/>
 							</div>
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">Booked By</label>
-							<select name="bookedBy" tabindex="#evaluate(currentTab+1)#" class="carriertextbox">
+							<select name="bookedBy" tabindex="#evaluate(currentTab+34)#" class="carriertextbox">
 							<option value="">Select</option>
 							<cfloop query="request.qSalesPerson">
 							<option value="#request.qSalesPerson.EmployeeID#" <cfif request.qSalesPerson.EmployeeID eq  bookedBy> selected="selected" </cfif>>#request.qSalesPerson.Name#</option>
@@ -1992,7 +2141,7 @@ function getCommodityByCarrId(){
 							<div style="width:100%" class="carrierrightdiv">
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">Equipment</label>
-							<select name="equipment" id="equipment" tabindex="#evaluate(currentTab+1)#" class="carriertextbox">
+							<select name="equipment" id="equipment" tabindex="#evaluate(currentTab+35)#" class="carriertextbox">
 							<option value="">Select</option>
 							<cfloop query="request.qEquipments">
 							<option value="#request.qEquipments.equipmentID#" <cfif equipment1 is request.qEquipments.equipmentID> selected="selected" </cfif>>#request.qEquipments.equipmentname#</option>
@@ -2001,72 +2150,72 @@ function getCommodityByCarrId(){
 							</div>
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">#request.qSystemSetupOptions.userDef1#</label>
-							<input name="userDef1" value="#request.LoadStopInfoShipper.userDef1#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="userDef1" value="#request.LoadStopInfoShipper.userDef1#" type="text" tabindex="#evaluate(currentTab+36)#" class="carriertextbox"/>
 							</div>
 							</div>
 							<div class="clear"></div>
 							<div style="width:100%" class="carrierrightdiv">
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">Driver</label>
-							<input name="driver" value="#driver#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="driver" value="#driver#" type="text" tabindex="#evaluate(currentTab+37)#" class="carriertextbox"/>
 							</div>
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">#request.qSystemSetupOptions.userDef2#</label>
-							<input name="userDef2" value="#request.LoadStopInfoShipper.userDef2#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="userDef2" value="#request.LoadStopInfoShipper.userDef2#" type="text" tabindex="#evaluate(currentTab+38)#" class="carriertextbox"/>
 							</div>
 							</div>
 							<div class="clear"></div>
 							<div style="width:100%" class="carrierrightdiv">
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">Driver Cell</label>
-							<input name="driverCell" value="#driverCell#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="driverCell" value="#driverCell#" type="text" tabindex="#evaluate(currentTab+39)#" class="carriertextbox"/>
 							</div>
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">#request.qSystemSetupOptions.userDef3#</label>
-							<input name="userDef3" value="#request.LoadStopInfoShipper.userDef3#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="userDef3" value="#request.LoadStopInfoShipper.userDef3#" type="text" tabindex="#evaluate(currentTab+40)#" class="carriertextbox"/>
 							</div>
 							</div>
 							<div class="clear"></div>
 							<div style="width:100%" class="carrierrightdiv">
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">Truck##</label>
-							<input name="truckNo" value="#truckNo#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="truckNo" value="#truckNo#" type="text" tabindex="#evaluate(currentTab+41)#" class="carriertextbox"/>
 							</div>
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">#request.qSystemSetupOptions.userDef4#</label>
-							<input name="userDef4" value="#request.LoadStopInfoShipper.userDef4#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="userDef4" value="#request.LoadStopInfoShipper.userDef4#" type="text" tabindex="#evaluate(currentTab+42)#" class="carriertextbox"/>
 							</div>
 							</div>
 							<div class="clear"></div>
 							<div style="width:100%" class="carrierrightdiv">
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">Trailer##</label>
-							<input name="TrailerNo" value="#TrailerNo#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="TrailerNo" value="#TrailerNo#" type="text" tabindex="#evaluate(currentTab+43)#" class="carriertextbox"/>
 							</div>
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">#request.qSystemSetupOptions.userDef5#</label>
-							<input name="userDef5" value="#request.LoadStopInfoShipper.userDef5#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="userDef5" value="#request.LoadStopInfoShipper.userDef5#" type="text" tabindex="#evaluate(currentTab+44)#" class="carriertextbox"/>
 							</div>
 							</div>
 							<div class="clear"></div>
 							<div style="width:100%" class="carrierrightdiv">
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">Ref##</label>
-							<input name="refNo" value="#refNo#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="refNo" value="#refNo#" type="text" tabindex="#evaluate(currentTab+45)#" class="carriertextbox"/>
 							</div>
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">#request.qSystemSetupOptions.userDef6#</label>
-							<input name="userDef6" value="#request.LoadStopInfoShipper.userDef6#" type="text" tabindex="#evaluate(currentTab+1)#" class="carriertextbox"/>
+							<input name="userDef6" value="#request.LoadStopInfoShipper.userDef6#" type="text" tabindex="#evaluate(currentTab+46)#" class="carriertextbox"/>
 							</div>
 							</div>
-							<div class="clear"></div>
+							<div class="clear"></div> 
 							<div style="width:100%" class="carrierrightdiv">
 							<div style="width:200px;float:left;">
 							<label class="carrierrightlabel">Miles##</label>
-							<input name="milse" class="careermilse carriertextbox" id="milse" tabindex="#evaluate(currentTab+1)#" value="#milse#" type="text" onClick="showWarningEnableButton('block','');" onBlur="showWarningEnableButton('none','');CalculateTotal();changeQuantityWithValue(this, 1);" onChange="changeQuantity(this.id,this.value,'type');calculateTotalRates('#application.DSN#');" style="width:168px;" />
+							<input name="milse" class="careermilse carriertextbox" id="milse" tabindex="#evaluate(currentTab+47)#" value="#milse#" type="text" onClick="showWarningEnableButton('block','');" onBlur="showWarningEnableButton('none','');CalculateTotal();changeQuantityWithValue(this, 1);" onChange="changeQuantity(this.id,this.value,'type');calculateTotalRates('#application.DSN#');" style="width:168px;" />
 							</div>
 							<div style="width:200px;float:left;">
-							<input id="refreshBtn" value="" type="button"  disabled="disabled" onClick="refreshMilesClicked('');" style="width:17px; height:22px; background: url('images/refresh.png') no-repeat left top;"/>
+							<input id="refreshBtn" value="" type="button" <!--- disabled="disabled" ---> onClick="refreshMilesClicked('');" style="width:17px; height:22px; background: url('images/refresh.png') no-repeat left top;"/>
 							<input id="milesUpdateMode" name="milesUpdateMode" type="hidden" value="auto">
 							</div>			
 							</div>
@@ -2086,8 +2235,10 @@ function getCommodityByCarrId(){
 								<th align="right" valign="middle" class="head-bg">Fee</th>
 								<th align="right" valign="middle" width="10%" class="head-bg">Qty</th>
 								<th align="right" valign="middle" class="head-bg textalign">Type</th>
-								<th align="right" valign="middle" class="head-bg" width="30%">Description</th>
-								<th align="right" valign="middle" class="head-bg">Wt(lbs)</th>
+								<th align="right" valign="middle" class="head-bg" <cfif request.qSystemSetupOptions.commodityWeight> width="30%"<cfelse> width="71%" </cfif>>Description</th>
+								<cfif request.qSystemSetupOptions.commodityWeight>
+									<th align="right" valign="middle" class="head-bg">Wt(lbs)</th>
+								</cfif>
 								<th align="right" valign="middle" class="head-bg">Class</th>
 								<th align="right" valign="middle" class="head-bg">Cust. Rate</th>
 								<th align="right" valign="middle" class="head-bg textalign">#variables.freightBrokerShortForm#. Rate</th>
@@ -2101,80 +2252,84 @@ function getCommodityByCarrId(){
 								<cfif (structkeyexists(url,"loadid") and len(trim(url.loadid)) gt 1) OR (structkeyexists(url,"loadToBeCopied") and len(trim(url.loadToBeCopied)) gt 1)>
 								<!---<cfdump var="#request.qItems#" abort="true"/>--->
 								<cfloop query="request.qItems">
-								<tr <cfif request.qItems.currentRow mod 2 eq 0>bgcolor="##FFFFFF"<cfelse>  bgcolor="##f7f7f7"</cfif> >
-								<td height="20" class="lft-bg">&nbsp;</td>
-								<td class="lft-bg2" valign="middle" align="center"><input name="isFee#request.qItems.currentRow#" id="isFee#request.qItems.currentRow#" class="check isFee" <cfif request.qItems.fee is 1> checked="checked" </cfif> type="checkbox" tabindex="#evaluate(currentTab+1)#" /></td>
-								<td class="normaltdC" valign="middle" align="left"><input name="qty#request.qItems.currentRow#" id="qty#request.qItems.currentRow#" onchange="CalculateTotal()" class="q-textbox qty" type="text" value="#request.qItems.qty#"  tabindex="#evaluate(currentTab+1)#" /></td>
-								<td class="normaltdC" valign="middle" align="left">
-								<select name="unit#request.qItems.currentRow#" id="type#request.qItems.currentRow#" class="t-select unit typeSelect1" onChange="changeQuantityWithtype(this,'');checkForFee(this.value,'#request.qItems.currentRow#','','#application.dsn#');CalculateTotal();" tabindex="#evaluate(currentTab+1)#">
-								<option value=""></option>
-								<cfloop query="request.qUnits">
-								<option value="#request.qUnits.unitID#" <cfif request.qUnits.unitID is request.qItems.unitid> selected="selected" </cfif>>#request.qUnits.unitName#<cfif trim(request.qUnits.unitCode) neq ''>(#request.qUnits.unitCode#)</cfif></option>
-								</cfloop>
-								</select>
-								</td>
-								<td class="normaltdC" valign="middle" align="left"><input name="description#request.qItems.currentRow#" id="description#request.qItems.currentRow#" class="t-textbox" value="#replace(request.qItems.description,'"','&quot;','all')#" type="text" tabindex="#evaluate(currentTab+1)#" /></td>
-								<td class="normaltdC" valign="middle" align="left"><input name="weight#request.qItems.currentRow#" class="wt-textbox" value="#request.qItems.weight#" type="text" tabindex="#evaluate(currentTab+1)#" /></td>
-								<td class="normaltdC" valign="middle" align="left" >
-								<select name="class#request.qItems.currentRow#" style="width:60px;" class="t-select sel_class" tabindex="#evaluate(currentTab+1)#" >
-								<option></option>
-								<cfloop query="request.qClasses">
-								<option value="#request.qClasses.classId#" <cfif request.qClasses.classId is request.qItems.classid> selected="selected" </cfif>>#request.qClasses.className#</option>
-								</cfloop>
-								</select>
-								</td>
-								<!---
-								<cfset variables.CustomerRate = request.qItems.CustomerRate>
-								<cfset variables.CarrierRate = request.qItems.CarrierRate>
-								<cfif request.qItems.CustomerRate eq ""><cfset variables.CustomerRate = '0.00' ></cfif>
-								<cfif request.qItems.CarrierRate eq ""><cfset variables.CarrierRate = '0.00' ></cfif>
+									<tr <cfif request.qItems.currentRow mod 2 eq 0>bgcolor="##FFFFFF"<cfelse>  bgcolor="##f7f7f7"</cfif> >
+										<td height="20" class="lft-bg">&nbsp;</td>
+										<td class="lft-bg2" valign="middle" align="center"><input name="isFee#request.qItems.currentRow#" id="isFee#request.qItems.currentRow#" class="check isFee" <cfif request.qItems.fee is 1> checked="checked" </cfif> type="checkbox" tabindex="#evaluate(currentTab+45)#" /></td>
+										<td class="normaltdC" valign="middle" align="left"><input name="qty#request.qItems.currentRow#" id="qty#request.qItems.currentRow#" onchange="CalculateTotal()" class="q-textbox qty" type="text" value="#request.qItems.qty#"  tabindex="#evaluate(currentTab+46)#" /></td>
+										<td class="normaltdC" valign="middle" align="left">
+										<select name="unit#request.qItems.currentRow#" id="type#request.qItems.currentRow#" class="t-select unit typeSelect1" onChange="changeQuantityWithtype(this,'');checkForFee(this.value,'#request.qItems.currentRow#','','#application.dsn#');CalculateTotal();" tabindex="#evaluate(currentTab+47)#">
+										<option value=""></option>
+										<cfloop query="request.qUnits">
+										<option value="#request.qUnits.unitID#" <cfif request.qUnits.unitID is request.qItems.unitid> selected="selected" </cfif>>#request.qUnits.unitName#<cfif trim(request.qUnits.unitCode) neq ''>(#request.qUnits.unitCode#)</cfif></option>
+										</cfloop>
+										</select>
+										</td>
+										<td class="normaltdC" valign="middle" align="left"><input name="description#request.qItems.currentRow#" id="description#request.qItems.currentRow#" class="t-textbox" value="#replace(request.qItems.description,'"','&quot;','all')#" type="text" tabindex="#evaluate(currentTab+48)#" <cfif not request.qSystemSetupOptions.commodityWeight> style="width:220px;" </cfif> /></td>
+										<cfif request.qSystemSetupOptions.commodityWeight>
+											<td class="normaltdC" valign="middle" align="left"><input name="weight#request.qItems.currentRow#" class="wt-textbox" value="#request.qItems.weight#" type="text" tabindex="#evaluate(currentTab+1)#" /></td>
+										</cfif>
+										<td class="normaltdC" valign="middle" align="left" >
+										<select name="class#request.qItems.currentRow#" style="width:60px;" class="t-select sel_class" tabindex="#evaluate(currentTab+49)#" >
+										<option></option>
+										<cfloop query="request.qClasses">
+										<option value="#request.qClasses.classId#" <cfif request.qClasses.classId is request.qItems.classid> selected="selected" </cfif>>#request.qClasses.className#</option>
+										</cfloop>
+										</select>
+										</td>
+										<!---
+										<cfset variables.CustomerRate = request.qItems.CustomerRate>
+										<cfset variables.CarrierRate = request.qItems.CarrierRate>
+										<cfif request.qItems.CustomerRate eq ""><cfset variables.CustomerRate = '0.00' ></cfif>
+										<cfif request.qItems.CarrierRate eq ""><cfset variables.CarrierRate = '0.00' ></cfif>
 
-								<td class="normaltdC" valign="middle" align="left"><input name="CustomerRate#request.qItems.currentRow#" id="CustomerRate#request.qItems.currentRow#" class="q-textbox CustomerRate" value="#DollarFormat(variables.CustomerRate)#" onChange="CalculateTotal()"  type="text" tabindex="#evaluate(currentTab+1)#"/></td>
-								<td class="normaltd2C" valign="middle" align="left"><input name="CarrierRate#request.qItems.currentRow#" id="CarrierRate#request.qItems.currentRow#" class="q-textbox CarrierRate" value="#DollarFormat(variables.CarrierRate)#" onChange="CalculateTotal()"  type="text" tabindex="#evaluate(currentTab+1)#" /></td>
-								<td class="normaltdC" valign="middle" align="left"><input name="custCharges#request.qItems.currentRow#" id="custCharges#request.qItems.currentRow#" class="q-textbox custCharges" value="#request.qItems.custCharges#" onChange="CalculateTotal();" type="text" tabindex="#evaluate(currentTab+1)#"/></td>
-								<td class="normaltd2C" valign="middle" align="left"><input name="carrCharges#request.qItems.currentRow#" id="carrCharges#request.qItems.currentRow#" class="q-textbox carrCharges" value="#request.qItems.carrCharges#" onChange="CalculateTotal();" type="text" tabindex="#evaluate(currentTab+1)#" /></td>
-								--->
-								<cfset variables.CUSTRATE = request.qItems.CUSTRATE>
-								<cfset variables.CARRRATE = request.qItems.CARRRATE>
-								<cfif request.qItems.CUSTRATE eq "">
-								<cfset variables.CUSTRATE = '0.00' >
-								</cfif>
-								<cfif request.qItems.CARRRATE eq "">
-								<cfset variables.CARRRATE = '0.00' >
-								</cfif>
-								<!---			  <td class="normaltdC" valign="middle" align="left"><input name="CustomerRate#request.qItems.currentRow#" id="CustomerRate#request.qItems.currentRow#" class="q-textbox CustomerRate" value="#DollarFormat(variables.CUSTRATE)#" onChange="CalculateTotal();formatDollar(this.value, this.id);"  type="text" tabindex="#evaluate(currentTab+1)#"/></td>
-								<td class="normaltd2C" valign="middle" align="left"><input name="CarrierRate#request.qItems.currentRow#" id="CarrierRate#request.qItems.currentRow#" class="q-textbox CarrierRate" value="#DollarFormat(variables.CARRRATE)#" onChange="CalculateTotal();formatDollar(this.value, this.id);"  type="text" tabindex="#evaluate(currentTab+1)#" /></td>
-								--->								
-								<td class="normaltdC" valign="middle" align="left"><input name="CustomerRate#request.qItems.currentRow#" id="CustomerRate#request.qItems.currentRow#" class="q-textbox CustomerRate" value="#replace(myCurrencyFormatter(variables.CUSTRATE),",","","ALL")#" onChange="CalculateTotal();formatDollar(this.value, this.id);"  type="text" tabindex="#evaluate(currentTab+1)#"/></td>
-								<td class="normaltd2C" valign="middle" align="left"><input name="CarrierRate#request.qItems.currentRow#" id="CarrierRate#request.qItems.currentRow#" class="q-textbox CarrierRate" value="#replace(myCurrencyFormatter(variables.CARRRATE),",","","ALL")#" onChange="CalculateTotal();formatDollar(this.value, this.id);"  type="text" tabindex="#evaluate(currentTab+1)#" /></td>
+										<td class="normaltdC" valign="middle" align="left"><input name="CustomerRate#request.qItems.currentRow#" id="CustomerRate#request.qItems.currentRow#" class="q-textbox CustomerRate" value="#DollarFormat(variables.CustomerRate)#" onChange="CalculateTotal()"  type="text" tabindex="#evaluate(currentTab+1)#"/></td>
+										<td class="normaltd2C" valign="middle" align="left"><input name="CarrierRate#request.qItems.currentRow#" id="CarrierRate#request.qItems.currentRow#" class="q-textbox CarrierRate" value="#DollarFormat(variables.CarrierRate)#" onChange="CalculateTotal()"  type="text" tabindex="#evaluate(currentTab+1)#" /></td>
+										<td class="normaltdC" valign="middle" align="left"><input name="custCharges#request.qItems.currentRow#" id="custCharges#request.qItems.currentRow#" class="q-textbox custCharges" value="#request.qItems.custCharges#" onChange="CalculateTotal();" type="text" tabindex="#evaluate(currentTab+1)#"/></td>
+										<td class="normaltd2C" valign="middle" align="left"><input name="carrCharges#request.qItems.currentRow#" id="carrCharges#request.qItems.currentRow#" class="q-textbox carrCharges" value="#request.qItems.carrCharges#" onChange="CalculateTotal();" type="text" tabindex="#evaluate(currentTab+1)#" /></td>
+										--->
+										<cfset variables.CUSTRATE = request.qItems.CUSTRATE>
+										<cfset variables.CARRRATE = request.qItems.CARRRATE>
+										<cfif request.qItems.CUSTRATE eq "">
+										<cfset variables.CUSTRATE = '0.00' >
+										</cfif>
+										<cfif request.qItems.CARRRATE eq "">
+										<cfset variables.CARRRATE = '0.00' >
+										</cfif>
+										<!---			  <td class="normaltdC" valign="middle" align="left"><input name="CustomerRate#request.qItems.currentRow#" id="CustomerRate#request.qItems.currentRow#" class="q-textbox CustomerRate" value="#DollarFormat(variables.CUSTRATE)#" onChange="CalculateTotal();formatDollar(this.value, this.id);"  type="text" tabindex="#evaluate(currentTab+1)#"/></td>
+										<td class="normaltd2C" valign="middle" align="left"><input name="CarrierRate#request.qItems.currentRow#" id="CarrierRate#request.qItems.currentRow#" class="q-textbox CarrierRate" value="#DollarFormat(variables.CARRRATE)#" onChange="CalculateTotal();formatDollar(this.value, this.id);"  type="text" tabindex="#evaluate(currentTab+1)#" /></td>
+										--->								
+										<td class="normaltdC" valign="middle" align="left"><input name="CustomerRate#request.qItems.currentRow#" id="CustomerRate#request.qItems.currentRow#" class="q-textbox CustomerRate" value="#replace(myCurrencyFormatter(variables.CUSTRATE),",","","ALL")#" onChange="CalculateTotal();formatDollar(this.value, this.id);"  type="text" tabindex="#evaluate(currentTab+50)#"/></td>
+										<td class="normaltd2C" valign="middle" align="left"><input name="CarrierRate#request.qItems.currentRow#" id="CarrierRate#request.qItems.currentRow#" class="q-textbox CarrierRate" value="#replace(myCurrencyFormatter(variables.CARRRATE),",","","ALL")#" onChange="CalculateTotal();formatDollar(this.value, this.id);"  type="text" tabindex="#evaluate(currentTab+51)#" /></td>
 
-								<cfif request.qItems.CarrRateOfCustTotal EQ "">
-								<cfset variables.CarrRateOfCustTotal = 0.00>
-								<cfelse>
-								<cfset variables.CarrRateOfCustTotal = request.qItems.CarrRateOfCustTotal>
-								</cfif>
-								<td class="normaltd2C" valign="middle" align="left"><input name="CarrierPer#request.qItems.currentRow#" id="CarrierPer#request.qItems.currentRow#" style="width:105px;" class="q-textbox CarrierPer" value="#variables.CarrRateOfCustTotal#%" onChange="ConfirmMessage('#request.qItems.currentRow#',0)"  type="text" tabindex="" /></td>
-								<td class="normaltdC" valign="middle" align="left"><input name="custCharges#request.qItems.currentRow#" id="custCharges#request.qItems.currentRow#" class="q-textbox custCharges" value="#request.qItems.CUSTCHARGES#" onChange="CalculateTotal();" type="text" tabindex="#evaluate(currentTab+1)#"/></td>
-								<td class="normaltd2C" valign="middle" align="left"><input name="carrCharges#request.qItems.currentRow#" id="carrCharges#request.qItems.currentRow#" class="q-textbox carrCharges" value="#request.qItems.CARRCHARGES#" onChange="CalculateTotal();" type="text" tabindex="#evaluate(currentTab+1)#" /></td>
-								<td class="normal-td3">&nbsp;</td>
-								</tr>
+										<cfif request.qItems.CarrRateOfCustTotal EQ "">
+										<cfset variables.CarrRateOfCustTotal = 0.00>
+										<cfelse>
+										<cfset variables.CarrRateOfCustTotal = request.qItems.CarrRateOfCustTotal>
+										</cfif>
+										<td class="normaltd2C" valign="middle" align="left"><input name="CarrierPer#request.qItems.currentRow#" id="CarrierPer#request.qItems.currentRow#" style="width:105px;" class="q-textbox CarrierPer" value="#variables.CarrRateOfCustTotal#%" onChange="ConfirmMessage('#request.qItems.currentRow#',0)"  type="text" tabindex="#evaluate(currentTab+52)#" /></td>
+										<td class="normaltdC" valign="middle" align="left"><input name="custCharges#request.qItems.currentRow#" id="custCharges#request.qItems.currentRow#" class="q-textbox custCharges" value="#request.qItems.CUSTCHARGES#" onChange="CalculateTotal();" type="text" tabindex="#evaluate(currentTab+53)#"/></td>
+										<td class="normaltd2C" valign="middle" align="left"><input name="carrCharges#request.qItems.currentRow#" id="carrCharges#request.qItems.currentRow#" class="q-textbox carrCharges" value="#request.qItems.CARRCHARGES#" onChange="CalculateTotal();" type="text" tabindex="#evaluate(currentTab+54)#" /></td>
+										<td class="normal-td3">&nbsp;</td>
+									</tr>
 								</cfloop>
 								<cfif request.qItems.recordcount lt 7>
 								<cfset remainCol=request.qItems.recordcount+1>
 								<cfloop from ="#remainCol#" to="7" index="rowNum">
 								<tr <cfif rowNum mod 2 eq 0>bgcolor="##FFFFFF"<cfelse>  bgcolor="##f7f7f7"</cfif> >
 								<td height="20" class="lft-bg">&nbsp;</td>
-								<td class="lft-bg2" valign="middle" align="center"><input name="isFee#rowNum#" id="isFee#rowNum#" class="isFee check" type="checkbox" tabindex="#evaluate(currentTab+1)#"/></td>
-								<td class="normaltdC" valign="middle" align="left"><input name="qty#rowNum#" class="qty q-textbox" type="text" onChange="CalculateTotal()" tabindex="#evaluate(currentTab+1)#"/></td>
-								<td class="normaltdC" valign="middle" align="left"><select name="unit#rowNum#" id="unit#rowNum#" class="t-select" onChange="checkForFee(this.value,'#rowNum#','','#application.dsn#');CalculateTotal();" tabindex="#evaluate(currentTab+1)#">
+								<td class="lft-bg2" valign="middle" align="center"><input name="isFee#rowNum#" id="isFee#rowNum#" class="isFee check" type="checkbox" tabindex="#evaluate(currentTab+55)#"/></td>
+								<td class="normaltdC" valign="middle" align="left"><input name="qty#rowNum#" class="qty q-textbox" type="text" onChange="CalculateTotal()" tabindex="#evaluate(currentTab+56)#"/></td>
+								<td class="normaltdC" valign="middle" align="left"><select name="unit#rowNum#" id="unit#rowNum#" class="t-select" onChange="checkForFee(this.value,'#rowNum#','','#application.dsn#');CalculateTotal();" tabindex="#evaluate(currentTab+57)#">
 								<option value=""></option>
 								<cfloop query="request.qUnits">
 								<option value="#request.qUnits.unitID#">#request.qUnits.unitName#<cfif trim(request.qUnits.unitCode) neq ''>(#request.qUnits.unitCode#)</cfif></option>
 								</cfloop>
 								</select></td>
-								<td class="normaltdC" valign="middle" align="left"><input name="description#rowNum#" id="description#rowNum#" class="t-textbox" type="text" tabindex="#evaluate(currentTab+1)#"/></td>
-								<td class="normaltdC" valign="middle" align="left"><input name="weight#rowNum#" class="wt-textbox" type="text" tabindex="#evaluate(currentTab+1)#"/></td>
-								<td class="normaltdC" valign="middle" align="left"><select name="class#rowNum#" class="t-select sel_class" tabindex="#evaluate(currentTab+1)#" style="width:60px;">
+								<td class="normaltdC" valign="middle" align="left"><input name="description#rowNum#" id="description#rowNum#" class="t-textbox" type="text" tabindex="#evaluate(currentTab+58)#" <cfif not request.qSystemSetupOptions.commodityWeight> style="width:220px;" </cfif> /></td>
+								<cfif request.qSystemSetupOptions.commodityWeight>
+									<td class="normaltdC" valign="middle" align="left"><input name="weight#rowNum#" class="wt-textbox" type="text" tabindex="#evaluate(currentTab+59)#"/></td>
+								</cfif>
+								<td class="normaltdC" valign="middle" align="left"><select name="class#rowNum#" class="t-select sel_class" tabindex="#evaluate(currentTab+60)#" style="width:60px;">
 								<option value=""></option>
 								<cfloop query="request.qClasses">
 								<option value="#request.qClasses.classId#">#request.qClasses.className#</option>
@@ -2190,10 +2345,11 @@ function getCommodityByCarrId(){
 								</cfloop>
 								</cfif>
 								<cfelse>
+								<cfset currentTab=74>
 								<cfloop from ="1" to="7" index="rowNum">
 								<tr <cfif rowNum mod 2 eq 0>bgcolor="##FFFFFF"<cfelse>  bgcolor="##f7f7f7"</cfif> >
 								<td height="20" class="lft-bg">&nbsp;</td>
-								<td class="lft-bg2" valign="middle" align="center"><input name="isFee#rowNum#" id="isFee#rowNum#" class="isFee check" type="checkbox" tabindex="#evaluate(currentTab+1)#"/></td>
+								<td class="lft-bg2" valign="middle" align="center"><input name="isFee#rowNum#" id="isFee#rowNum#" class="isFee check" type="checkbox" tabindex="#evaluate(currentTab++)#"/></td>
 								<td class="normaltdC" valign="middle" align="left"><input name="qty#rowNum#" onChange="CalculateTotal()" class="qty q-textbox" type="text" value="1" tabindex="#evaluate(currentTab+1)#"/></td>
 								<td class="normaltdC" valign="middle" align="left"><select name="unit#rowNum#" id="unit#rowNum#" class="t-select unit typeSelect1" onChange="changeQuantityWithtype(this,'');checkForFee(this.value,'#rowNum#','','#application.dsn#');CalculateTotal();" tabindex="#evaluate(currentTab+1)#">
 								<option value=""></option>
@@ -2201,8 +2357,10 @@ function getCommodityByCarrId(){
 								<option value="#request.qUnits.unitID#">#request.qUnits.unitName#<cfif trim(request.qUnits.unitCode) neq ''>(#request.qUnits.unitCode#)</cfif></option>
 								</cfloop>
 								</select></td>
-								<td class="normaltdC" valign="middle" align="left"><input name="description#rowNum#" id="description#rowNum#" class="t-textbox" type="text" tabindex="#evaluate(currentTab+1)#"/></td>
-								<td class="normaltdC" valign="middle" align="left"><input name="weight#rowNum#" class="wt-textbox" type="text" tabindex="#evaluate(currentTab+1)#"/></td>
+								<td class="normaltdC" valign="middle" align="left"><input name="description#rowNum#" id="description#rowNum#" class="t-textbox" type="text" tabindex="#evaluate(currentTab+1)#" <cfif not request.qSystemSetupOptions.commodityWeight> style="width:225px;" </cfif> /></td>
+								<cfif request.qSystemSetupOptions.commodityWeight>
+									<td class="normaltdC" valign="middle" align="left"><input name="weight#rowNum#" class="wt-textbox" type="text" tabindex="#evaluate(currentTab+1)#"/></td>
+								</cfif>	
 								<td class="normaltdC" valign="middle" align="left"><select name="class#rowNum#" class="t-select" tabindex="#evaluate(currentTab+1)#" style="width:60px;">
 								<option value=""></option>
 								<cfloop query="request.qClasses">
@@ -2226,7 +2384,7 @@ function getCommodityByCarrId(){
 							<tfoot>
 								<tr>
 								<td width="5" align="left" valign="top"><img src="images/left-bot.gif" alt="" width="5" height="23" /></td>
-								<td colspan="11" align="left" valign="middle" class="footer-bg"></td>
+								<td <cfif request.qSystemSetupOptions.commodityWeight> colspan="11" <cfelse>  colspan="10"</cfif> align="left" valign="middle" class="footer-bg"></td>
 								<td width="5" align="right" valign="top"><img src="images/right-bot.gif" alt="" width="5" height="23" /></td>
 								</tr>
 							</tfoot>
@@ -2260,7 +2418,9 @@ function getCommodityByCarrId(){
 				<input type="button" class="black-btn" value="B.O.L. Report" onClick="self.location='index.cfm?event=BOLReport&loadid=#url.loadid#&#session.URLToken#'"/>
 				<!--- BEGIN: Prevent already transcore synced load update from Agent has no Transcore Login setup in their profile Date:20 Sep 2013  --->
 				<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
-				<input name="save" type="submit" class="green-btn"  onClick="alert('This Load has been posted to Transcore 360 Load board and can only be edited by users with a Transcore Login setup in their profile. However you can view the load details.'); return false;" value="Save">
+				<input name="save" type="submit" class="green-btn"  onClick="alert('Any changes you make will not be updated to the DAT Load Board because you do not have credentials setup on your Agent Profile.');javascript:return saveButStayOnPage('#url.loadid#');" onfocus="checkUnload();" value="Save">
+				<cfelseif request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+				<input name="save" type="submit" class="green-btn"  onClick="alert('Any changes you make will not be updated to the 123Load Board because you do not have credentials setup on your Agent Profile.');javascript:return saveButStayOnPage('#url.loadid#');" onfocus="checkUnload();" value="Save">
 				<cfelse>
 				<input name="save" type="submit" class="green-btn" onClick="return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="yes" />
 				</cfif>
@@ -2271,17 +2431,31 @@ function getCommodityByCarrId(){
 				<input type="button" value="Copy Load" class="blue-btn" onclick="window.open('index.cfm?event=addload&loadToBeCopied=#url.loadid#&#session.URLToken#')"/>
 				<!--- BEGIN: Prevent already transcore synced load update from Agent has no Transcore Login setup in their profile Date:20 Sep 2013  --->
 				<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
-				<input name="submit" type="submit" class="green-btn"  onClick="alert('This Load has been posted to Transcore 360 Load board and can only be edited by users with a Transcore Login setup in their profile. However you can view the load details.'); return false;" value="Save & Exit">
+				<input name="submit" type="submit" class="green-btn"  onClick="alert('Any changes you make will not be updated to the DAT Load Board because you do not have credentials setup on your Agent Profile.');javascript:return saveButExitPage('#url.loadid#');"  onfocus="checkUnload();" value="Save & Exit">
+				<cfelseif request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+					<input name="submit" type="submit" class="green-btn"  onClick="alert('Any changes you make will not be updated to the 123Load Board because you do not have credentials setup on your Agent Profile.');javascript:return saveButExitPage('#url.loadid#');"  onfocus="checkUnload();" value="Save & Exit">
 				<cfelse>
 				<input name="submit" type="submit" class="green-btn" onClick="return saveButExitPage('#url.loadid#');" onfocus="checkUnload();" value="Save & Exit" disabled="yes" />
 				</cfif>
 				<!--- END: Prevent already transcore synced load update from Agent has no Transcore Login setup in their profile Date:20 Sep 2013  --->
 				</p>
 				<cfelse>
-				<p>
-				<input name="save" type="submit" class="green-btn" onClick="return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="yes" />
-				<input name="submit" type="submit" class="green-btn" onClick="return saveButExitPage('#url.loadid#');" onfocus="checkUnload();" value="Save & Exit" disabled="yes" />
-				</p>
+					<p>
+					<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
+					<input name="save" type="submit" class="green-btn" onClick="alert('Any changes you make will not be updated to the DAT Load Board because you do not have credentials setup on your Agent Profile.');return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="yes" />
+					<cfelseif request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+					<input name="save" type="submit" class="green-btn" onClick="alert('Any changes you make will not be Added to the 123Load Board because you do not have credentials setup on your Agent Profile.');return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="yes" />
+					<cfelse>
+					<input name="save" type="submit" class="green-btn" onClick="return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="yes" />
+					</cfif>
+					<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
+						<input name="submit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be Added to the DAT Board because you do not have credentials setup on your Agent Profile.');return saveButExitPage('2');" onfocus="checkUnload();" value="Save & Exit" disabled="yes" />
+					<cfelseif request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+						<input name="submit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be Added to the 123Load Board because you do not have credentials setup on your Agent Profile.');return saveButExitPage('2');" onfocus="checkUnload();" value="Save & Exit" disabled="yes" />
+					<cfelse>
+					<input name="submit" type="submit" class="green-btn" onClick="return saveButExitPage('2');" onfocus="checkUnload();" value="Save & Exit" disabled="yes" />
+					</cfif>	
+					</p>
 				</cfif>
 				<input type="hidden" name="shipperFlag" id="shipperFlag" value="0">
 				<input type="hidden" name="consigneeFlag" id="consigneeFlag" value="0">	
@@ -2300,7 +2474,6 @@ function getCommodityByCarrId(){
 			</cfif>
 		</cfif>
 		<div class="white-bot"></div>
-	
 	</div>
   <!---End stop block 1--->
   <div class="gap"></div>
@@ -2312,9 +2485,27 @@ function getCommodityByCarrId(){
 	<div class="white-con-area">
 		<div id="stop#stopNo#" <cfif NoOfStopsToShow gte StopNoIs>style="display:block"</cfif>>
 			<div id="tabs#stopNo#" class="tabsload">
-				<ul>
+				<ul style="height:27px;">
 					<li><a href="##tabs-1">Stop #stopNo#</a></li>
 					<li><a href="index.cfm?event=loadIntermodal&stopno=#stopNo#&loadID=#loadID#&#Session.URLToken#">Intermodal</a></li>
+					<div style="float: left;width: 23%; margin-left: 27px;" id="StopNo#stopNo#">
+						<div class="form-con" style="width:103%">
+							<ul class="load-link" id="ulStopNo1" style="line-height:26px;">
+								<cfloop from="1" to="#totStops#" index='stpNoid'>
+									<cfif stpNoid is 1>
+										<li><a href="##StopNo#stpNoid#">###stpNoid#</a></li>
+									<cfelse>
+										<li><a href="##StopNo#stpNoid#">###stpNoid#</a></li>
+									</cfif>
+								</cfloop>
+								<!--- <li><a href="##">##2</a></li><li><a href="##">##3</a></li> --->
+							</ul>
+							<div class="clear"></div>
+						</div>
+					</div>
+					<div style="float: left; width: 56%; height:6px;">
+						<h2 id="loadNumber" style="color:white;font-weight:bold;margin-top: -11px;">Load###Ucase(loadnumber)#</h2>
+					</div>
 				</ul>
 				<div id="tabs-1">
 					<cfset stopNumber=stopNo>
@@ -2338,16 +2529,41 @@ function getCommodityByCarrId(){
 				<cfif isdefined("url.loadid") and len(trim(url.loadid)) gt 1>
 					<div class="rt-button">
 						<input type="button" value="#variables.freightBrokerReport# Report" class="report-btn" onclick="#carrierReportOnClick#" <cfif carrierReportOnClick eq "">disabled="disabled"</cfif>/>
-						<input name="submit" type="submit" class="green-btn" onClick="return saveButStayOnPage('#url.loadid#');setStopValue();" onFocus="checkUnload();" value="Save" disabled="disabled" />
-						<input name="submit" type="submit" class="green-btn" onClick="return saveButExitPage('#url.loadid#');setStopValue();" onfocus="checkUnload();" value="Save & Exit" />
+						<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
+							<input name="submit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be Added to the DAT Board because you do not have credentials setup on your Agent Profile.');return saveButStayOnPage('#url.loadid#');setStopValue();" onFocus="checkUnload();" value="Save" disabled="disabled" />
+						<cfelseif  request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+							<input name="submit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be Added to the 123Load Board because you do not have credentials setup on your Agent Profile.');return saveButStayOnPage('#url.loadid#');setStopValue();" onFocus="checkUnload();" value="Save" disabled="disabled" />
+						<cfelse>
+							<input name="submit" type="submit" class="green-btn" onClick="return saveButStayOnPage('#url.loadid#');setStopValue();" onFocus="checkUnload();" value="Save" disabled="disabled" />
+						</cfif>
+						<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
+							<input name="submit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be Added to the DAT Board because you do not have credentials setup on your Agent Profile.');return saveButExitPage('#url.loadid#');setStopValue();" onfocus="checkUnload();" value="Save & Exit" />
+						<cfelseif  request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+							<input name="submit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be Added to the 123Load Board because you do not have credentials setup on your Agent Profile.');return saveButExitPage('#url.loadid#');setStopValue();" onfocus="checkUnload();" value="Save & Exit" />
+						<cfelse>
+							<input name="submit" type="submit" class="green-btn" onClick="return saveButExitPage('#url.loadid#');setStopValue();" onfocus="checkUnload();" value="Save & Exit" />
+						</cfif>
+						
 						<input type="button"  value="Customer Report" class="report-btn" onclick="#customerReportOnClick#" <cfif customerReportOnClick eq ""> disabled="disabled"</cfif>/>
 						<input type="button"  value="Copy Load" class="bttn" onclick="window.open('index.cfm?event=addload&loadToBeCopied=#url.loadid#&#session.URLToken#')"/>
 						<input name="" type="button" class="bttn" onclick="javascript:history.back();" value="Back" />
 					</div>
 				<cfelse>
 					<div class="rt-button">
-						<input name="submit" type="submit" class="green-btn" onClick="return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="disabled"/>
-						<input name="submit" type="submit" class="green-btn" onClick="javascript:return saveButExitPage('#url.loadid#');" onfocus="checkUnload();" value="Save & Exit"  disabled="disabled" />
+						<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
+								<input name="submit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be Added to the DAT Load Board because you do not have credentials setup on your Agent Profile.');return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="disabled"/>
+						<cfelseif  request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+								<input name="submit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be Added to the 123Load Board because you do not have credentials setup on your Agent Profile.');return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="disabled"/>
+						<cfelse>
+							<input name="submit" type="submit" class="green-btn" onClick="return saveButExitPage('#url.loadid#');setStopValue();" onfocus="checkUnload();" value="Save & Exit" 	<input name="submit" type="submit" class="green-btn" onClick="return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="disabled"/>
+						</cfif>
+						<cfif request.qcurAgentdetails.integratewithTran360 EQ false AND posttoTranscore EQ 1>
+							<input name="submit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be Added to the DAT Load Board because you do not have credentials setup on your Agent Profile.');javascript:return saveButExitPage('#url.loadid#');" onfocus="checkUnload();" value="Save & Exit"  disabled="disabled" />
+						<cfelseif  request.qcurAgentdetails.loadBoard123 EQ false AND PostTo123LoadBoard EQ 1>
+							<input name="submit" type="submit" class="green-btn" onClick="alert('Any changes you make will not be Added to the 123Load Board because you do not have credentials setup on your Agent Profile.');javascript:return saveButExitPage('#url.loadid#');" onfocus="checkUnload();" value="Save & Exit"  disabled="disabled" />
+						<cfelse>
+							<input name="submit" type="submit" class="green-btn" onClick="javascript:return saveButExitPage('#url.loadid#');" onfocus="checkUnload();" value="Save & Exit"  disabled="disabled" />
+						</cfif>
 						<input name="" type="button" class="bttn" onclick="javascript:history.back();" value="Back" />
 					</div>
 				</cfif>
@@ -2443,7 +2659,8 @@ function getCommodityByCarrId(){
 			 });
 			
 			$('##carrierReportLink').click(function(){
-				carrierReportOnClick(mailLoadId,mailUrlToken);
+				var dsn='#dsn#';
+				carrierReportOnClick(mailLoadId,mailUrlToken,dsn);
 				/*
 			   var action =  $('##carrierReportImg').data('action');
 				if(action == 'view')
@@ -2490,7 +2707,8 @@ function getCommodityByCarrId(){
 			 });
 			
 			$('##impWorkReportLink').click(function(){
-				CarrierWorkOrderImportOnClick(mailLoadId,mailUrlToken);
+				var dsn='#dsn#';
+				CarrierWorkOrderImportOnClick(mailLoadId,mailUrlToken,dsn);
 				/*
 				var action =  $('##impWorkReportImg').data('action');
 				if(action == 'view')
@@ -2536,7 +2754,8 @@ function getCommodityByCarrId(){
 			 });
 			
 			$('##expWorkReportLink').click(function(){
-				CarrierWorkOrderExportOnClick(mailLoadId,mailUrlToken);
+				var dsn='#dsn#';
+				CarrierWorkOrderExportOnClick(mailLoadId,mailUrlToken,dsn);
 				/*
 				var action =  $('##expWorkReportImg').data('action');
 				if(action == 'view')
@@ -2582,7 +2801,8 @@ function getCommodityByCarrId(){
 			 });
 			
 			$('##custInvReportLink').click(function(){
-				CustomerReportOnClick(mailLoadId,mailUrlToken);
+				var dsn='#dsn#';
+				CustomerReportOnClick(mailLoadId,mailUrlToken,dsn);
 				/*
 				var action =  $('##custInvReportImg').data('action');
 				if(action == 'view')
@@ -2600,7 +2820,7 @@ function getCommodityByCarrId(){
 				
 				var printDisplayStatus='<cfoutput>#request.qSystemSetupOptions.automaticprintreports#</cfoutput>';
 				if(printDisplayStatus == '1'){
-					$('##dispatchHiddenValue').val('Printed Customer Invoice >');
+					$('##dispatchHiddenValue').val('Printed <cfoutput>#variables.statusDispatch#</cfoutput> >');
 					applyNotes($('##dispatchNotes'), "bfb");
 				}	
 			 });
@@ -2722,6 +2942,7 @@ function getCommodityByCarrId(){
 	</script>
 	
   <script type="text/javascript">
+  
 	$(document).ready(function(){
 		if($.trim($('##load input[name="loadnumber"]').val()).length == 0){
 			$('##load input[name="save"]').removeAttr('disabled');
@@ -2735,6 +2956,16 @@ function getCommodityByCarrId(){
 				
 			} else {
 				$(this).val("0");
+			}
+		});
+		$('##posttoTranscore').click(function() {
+			if($(this).is(":checked"))
+			{
+				$(this).val("1");
+				
+			} else {
+				$(this).val("0");
+				$('##Trancore_DeleteFlag').val(1);
 			}
 		});
 	});
@@ -2771,7 +3002,7 @@ function getCommodityByCarrId(){
 			$("##shipperValueContainer"+stpno).val(''); 
 			$("##shipperName"+stpno).val('');
 			$("##shipperNameText"+stpno).val('');
-			$("##shipperlocation"+stpno).val('');
+			$("##shipperlocation"+stpno).val(''); 
 			$("##shippercity"+stpno).val('');
 			$("##shipperstate"+stpno).val('');
 			$("##shipperStateName"+stpno).val('');
@@ -2785,6 +3016,7 @@ function getCommodityByCarrId(){
 			if (type=='Shipper')
 			{
 				$("##span_Shipper"+stpno).html("<font color='red' size=2>This will add a new shipper </font>");
+				$("##span_Shipper"+stpno).show();
 			}
 			else
 			{
@@ -2814,6 +3046,7 @@ function getCommodityByCarrId(){
 			if (type=='consignee')
 			{
 			$("##span_Consignee"+stpno).html("<font color='red' size=2>This will add a new consignee </font>");
+			$("##span_Consignee"+stpno).show();
 			}
 			else
 			{
@@ -3386,6 +3619,7 @@ $(function() {
 			}
 		});	
 		$(tag).data("ui-autocomplete")._renderItem = function(ul, item) {
+			console.log(item);
 			return $( "<li>"+item.name+"<br/><b><u>City</u>:</b> "+ item.city+"&nbsp;&nbsp;&nbsp;<b><u>State</u>:</b>" + item.state+"&nbsp;&nbsp;&nbsp;<b><u>Zip</u>:</b> " + item.zip+"&nbsp;&nbsp;&nbsp;<b><u>Insurance Expiry</u>:</b> " + item.InsExpDate+"</li>" )
 					.appendTo( ul );
 		}
@@ -3616,6 +3850,66 @@ $(function() {
 		updateTotalRates('<cfoutput>#application.DSN#</cfoutput>');
 	}	
 </script>
+<cfif  structkeyexists(url,"loadid") and len(trim(url.loadid)) gt 1>
+		<cfset loadID = url.loadid>
+		<cfif structkeyexists (session,"empid")>		
+			<cfif Session.empid neq "">
+				<cfinvoke component="#variables.objloadGateway#" method="checkEditLoadIdExists" loadid="#loadID#"  returnvariable="request.EditLoadIdDetails"/>
+				<cfif request.EditLoadIdDetails.recordcount>
+						 <script  type="text/javascript">
+							$(function() {
+								$('input').prop('readonly',true);
+								$('option:not(:selected)').attr('disabled', true);
+								$("input:checkbox").on('click',function(){
+								   $(this).prop('checked',!$(this).is(':checked'));
+								});
+								$( ".ui-datepicker-trigger" ).css( "display","none" );
+								$(".form-con > fieldset > img").css("display","none");
+								$('.rt-button3 > input[name="addstopButton"]').css("display","none");
+								$('.rt-button1 > input[name="addstopButton"]').css("display","none");
+								$('.rt-button2 > input[name="addstopButton"]').css("display","none");
+								$("textarea").prop('readonly', true);
+								alert("Another user is now editing the load.Please try again later..");
+								$('input').unbind( "focus" );
+								$('textarea').unbind( "focus" );
+								return false;
+							});
+						</script>
+					<cfelse>
+						<cfinvoke component="#variables.objloadGateway#" method="insertUserEditingLoad" loadid="#loadID#" returnvariable="request.EditLoadIdDetails"/>
+					</cfif>
+				
+			</cfif>
+		</cfif>	
+		<cfif structkeyexists (session,"customerid")>
+			<cfif Session.customerid neq "">	
+				<cfinvoke component="#variables.objloadGateway#" method="checkEditLoadIdExists" loadid="#loadID#"  returnvariable="request.EditLoadIdDetails"/>
+				<cfif request.EditLoadIdDetails.recordcount>
+					 <script  type="text/javascript">
+						$(function() {
+							$('input').prop('readonly',true);
+							$('option:not(:selected)').attr('disabled', true);
+							$("input:checkbox").on('click',function(){
+							   $(this).prop('checked',!$(this).is(':checked'));
+							});
+							$( ".ui-datepicker-trigger" ).css( "display","none" );
+							$(".form-con > fieldset > img").css("display","none");
+							$('.rt-button3 > input[name="addstopButton"]').css("display","none");
+							$('.rt-button1 > input[name="addstopButton"]').css("display","none");
+							$('.rt-button2 > input[name="addstopButton"]').css("display","none");
+							$("textarea").prop('readonly', true);
+							alert("Another user is now editing the load.Please try again later..");
+							$('input').unbind( "focus" );
+							$('textarea').unbind( "focus" );
+							return false;
+						});
+					</script>
+				<cfelse>
+					<cfinvoke component="#variables.objloadGateway#" method="insertUserEditingLoad" loadid="#loadID#" returnvariable="request.EditLoadIdDetails"/>
+				</cfif>
+			</cfif>
+		</cfif>
+</cfif>	
 </cfoutput>
 <cfset tickEnd = GetTickCount()>
 <cfset testTime = tickEnd - tickBegin> 
@@ -3630,3 +3924,4 @@ $(function() {
 	  return str;
 	}
 </cfscript>
+ 	

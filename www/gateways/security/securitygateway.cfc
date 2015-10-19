@@ -31,150 +31,177 @@
 			  AND password =<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.strPassword#" />
 			  AND benabled = 'True'
 		</cfquery>
-
-		<cfif rstCurrentSiteUser.recordcount gt 0>
+		
+		<cfif rstCurrentSiteUser.recordcount>
             <cfset session.officeid="">
             <cfset session.EmpId="">
 			<cfreturn rstCurrentSiteUser />
 		<cfelse>
-			<cfquery name="rstCurrentSiteUser" datasource="#variables.dsn#">
-			SELECT EmployeeID as pkiadminUserID, name as FirstName, name as LastName,loginid as UserName,emailid as EmailAddress,isActive as bEnabled,createdDateTime as dtCreated,LastModifiedDatetime as dtUpdated, allowed_users, isnull(current_count,0) as current_count ,  officeId
-			FROM Employees
-			WHERE loginId = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.strUsername#" />
-			AND password =<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.strPassword#" />
-			AND isActive = 1
-            AND Employees.allowed_users != Employees.current_count
-		</cfquery>
-		<cfif rstCurrentSiteUser.recordcount gt 0>
-        
-        	    <!---MY EDit Code for allowed user check --->
-            
-            <cfset session.allowed_users ="#rstCurrentSiteUser.allowed_users#" />
-            <cfset currentC = #rstCurrentSiteUser.current_count# >
-            
-			<cfif rstCurrentSiteUser.allowed_users NEQ rstCurrentSiteUser.current_count>
-				<cfset userip = #REMOTE_ADDR#>
-                <cfset session.userip = #userip#>
-                <cfset todayDate = #Now()#> 
-                <cfset logindate = #DateFormat(todayDate, "yyyy-mm-dd")# >
-                <cfset logintime = #TimeFormat(todayDate, "HH")#>
-                
-           <cfquery name="editu" datasource="#variables.dsn#" result="e">
-            UPDATE Employees
-            set
-            current_count = #++currentC#
-            WHERE EmployeeID='#rstCurrentSiteUser.pkiadminUserID#'
-            </cfquery>
-            
-             
-            <cfset userpin = #Rand("SHA1PRNG")#>
-            <cfset session.userpin = #userpin#>
-            
-            	<cfquery name="addtracking" datasource="#variables.dsn#" result="t">
-                    Insert into User_Track
-                    (user_id,ip,dated,timing,userpin,status)
-                    Values
-                    ('#rstCurrentSiteUser.pkiadminUserID#','#userip#','#logindate#','#logintime#','#userpin#','active')
-          		 </cfquery>
-              
-            <cfelse>
-           
-
-            </cfif>
-            
-
-            <!---My Code Ends here--->
-            
-            
-            <!---Code That Put inactive users counter down and change their status to inactive from active--->
-			<cfset todayDate = #Now()#> 
-            <cfset logindate = #DateFormat(todayDate, "yyyy-mm-dd")# >
-            <cfset logintime = #TimeFormat(todayDate, "HH")#>
-            
-            <cfquery name="chkusers" datasource="#variables.dsn#" result="c">
-            SELECT User_Track.user_id, User_Track.track_id, User_Track.ip, User_Track.dated, User_Track.timing
-            FROM User_Track
-            WHERE User_Track.dated = '#logindate#' AND User_Track.timing ! = #logintime# And User_Track.status = 'active'
-            </cfquery>
-            
-            
-			<cfif chkusers.recordcount gt 0>
-                
-                <cfquery name="getrow" datasource="#variables.dsn#" result="e">
-                
-                    SELECT	Employees.current_count
-                    FROM Employees
-                    WHERE Employees.EmployeeID = '#chkusers.user_id#'
-                
-                </cfquery>
-                
-                <cfset usercount = #getrow.current_count#>
-                
-                <cfloop query="chkusers">
-                
-                <cfquery name="getrow" datasource="#variables.dsn#" result="e">
-                
-                    SELECT	Employees.current_count
-                    FROM Employees
-                    WHERE Employees.EmployeeID = '#chkusers.user_id#'
-                
-                </cfquery>
-                
-                <cfset usercount = #getrow.current_count#>
-                
-                <cfquery name="editstatus" datasource="#variables.dsn#" result="e">
-                
-                    UPDATE	Employees
-                    set 
-                    Employees.current_count = #--usercount#
-                    WHERE Employees.EmployeeID = '#chkusers.user_id#'
-                
-                </cfquery>
-                
-                <cfquery name="editstatus2" datasource="#variables.dsn#" result="e">
-                
-                    UPDATE	User_Track
-                    set 
-                    User_Track.status = 'inactive'
-                    WHERE User_Track.track_id = #chkusers.track_id#
-                
-                </cfquery>
-                
-                </cfloop>
+			<cfquery name="rstCurrentSiteUserFirst" datasource="#variables.dsn#">
+				SELECT EmployeeID as pkiadminUserID, name as FirstName, name as LastName,loginid as UserName,emailid as EmailAddress,isActive as bEnabled,createdDateTime as dtCreated,LastModifiedDatetime as dtUpdated, isnull(current_count,0) as current_count , officeId
+				FROM Employees
+				WHERE loginId = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.strUsername#" />
+				AND password =<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.strPassword#" />
+				AND isActive = 1
+			</cfquery>
+			<cfquery name="qryUserCount" datasource="#variables.dsn#">
+				SELECT allowed_users,usercount
+				FROM SystemConfig
+				where SystemConfig.allowed_users > SystemConfig.usercount
+			</cfquery>
+			<cfset rstCurrentSiteUser = QueryNew("pkiadminUserID, LastName, UserName,EmailAddress,bEnabled,dtCreated,dtUpdated,officeId,allowed_users,usercount", "VarChar, VarChar, VarChar,VarChar,bit,date,date,VarChar,integer,integer")>
+			<cfif rstCurrentSiteUserFirst.recordcount and qryUserCount.recordcount>
+				<!--- Make one rows in the query ---> 
+				<cfset QueryAddRow(rstCurrentSiteUser, 1)> 
+				<!--- Set the values of the cells in the query ---> 
+				<cfset QuerySetCell(rstCurrentSiteUser, "pkiadminUserID", "#rstCurrentSiteUserFirst.pkiadminUserID#", 1)> 
+				<cfset QuerySetCell(rstCurrentSiteUser, "LastName", "#rstCurrentSiteUserFirst.LastName#", 1)> 
+				<cfset QuerySetCell(rstCurrentSiteUser, "UserName", "#rstCurrentSiteUserFirst.UserName#", 1)> 
+				<cfset QuerySetCell(rstCurrentSiteUser, "EmailAddress", "#rstCurrentSiteUserFirst.EmailAddress#", 1)> 
+				<cfset QuerySetCell(rstCurrentSiteUser, "bEnabled", "#rstCurrentSiteUserFirst.bEnabled#", 1)> 
+				<cfset QuerySetCell(rstCurrentSiteUser, "dtCreated", "#rstCurrentSiteUserFirst.dtCreated#", 1)> 
+				<cfset QuerySetCell(rstCurrentSiteUser, "dtUpdated", "#rstCurrentSiteUserFirst.dtUpdated#", 1)> 
+				<cfset QuerySetCell(rstCurrentSiteUser, "officeId", "#rstCurrentSiteUserFirst.officeId#", 1)> 
+				<cfset QuerySetCell(rstCurrentSiteUser, "allowed_users", "#qryUserCount.allowed_users#", 1)> 
+				<cfset QuerySetCell(rstCurrentSiteUser, "usercount", "#qryUserCount.usercount#", 1)> 
+				<!---Delete From Exceededlist--->
+				<!---cfquery name="qryDeleteFromExceededList" datasource="#variables.dsn#">
+					delete 
+					from UserExceededList
+					where UserId=  <cfqueryparam cfsqltype="cf_sql_varchar" value="#rstCurrentSiteUser.pkiadminUserID#" />
+				</cfquery--->
+				<!---MY EDit Code for allowed user check --->
+				
+				<cfset session.allowed_users ="#rstCurrentSiteUser.allowed_users#" />
+				<!---cfset currentC = #rstCurrentSiteUser.current_count# --->
+				<cfset variables.userloggegInCount=listlen(Application.userLoggedInCount)+1>
+				<cfquery name="update" datasource="#variables.dsn#">
+					UPDATE SystemConfig
+					set
+					userCount =  <cfqueryparam cfsqltype="cf_sql_integer" value="#variables.userloggegInCount#" />
+				</cfquery>
+				<cfif rstCurrentSiteUser.allowed_users Gte rstCurrentSiteUser.userCount>
+					<cfset userip = #REMOTE_ADDR#>
+					<cfset session.userip = #userip#>
+					<cfset todayDate = #Now()#> 
+					<cfset logindate = #DateFormat(todayDate, "yyyy-mm-dd")# >
+					<cfset logintime = #TimeFormat(todayDate, "HH")#>
+					<!---cfquery name="editu" datasource="#variables.dsn#" result="e">
+						UPDATE Employees
+						set
+						current_count = #++currentC#
+						WHERE EmployeeID='#rstCurrentSiteUser.pkiadminUserID#'
+					</cfquery--->
+					
+					<cfset userpin = #Rand("SHA1PRNG")#>
+					<cfset session.userpin = #userpin#>
+					<cfquery name="addtracking" datasource="#variables.dsn#" result="t">
+						Insert into User_Track
+						(user_id,ip,dated,timing,userpin,status)
+						Values
+						('#rstCurrentSiteUser.pkiadminUserID#','#userip#','#logindate#','#logintime#','#userpin#','active')
+					 </cfquery>
+				</cfif>
+				<!---My Code Ends here--->
+				<!---Code That Put inactive users counter down and change their status to inactive from active--->
+				<cfset todayDate = #Now()#> 
+				<cfset logindate = #DateFormat(todayDate, "yyyy-mm-dd")# >
+				<cfset logintime = #TimeFormat(todayDate, "HH")#>
+				<cfquery name="chkusers" datasource="#variables.dsn#" result="c">
+					SELECT User_Track.user_id, User_Track.track_id, User_Track.ip, User_Track.dated, User_Track.timing
+					FROM User_Track
+					WHERE User_Track.dated = '#logindate#' AND User_Track.timing ! = #logintime# And User_Track.status = 'active'
+				</cfquery>
+				<cfif chkusers.recordcount>
+					<cfquery name="getrow" datasource="#variables.dsn#" result="e">
+						SELECT	Employees.current_count
+						FROM Employees
+						WHERE Employees.EmployeeID = '#chkusers.user_id#'
+					</cfquery>
+					<cfset usercount = #getrow.current_count#>
+					<cfloop query="chkusers">
+						<cfquery name="getrow" datasource="#variables.dsn#" result="e">
+							SELECT	Employees.current_count
+							FROM Employees
+							WHERE Employees.EmployeeID = '#chkusers.user_id#'
+						</cfquery>
+						<cfset usercount = #getrow.current_count#>
+						<cfquery name="editstatus" datasource="#variables.dsn#" result="e">
+							UPDATE	Employees
+							set 
+							Employees.current_count = #--usercount#
+							WHERE Employees.EmployeeID = '#chkusers.user_id#'
+						</cfquery>
+						<cfquery name="editstatus2" datasource="#variables.dsn#" result="e">
+							UPDATE	User_Track
+							set 
+							User_Track.status = 'inactive'
+							WHERE User_Track.track_id = #chkusers.track_id#
+						</cfquery>
+					</cfloop>
                 <cfelse>
                		 no record to update.
-            </cfif>
-            
-            
-            
-            <!---Status Code Ends Here--->
-            
-			<cfset session.officeid= rstCurrentSiteUser.officeid>
-            <cfset session.EmpId= rstCurrentSiteUser.pkiadminUserID>
-		<cfelse>
-        
-            <!---Additional code added by Furqan for displaying limit over message--->
-            <cfquery name="chklimit" datasource="#variables.dsn#" result="ch">
-                SELECT Employees.allowed_users, Employees.current_count
-                FROM Employees
-                WHERE loginId = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.strUsername#" />
-                AND password =<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.strPassword#" />
-                AND isActive = 1
-            </cfquery>
-			<cfif chklimit.recordcount gt 0>
-          
-            	<cfif chklimit.allowed_users eq chklimit.current_count>
-					<cfset session.limitover = 1>
-                </cfif>
-             <cfelse>
-             		<cfset session.limitover = ''>
-             </cfif>
-             <!---limit over code ends here--->   
-             
-			<cfset session.officeid="">
-		</cfif>
-		<!--- <cfdump var="#rstCurrentSiteUser#"><cfabort> --->
-		<cfreturn rstCurrentSiteUser />
+				</cfif>
+				<!---Status Code Ends Here--->
+				<cfset session.officeid= rstCurrentSiteUserFirst.officeid>
+				<cfset session.EmpId= rstCurrentSiteUserFirst.pkiadminUserID>
+			<cfelse>
+				<!---Additional code added by Furqan for displaying limit over message--->
+				<cfif structkeyexists(Session,"empid") and len(trim(Session.empid))>
+					<cfset listPos = ListFindNoCase(Application.userLoggedInCount, Session.empid)>
+					<cfif listPos>
+						<cfset Application.userLoggedInCount = ListDeleteAt(Application.userLoggedInCount, listPos)>
+						<cfquery name="update" datasource="#Application.dsn#">
+							UPDATE SystemConfig
+							set
+							userCount =  <cfqueryparam cfsqltype="cf_sql_integer" value="#listlen(Application.userLoggedInCount)#" />
+						</cfquery>
+					</cfif>		
+				</cfif>
+				<cfif structkeyexists(Session,"customerid") and len(trim(Session.customerid))>	
+					<cfset listPos = ListFindNoCase(Application.userLoggedInCount, Session.customerid)>
+					<cfif listPos>
+						<cfset Application.userLoggedInCount = ListDeleteAt(Application.userLoggedInCount, listPos)>
+						<cfquery name="update" datasource="#Application.dsn#">
+							UPDATE SystemConfig
+							set
+							userCount =  <cfqueryparam cfsqltype="cf_sql_integer" value="#listlen(Application.userLoggedInCount)#" />
+						</cfquery>
+					</cfif>
+				</cfif>	
+				<cfquery name="qryUserCountCalculate" datasource="#variables.dsn#">
+					SELECT allowed_users,usercount
+					FROM SystemConfig
+				</cfquery>
+				<cfif rstCurrentSiteUserFirst.recordcount and qryUserCountCalculate.userCount gte qryUserCountCalculate.allowed_users>
+						<cfset session.limitover = 1>
+				 <cfelse>
+						<cfset session.limitover = ''>
+				 </cfif>
+				 <cfif session.limitover eq 1>
+					<cfquery name="qryGetEmployeeId" datasource="#variables.dsn#" >
+						SELECT EmployeeID, Name
+						FROM Employees
+						WHERE loginId = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.strUsername#" />
+						AND password =<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.strPassword#" />
+						AND isActive = 1
+					</cfquery>
+					<cfif qryGetEmployeeId.recordcount>
+						<cfquery name="qryInsertExceedList" datasource="#variables.dsn#">
+							Insert into UserExceededList
+							(UserId,UserName,DateCreated)
+							Values
+							(<cfqueryparam cfsqltype="cf_sql_varchar" value="#qryGetEmployeeId.EmployeeID#" />,
+							<cfqueryparam cfsqltype="cf_sql_varchar" value="#qryGetEmployeeId.Name#" />,
+							<cfqueryparam cfsqltype="cf_sql_timestamp" value="#now()#" />
+							)
+						 </cfquery>
+					</cfif>	 
+				 </cfif>
+				<!---limit over code ends here--->   
+				<cfset session.officeid="">
+			</cfif>
+			<cfreturn rstCurrentSiteUser />
 		</cfif>
 	</cffunction>
 
@@ -288,13 +315,12 @@
 			
 			<cfset currentC = #newq1.current_count# >
 			<cfquery name="editu" datasource="#variables.dsn#" result="e">
-		    
-			UPDATE employees
-			set
-			employees.current_count = #--currentC#
-			WHERE employees.employeeid = '#session.EmpId#'
-			
+				UPDATE employees
+				set
+				employees.current_count = #--currentC#
+				WHERE employees.employeeid = '#session.EmpId#'
 			</cfquery>
+		
 		    
 		  	<cfquery name="tupdate" datasource="#variables.dsn#">
 		    UPDATE User_Track
@@ -419,20 +445,26 @@
 	
 	<cffunction name="checkLostPassword" access="public" output="false" returntype="query">
 		<cfargument name="EmailAddress" required="yes" type="string" />
-		<cfargument name="NewPassword" required="yes" type="string" />
+		<!--- <cfargument name="NewPassword" required="yes" type="string" /> --->
 		
 		<cfset var rstUserDetails = "" />
 
-		<cfquery name="rstUserDetails" datasource="#variables.dsn#">
+		<!--- <cfquery name="rstUserDetails" datasource="#variables.dsn#">
 			SELECT pkiSiteUserID,sFirstName,sLastName, sUserName
 			FROM tSiteUsers
 			INNER JOIN tSiteUserPasswords ON fkiSiteUserID = pkiSiteUserID
 						     AND tSiteUserPasswords.bExpired = 0
 			WHERE pkiSiteUserID = '#arguments.EmailAddress#'
 			AND bDeleted = 0
+		</cfquery> --->
+
+		<!--- LastModifiedDatetime 7/10/15  spericorn(cfprabhu)--->
+		<cfquery name="rstUserDetails" datasource="#variables.dsn#">
+			SELECT EmailId,password,Name,smtpAddress,smtpUserName,smtpPassword,smtpPort,loginid,usessl FROM Employees emp
+			WHERE emp.EmailId = <cfqueryparam value='#arguments.EmailAddress#' cfsqltype="cf_sql_varchar">
 		</cfquery>
 		
-		<cfif rstUserDetails.recordcount GT 0>
+		<!--- <cfif rstUserDetails.recordcount GT 0>
 			<cfquery name="GenerateNewPassword" datasource="#variables.dsn#">
 				UPDATE tSiteUserPasswords
 				SET bExpired = 1
@@ -453,10 +485,20 @@
 					0
 				)
 			</cfquery>
-		</cfif>
+		</cfif> --->
 		
 		<cfreturn rstUserDetails />
 	</cffunction>
+
+	<cffunction name="checkCustomerLostPassword" access="public" output="false" returntype="query">
+		<cfargument name="EmailAddress" required="yes" type="string" />
+		<cfset var rstCustomerDetails = "" />
+		<cfquery name="rstCustomerDetails" datasource="#variables.dsn#">
+			SELECT Email,userName,password,CustomerName FROM Customers cus
+			WHERE cus.Email = <cfqueryparam value='#arguments.EmailAddress#' cfsqltype="cf_sql_varchar">
+		</cfquery>
+		<cfreturn rstCustomerDetails>
+	</cffunction>	
 
 	<!--- Function used to get all the privilege ID's for a site user --->
 	<cffunction name="getSiteUserPrivileges" access="public" output="false" returntype="query">

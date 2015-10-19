@@ -11,12 +11,21 @@
 	}
 </script>
 <div class="login-bg">
-<div class="login-title">Login</div>
-<form action="index.cfm?event=lostpassword:process&#Session.URLToken#" method="post" name="frmLostPassword" id="frmLostPassword" onSubmit="JavaScript: return Validation(this)" autocomplete="off">
+<div class="login-title">Password Recovery</div>
+<form action="index.cfm?event=lostpassword:process&#Session.URLToken#<cfif structkeyexists(url,'type')>&type=c</cfif>" method="post" name="frmLostPassword" id="frmLostPassword" onSubmit="JavaScript: return Validation(this)" autocomplete="off">
 				<fieldset>
 				<!--- <label class="user">Please enter your email address and we will send your login details to you</label> --->
 				<cfif isdefined('URL.Failed')>
-					Email Address Not Found
+					<div id="alertmsg">
+						<!--- <h4 style="color:red;">Email Address Not Found</h4> --->
+						<h4 style="color:red;margin-bottom: 15px;margin-left: 54px;">
+							<cfif structkeyexists(url,"type")>
+								No customer exists for that email address
+							<cfelse>
+								No user exists for that email address
+							</cfif>
+						</h4>
+					</div>
 				</cfif>
 				<label class="user" style="width:80px;">Email Address</label>
 				<input type="text" id="txtEmailAddress" name="txtEmailAddress" class="field">

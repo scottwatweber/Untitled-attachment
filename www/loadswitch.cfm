@@ -1,3 +1,4 @@
+<cfsetting requesttimeout="500">
 <cfscript>
 	
 	if(Not isDefined("Application.objLoadGatewayAdd")){
@@ -136,88 +137,81 @@
 					 </cfinvoke>
 					 <cfset insertedLoadId = insertedmessage.split("~~")>
 				 </cfif>
-                
-				 <cfif ( isdefined("form.loadToSaveAndExit") and len(trim(form.loadToSaveAndExit)) gt 1 )>
-							<cfif isdefined("form.editid") and len(form.editid) gt 1>
-							   
-								<cfset AlertvarP=#message[1]#>
-								<cfset AlertvarT=#message[2]#>
-								<cfset AlertvarI=#message[3]#>
-								<cfset AlertvarM=#message[4]#>
-								<cfset AlertvarN=#message[5]#>
-							<cfelse>
-								<cfset AlertvarP=#message[1]#>
-								<cfset AlertvarT=#message[2]#>
-								<cfset AlertvarI=#message[3]#>
-							</cfif>
+				 <cfif (isdefined("form.loadToSaveAndExit") and len(trim(form.loadToSaveAndExit)) gt 1 )>
+					<cfif isdefined("form.editid") and len(form.editid) gt 1>
+						<cfset AlertvarP=#message[1]#>
+						<cfset AlertvarT=#message[2]#>
+						<cfset AlertvarI=#message[3]#>
+						<cfset AlertvarM=#message[4]#>
+						<cfset AlertvarN=#message[5]#>
+					<cfelse>
+						<cfset AlertvarP=#message[1]#>
+						<cfset AlertvarT=#message[2]#>
+						<cfset AlertvarI=#message[3]#>
+					</cfif>
                  	 <cfoutput>
 						<script>
-							window.location = "index.cfm?event=myLoad&AlertvarP=#AlertvarP#&AlertvarT=#AlertvarT#&AlertvarI=#AlertvarI#&AlertvarM=#AlertvarM#&AlertvarN=#AlertvarN#";
+							window.location = "index.cfm?event=myLoad&AlertvarP=#AlertvarP#&Ialert=#AlertvarT#&AlertvarI=#AlertvarI#&AlertvarM=#AlertvarM#&AlertvarN=#AlertvarN#";
 						</script>
 					</cfoutput>
                     <cfabort>
                  </cfif>
 				<cfif ( isdefined("form.loadToSaveToCarrierPage") and len(trim(form.loadToSaveToCarrierPage)) gt 1 )>
-							<cfif isdefined("form.editid") and len(form.editid) gt 1>
-							   
-								<cfset AlertvarP=#message[1]#>
-								<cfset AlertvarT=#message[2]#>
-								<cfset AlertvarI=#message[3]#>
-							<cfelse>
-							    
-								<cfset AlertvarP=#message[1]#>
-								<cfset AlertvarT=#message[2]#>
-								<cfset AlertvarI=#message[3]#>
-							</cfif>
-				 
-                 	 <cfoutput>
+					<cfif isdefined("form.editid") and len(form.editid) gt 1>
+						<cfset AlertvarP=#message[1]#>
+						<cfset AlertvarT=#message[2]#>
+						<cfset AlertvarI=#message[3]#>
+					<cfelse>
+						<cfset AlertvarP=#message[1]#>
+						<cfset AlertvarT=#message[2]#>
+						<cfset AlertvarI=#message[3]#>
+					</cfif>
+                 	<cfoutput>
 						<script>
 							window.location = "index.cfm?event=addcarrier&#session.URLToken#";
 						</script>
 					</cfoutput>
                     <cfabort>
                  </cfif>
-				 
 				 <cfif ( isdefined("form.loadToSaveWithoutExit") and len(trim(form.loadToSaveWithoutExit)) gt 1 )>
-                        <cfinvoke component="#variables.objloadGateway#" method="getNoOfStops" LOADID="#form.loadToSaveWithoutExit#" returnvariable="request.NoOfStops" />
-                        <cfinvoke component="#variables.objloadGateway#" method="getAllLoads" loadid="#form.loadToSaveWithoutExit#"  stopNo="#request.NoOfStops#" returnvariable="qLoadsLastStop" />
-                        <cfinvoke component="#variables.objloadGateway#" method="getAllLoads" loadid="#form.loadToSaveWithoutExit#"  stopNo="0" returnvariable="qLoadsFirstStop" />
+					<cfinvoke component="#variables.objloadGateway#" method="getNoOfStops" LOADID="#form.loadToSaveWithoutExit#" returnvariable="request.NoOfStops" />
+					<cfinvoke component="#variables.objloadGateway#" method="getAllLoads" loadid="#form.loadToSaveWithoutExit#"  stopNo="#request.NoOfStops#" returnvariable="qLoadsLastStop" />
+					<cfinvoke component="#variables.objloadGateway#" method="getAllLoads" loadid="#form.loadToSaveWithoutExit#"  stopNo="0" returnvariable="qLoadsFirstStop"/> 
 				<cfelse>
 					<cfif isDefined("insertedmessage")>
-						 
-						 
 						<cfinvoke component="#variables.objloadGateway#" method="getNoOfStops" LOADID="#insertedLoadId[1]#" returnvariable="request.NoOfStops" />
                         <cfinvoke component="#variables.objloadGateway#" method="getAllLoads"  loadid="#insertedLoadId[1]#"  stopNo="#request.NoOfStops#" returnvariable="qLoadsLastStop" /> 
                         <cfinvoke component="#variables.objloadGateway#" method="getAllLoads" loadid="#insertedLoadId[1]#"  stopNo="0" returnvariable="qLoadsFirstStop" />
                  	</cfif>
-                 	
                  	<cfif isdefined("insertedLoadId") and ArrayLen(insertedLoadId) gt 1>
 					     <cfset AlertvarP=#insertedLoadId[2]#>
 						 <cfset AlertvarT=#insertedLoadId[3]#>
 						 <cfset AlertvarI=#insertedLoadId[4]#>
 						 <cfset AlertvarM=#insertedLoadId[5]#>
-						
 					<cfelse>
 					     <cfset AlertvarP="">
 						 <cfset AlertvarT="">
 						 <cfset AlertvarI="">
 						 <cfset AlertvarM="">
 					</cfif>
-					
 					<cfoutput>
+						<cfif ( isdefined("form.loadToSaveAndExit") and (form.loadToSaveAndExit) eq 2 )>
+							<script>
+								window.location = "index.cfm?event=myload&AlertvarP=#AlertvarT#&AlertvarT=#AlertvarP#&AlertvarI=#AlertvarI#&AlertvarM=#AlertvarM#";
+							</script>
+							<cfabort>
+						</cfif>
+						<cfdump var="6">
 						<script>
-							window.location = "index.cfm?event=myLoad&AlertvarP=#AlertvarP#&AlertvarT=#AlertvarT#&AlertvarI=#AlertvarI#&AlertvarM=#AlertvarM#";
+							window.location = "index.cfm?event=addload&loadid=#insertedLoadId[1]#&AlertvarP=#AlertvarT#&AlertvarT=#AlertvarP#&AlertvarI=#AlertvarI#&AlertvarM=#AlertvarM#";
 							// <!--- window.location = "index.cfm?event=addload&loadid=#insertedLoadId[1]#&AlertvarP=#AlertvarP#&AlertvarT=#AlertvarT#&AlertvarI=#AlertvarI#&" --->
 						</script>
 					</cfoutput>
-	 
 				 </cfif> 
 				<cfif isdefined("form.LoadNumber") and len(form.LoadNumber) eq "">
-							   
-								<cfset AlertvarP=#message[1]#>
-								<cfset AlertvarT=#message[2]#>
-								<cfset AlertvarI=#message[3]#>
-				 
+					<cfset AlertvarP=#message[1]#>
+					<cfset AlertvarT=#message[2]#>
+					<cfset AlertvarI=#message[3]#>
 				    <cfoutput>
 						<script>
 							window.location = "index.cfm?event=myLoad&AlertvarP=#AlertvarP#&AlertvarT=#AlertvarT#&AlertvarI=#AlertvarI#";
@@ -226,20 +220,17 @@
 				</cfif>
 				<cfif isdefined("form.loadToSaveWithoutExit") and len(form.loadToSaveWithoutExit) gt 30 and form.loadToCarrierFilter neq 'true' >
 				<cfif isdefined("form.editid") and len(form.editid) gt 1>
-				 
-							    
-								<cfset AlertvarP=#message[1]#>
-								<cfset AlertvarT=#message[2]#>
-								<cfset AlertvarI=#message[3]#>
-								<cfset AlertvarM=#message[4]#>
-								<cfset AlertvarN=#message[5]#>
+					<cfset AlertvarP=#message[1]#>
+					<cfset AlertvarT=#message[2]#>
+					<cfset AlertvarI=#message[3]#>
+					<cfset AlertvarM=#message[4]#>
+					<cfset AlertvarN=#message[5]#>
 				<cfelse>
-				<cfparam name="insertedmessage" default="">
-				<cfset insertedLoadId = insertedmessage.split("~~")>
-				 
-				<cfset AlertvarP=#insertedLoadId[2]#>
-				<cfset AlertvarT=#insertedLoadId[3]#>
-				<cfset AlertvarI=#insertedLoadId[4]#>
+					<cfparam name="insertedmessage" default="">
+					<cfset insertedLoadId = insertedmessage.split("~~")>
+					<cfset AlertvarP=#insertedLoadId[2]#>
+					<cfset AlertvarT=#insertedLoadId[3]#>
+					<cfset AlertvarI=#insertedLoadId[4]#>
 				</cfif>
 			
 				<!--- BEGIN: Fix for issue in redirection Date:19 Sep 2013 --->
@@ -248,14 +239,14 @@
 				<!--- END: Fix for issue in redirection Date:19 Sep 2013 --->
 					<cfoutput>
 						<script>
-							window.location = "index.cfm?event=addload&loadid=#form.loadToSaveWithoutExit#&Palert=#AlertvarP#&Talert=#AlertvarT#&Ialert=#AlertvarI#&AlertvarM=#AlertvarM#&AlertvarN=#AlertvarN#";
+						window.location = "index.cfm?event=addload&loadid=#form.loadToSaveWithoutExit#&Palert=#AlertvarT#&Ialert=#AlertvarI#&AlertvarM=#AlertvarM#&AlertvarN=#AlertvarN#";
+						//<!---	window.location = "index.cfm?event=addload&loadid=#form.loadToSaveWithoutExit#&Palert=#AlertvarP#&Talert=#AlertvarT#&Ialert=#AlertvarI#&AlertvarM=#AlertvarM#&AlertvarN=#AlertvarN#";*/
 //                            var AlertvarP = #AlertvarP#;
 //                            var AlertvarT = #AlertvarT#;
 //                            var AlertvarI = "#AlertvarI#";
-//                            window.location = "index.cfm?event=addload&loadid=#form.loadToSaveWithoutExit#";
+//                            window.location = "index.cfm?event=addload&loadid=#form.loadToSaveWithoutExit#";--->
 						</script>
 					</cfoutput>
-			    
                 <cfelseif (form.loadToCarrierFilter eq true and len(trim("form.loadToSaveWithoutExit") gt 1)  )>
                 <!---and ( isdefined("form.loadToSaveWithoutExit") and len(trim(form.loadToSaveWithoutExit)) gt 1 ) and trim(insertedLoadId) neq '' --->
 	                 <cfoutput>
@@ -263,8 +254,6 @@
 							window.location='index.cfm?event=carrier&#session.URLToken#&carrierfilter=true&equipment=#qLoadsLastStop.CONSIGNEEEQUIPMENTID#&consigneecity=#qLoadsLastStop.CONSIGNEECITY#&consigneestate=#qLoadsLastStop.CONSIGNEESTATE#&consigneeZipcode=#qLoadsLastStop.CONSIGNEEPOSTALCODE#&shippercity=#qLoadsFirstStop.SHIPPERCITY#&shipperstate=#qLoadsFirstStop.SHIPPERSTATE#&shipperZipcode=#qLoadsFirstStop.SHIPPERPOSTALCODE#&mytest=1';
 						</script>
 					</cfoutput>
-                
-                
 				<cfelse>
 					<cfset request.myLoadsAgentUserName = ''>
 					<cfset request.subnavigation = includeTemplate("views/admin/loadNav.cfm", true) />
@@ -333,8 +322,12 @@
 			<cfcase value="BOLReport:print">
 			  <cfset formStruct = structNew()>
 			  <cfset formStruct = form>
+				<cfset Secret = application.dsn>
+				<cfset TheKey = 'NAMASKARAM'>
+				<cfset Encrypted = Encrypt(Secret, TheKey)>
+				<cfset dsn = ToBase64(Encrypted)>
                  <cfif isdefined("url.loadid") and len(url.loadid) gt 1>
-					  <cflocation url="../reports/loadreportForBOL.cfm?loadid=#url.loadid#" />
+					  <cflocation url="../reports/loadreportForBOL.cfm?loadid=#url.loadid#&dsn=#dsn#" />
 				 </cfif>
               	<cfset includeTemplate("views/templates/maintemplate.cfm") />
             </cfcase>

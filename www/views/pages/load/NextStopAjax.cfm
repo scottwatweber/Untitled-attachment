@@ -44,9 +44,31 @@
 			<div class="white-con-area">
 				<div id="stop#stopNumber#" style="display:none">
 					<div id="tabs#stopNumber#" class="tabsload">
-						<ul>
+						<ul style="height:27px;">
 							<li><a href="##tabs-1">Stop #stopNumber#</a></li>
 							<li><a href="index.cfm?event=loadIntermodal&stopno=#stopNumber#&loadID=#loadID#&#Session.URLToken#">Intermodal</a></li>
+							<div style="float: left;width: 23%;margin-left: 27px;">
+								<div class="form-con" style="width:103%" id="StopNo#stopNumber#">
+									<ul class="load-link" id="ulStopNo#stopNumber#" style="line-height:26px;">
+										<cfif IsDefined("loadIDN")>
+											<cfloop from="1" to="#totStops#" index='stpNoid'>
+												<cfif stpNoid is 1>
+													<li><a href="##StopNo#stpNoid#">###stpNoid#</a></li>
+												<cfelse>
+													<li><a href="##StopNo#stpNoid#">###stpNoid#</a></li>
+												</cfif>
+											</cfloop>
+										<cfelse>
+											<li><a href="##StopNo#stpNoid#">###stopNumber#</a></li>
+										</cfif>
+										<!--- <li><a href="##">##2</a></li><li><a href="##">##3</a></li> --->
+									</ul>
+									<div class="clear"></div>
+								</div>
+							</div>
+							<div style="float: left; width: 56%;height: 26px;">
+								<h2 style="color:white;font-weight:bold;margin-top: -8px;">Load###Ucase(loadnumber)#</h2>
+							</div>
 						</ul>
 						<div id="tabs-1">
 							<cfinclude template="loadStopAjax.cfm">
@@ -77,7 +99,7 @@
 						<cfelse>
 							<div class="rt-button">
 								<input name="submit" type="submit" class="green-btn" onClick="return saveButStayOnPage('#url.loadid#');" onFocus="checkUnload();" value="Save" disabled="disabled"/>
-								<input name="submit" type="submit" class="green-btn" onClick="return saveButExitPage('#url.loadid#');" onfocus="checkUnload();" value="Save & Exit"  disabled="disabled" />
+								<input name="submit" type="submit" class="green-btn" onClick="return saveButExitPage('2');" onfocus="checkUnload();" value="Save & Exit"  disabled="disabled" />
 								<input name="" type="button" class="bttn" onclick="javascript:history.back();" value="Back" />
 							</div>
 						</cfif>

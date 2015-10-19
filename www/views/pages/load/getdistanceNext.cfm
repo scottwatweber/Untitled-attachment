@@ -19,10 +19,11 @@
 <!--- <cfajaximport params="#{googlemapkey='#application.gAPI#'}#">
 <div style="width:50px;height:50px;display:none;"><cfmap name="mainMap" centeraddress="HUNTSVILLE" showcentermarker="false" zoomlevel="13" /></div>--->
 	<!--- <input name="consigneeZipcode#stopNumber#" id="consigneeZipcode#stopNumber#" value="#Consigneezipcode#" type="text" onchange="getLongitudeLatitudeNext(load,#stopNumber#);ClaculateDistanceNext(load,#stopNumber#);addressChanged(#stopNumber#);"  onkeyup="showChangeAlert('consignee',#stopNumber#);"/> --->
-	<cfif #Consigneezipcode# neq ''>
-		<input tabindex="#evaluate(currentTab+1)#" name="consigneeZipcode#stopNumber#" id="consigneeZipcode#stopNumber#" value="#Consigneezipcode#" type="text" onchange="getLongitudeLatitudeNext(load,#stopNumber#);ClaculateDistanceNext(load,#stopNumber#);addressChanged(#stopNumber#);"  onkeyup="showChangeAlert('consignee',#stopNumber#);"/>
+	
+	<cfif structkeyexists(url,"loadid") and len(url.loadid) gt 1>
+		<input tabindex="" name="consigneeZipcode#stopNumber#" id="consigneeZipcode#stopNumber#" value="#Consigneezipcode#" type="text" onchange="getLongitudeLatitudeNext(load,#stopNumber#);ClaculateDistanceNext(load,#stopNumber#);addressChanged(#stopNumber#);"  onkeyup="showChangeAlert('consignee',#stopNumber#);"/>
 	<cfelse>
-		<input name="consigneeZipcode#stopNumber#" id="consigneeZipcode#stopNumber#" value="#Consigneezipcode#" type="text" onchange="getLongitudeLatitudeNext(load,#stopNumber#);ClaculateDistanceNext(load,#stopNumber#);addressChanged(#stopNumber#);"  onkeyup="showChangeAlert('consignee',#stopNumber#);"/>
+		<input tabindex="" name="consigneeZipcode#stopNumber#"  id="consigneeZipcode#stopNumber#" value="#Consigneezipcode#" type="text" onchange="getLongitudeLatitudeNext(load,#stopNumber#);ClaculateDistanceNext(load,#stopNumber#);addressChanged(#stopNumber#);"  onkeyup="showChangeAlert('consignee',#stopNumber#);"/>
 	</cfif>
 	<input type="hidden" name="result1#stopNumber#" id="result1#stopNumber#" value="#result1#" >
 	<input type="hidden" name="result2#stopNumber#" id="result2#stopNumber#" value="#result2#" >

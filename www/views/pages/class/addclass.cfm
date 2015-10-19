@@ -17,10 +17,16 @@
 </cfif>
 </cfsilent>
 <cfif isdefined("url.classid") and len(trim(url.classid)) gt 1>
-<div class="search-panel"><div class="delbutton"><a href="index.cfm?event=class&classid=#editid#&#session.URLToken#" onclick="return confirm('Are you sure to delete it ?');">  Delete</a></div></div>	
-<h1>Edit Class <span style="padding-left:180px;">#Ucase(ClassName)#</span></h1>
+<div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
+	<div class="search-panel"><div class="delbutton"><a href="index.cfm?event=class&classid=#editid#&#session.URLToken#" onclick="return confirm('Are you sure to delete it ?');">  Delete</a></div></div>	
+	<div style="float: left;"><h2 style="color:white;font-weight:bold;margin-left: 12px;">Edit Class <span style="padding-left:180px;">#Ucase(ClassName)#</span></h2></div>
+</div>
+<div style="clear:left;"></div>
 <cfelse>
-<h1>Add New Class</h1>
+<div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
+	<div style="float: left;"><h2 style="color:white;font-weight:bold;margin-left: 12px;">Add New Class</h2></div>
+</div>
+<div style="clear:left;"></div>
 </cfif>
 <div class="white-con-area">
 <div class="white-top"></div>

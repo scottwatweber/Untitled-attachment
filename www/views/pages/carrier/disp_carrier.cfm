@@ -129,9 +129,10 @@
 	<cfif isdefined("url.carrierid") and len(url.carrierid) gt 1>	
 		<cfinvoke component="#variables.objCarrierGateway#" method="deleteCarriers" CarrierID="#url.carrierid#" returnvariable="message1" />
 		<cfif message1 eq 1>
-		<cfinvoke component="#variables.objCarrierGateway#" method="deleteCarriersoffices" CarrierID="#url.carrierid#" returnvariable="message" />
+			<cfinvoke component="#variables.objCarrierGateway#" method="deleteCarriersoffices" CarrierID="#url.carrierid#" returnvariable="message" />
+			<cfinvoke component="#variables.objCarrierGateway#" method="deleteCarrierLipublicfmcsa" CarrierID="#url.carrierid#" returnvariable="message" />
 		<cfelse>
-		<cfset message="Deletion is not allowed because data is active in other records.">
+			<cfset message="Deletion is not allowed because data is active in other records.">
 		</cfif>       			
 		<cfinvoke component="#variables.objCarrierGateway#" method="getSearchedCarrier" searchText="" pageNo="1" returnvariable="qCarrier" />
 	</cfif>

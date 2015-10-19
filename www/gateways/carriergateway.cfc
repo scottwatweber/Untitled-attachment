@@ -144,6 +144,28 @@
 	 </cfquery>
 	 <cfset i++ >
   </cfloop>
+  <cfquery name="qryInsertLifmcaDetails" datasource="#variables.dsn#">
+	   insert into lipublicfmcsa(InsuranceCompanyName,InsuranceCompanyAddress,carrierId,ExpirationDate,DateCreated,commonStatus,contractStatus,BrokerStatus,commonAppPending,contractAppPending,BrokerAppPending,BIPDInsRequired,cargoInsRequired,BIPDInsonFile,cargoInsonFile,householdGoods,CARGOExpirationDate)
+		values( 
+				<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.InsuranceCompanyName#">,
+				<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.InsuranceCompanyAddress#">,
+				<cfqueryparam cfsqltype="cf_sql_varchar" value="#qryinsertcarrier.carrierId#">,
+				<cfqueryparam cfsqltype="cf_sql_timestamp" value="#arguments.formStruct.ExpirationDate#"  null="#yesNoFormat(NOT len(arguments.formStruct.ExpirationDate))#">,
+				<cfqueryparam cfsqltype="cf_sql_timestamp" value="#now()#">,
+				<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.commonStatus#">,
+				<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.contractStatus#">,
+				<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BrokerStatus#">,
+				<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.commonAppPending#">,
+				<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.contractAppPending#">,
+				<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BrokerAppPending#">,
+				<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BIPDInsRequired#">,
+				<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.cargoInsRequired#">,
+				<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BIPDInsonFile#">,
+				<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.cargoInsonFile#">,
+				<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.householdGoods#">,
+				<cfqueryparam cfsqltype="cf_sql_timestamp" value="#arguments.formStruct.CARGOExpirationDate#" null="#yesNoFormat(NOT len(arguments.formStruct.CARGOExpirationDate))#">
+				)
+    </cfquery>
 <cfreturn "Carrier has been added successfully.">
 </cffunction>
 
@@ -465,6 +487,57 @@
 	 </cfquery>
 	 <cfset i++ >
   </cfloop>
+   <cfquery name="qryrecorExistsForlipublicfmcsa" datasource="#variables.dsn#">
+		select * from  lipublicfmcsa
+		where carrierId=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.editid#">
+   </cfquery>
+   <cfif qryrecorExistsForlipublicfmcsa.recordcount>
+		 <cfquery name="qryUpdateLifmcaDetails" datasource="#variables.dsn#">
+		   update lipublicfmcsa 
+			set 
+			InsuranceCompanyName=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.InsuranceCompanyName#">,
+			InsuranceCompanyAddress= <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.InsuranceCompanyAddress#">,
+			ExpirationDate=<cfqueryparam cfsqltype="cf_sql_timestamp" value="#arguments.formStruct.ExpirationDate#"  null="#yesNoFormat(NOT len(arguments.formStruct.ExpirationDate))#">,
+			DateModified=<cfqueryparam cfsqltype="cf_sql_timestamp" value="#now()#">,
+			commonStatus=<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.commonStatus#">,
+			contractStatus = <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.contractStatus#">,
+			BrokerStatus= <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BrokerStatus#">,
+			commonAppPending= <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.commonAppPending#">,
+			contractAppPending=  <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.contractAppPending#">,
+			BrokerAppPending=  <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BrokerAppPending#">,
+			BIPDInsRequired= <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BIPDInsRequired#">,
+			cargoInsRequired= <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.cargoInsRequired#">,
+			BIPDInsonFile=<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BIPDInsonFile#">,
+			cargoInsonFile= <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.cargoInsonFile#">,
+			householdGoods= <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.householdGoods#">,
+			CARGOExpirationDate= <cfqueryparam cfsqltype="cf_sql_timestamp" value="#arguments.formStruct.CARGOExpirationDate#" null="#yesNoFormat(NOT len(arguments.formStruct.CARGOExpirationDate))#">
+		where
+			carrierId=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.editid#">
+  </cfquery>
+	<cfelse>
+		 <cfquery name="qryInsertLifmcaDetails" datasource="#variables.dsn#">
+		   insert into lipublicfmcsa(InsuranceCompanyName,InsuranceCompanyAddress,carrierId,ExpirationDate,DateCreated,commonStatus,contractStatus,BrokerStatus,commonAppPending,contractAppPending,BrokerAppPending,BIPDInsRequired,cargoInsRequired,BIPDInsonFile,cargoInsonFile,householdGoods,CARGOExpirationDate)
+			values( 
+					<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.InsuranceCompanyName#">,
+					<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.InsuranceCompanyAddress#">,
+					<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.editid#">,
+					<cfqueryparam cfsqltype="cf_sql_timestamp" value="#arguments.formStruct.ExpirationDate#"  null="#yesNoFormat(NOT len(arguments.formStruct.ExpirationDate))#">,
+					<cfqueryparam cfsqltype="cf_sql_timestamp" value="#now()#">,
+					<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.commonStatus#">,
+					<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.contractStatus#">,
+					<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BrokerStatus#">,
+					<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.commonAppPending#">,
+					<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.contractAppPending#">,
+					<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BrokerAppPending#">,
+					<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BIPDInsRequired#">,
+					<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.cargoInsRequired#">,
+					<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BIPDInsonFile#">,
+					<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.cargoInsonFile#">,
+					<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.householdGoods#">,
+					<cfqueryparam cfsqltype="cf_sql_timestamp" value="#arguments.formStruct.CARGOExpirationDate#" null="#yesNoFormat(NOT len(arguments.formStruct.CARGOExpirationDate))#">
+					)
+		</cfquery>
+   </cfif>
  <cfreturn "Carrier has been updated successfully.">
 </cffunction>
 
@@ -642,6 +715,19 @@
         </cftry>  
 </cffunction>
 
+<cffunction name="deleteCarrierLipublicfmcsa" access="public" returntype="any">
+    <cfargument name="CarrierID" type="any" required="yes">
+        <cftry>
+        <cfquery name="qrydelete" datasource="#variables.dsn#">
+            delete from lipublicfmcsa
+            where carrierId= <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.CarrierID#">
+        </cfquery>
+        <cfreturn "Recored has been deleted successfully.">
+        <cfcatch type="any">
+            <cfreturn "Deletion is not allowed because data is active in other records. ">
+        </cfcatch>
+        </cftry>  
+</cffunction>
 <!--- Get Search Agent --->
 <cffunction name="getSearchedCarrier" access="public" output="false" returntype="query">
 	<cfargument name="searchText" required="yes" type="any">
@@ -864,5 +950,39 @@
 	</cfquery>
 	<cfreturn qGetCommodityById >
 </cffunction> 
-
+<!---update lifmca details--->
+<cffunction name="UpdatelifmcaDetails" access="public" output="false" returntype="query">
+    <cfargument name="formStruct" type="struct"  required="yes">
+      <cfquery name="qryUpdateLifmcaDetails" datasource="#variables.dsn#">
+           update lipublicfmcsa 
+			set 
+			InsuranceCompanyName=<cfqueryparam cfsqltype="cf_sql_varchar" value="#argument.formStruct.InsuranceCompanyName#">,
+			InsuranceCompanyAddress= <cfqueryparam cfsqltype="cf_sql_varchar" value="#argument.formStruct.InsuranceCompanyAddress#">,
+			ExpirationDate=<cfqueryparam cfsqltype="cf_sql_timestamp" value="#argument.formStruct.ExpirationDate#" null="#yesNoFormat(NOT len(arguments.formStruct.ExpirationDate))#">,
+			DateModified=<cfqueryparam cfsqltype="cf_sql_timestamp" value="#now()#">,
+			commonStatus=<cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.commonStatus#">,
+			contractStatus = <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.contractStatus#">,
+			BrokerStatus= <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BrokerStatus#">,
+			commonAppPending= <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.commonAppPending#">,
+			contractAppPending=  <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.contractAppPending#">,
+			BrokerAppPending=  <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BrokerAppPending#">,
+			BIPDInsRequired= <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.BIPDInsRequired#">,
+			cargoInsRequired= <cfqueryparam cfsqltype="cf_sql_bit" value="#session.adminUserName#">,
+			BIPDInsonFile=<cfqueryparam cfsqltype="cf_sql_bit" value="#Now()#">,
+			cargoInsonFile= <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.City#">,
+			householdGoods= <cfqueryparam cfsqltype="cf_sql_bit" value="#arguments.formStruct.Country#">
+		where 
+			carrierId=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.formStruct.carrierId#">
+      </cfquery>
+	  <cfreturn 'LI Web site data has been updated successfully.'>
+</cffunction>
+<!---get lifmcaDetails--->
+<cffunction name="getlifmcaDetails" access="public" output="false" returntype="query">
+    <cfargument name="carrierid" type="string"  required="yes">
+      <cfquery name="qrygetlifmcaDetails" datasource="#variables.dsn#">
+           select * from lipublicfmcsa 
+			where carrierId=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.carrierId#">
+      </cfquery>
+	  <cfreturn qrygetlifmcaDetails>
+</cffunction>
 </cfcomponent>

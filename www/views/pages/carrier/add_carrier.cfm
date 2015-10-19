@@ -1,358 +1,384 @@
 
 <cfoutput>
-<cfajaxproxy cfc="#request.cfcpath#.loadgateway" jsclassname="ajaxLoadCutomer">
-
-<cfsilent>
- <cfinvoke component="#variables.objloadGateway#" method="getSystemSetupOptions" returnvariable="request.qGetSystemSetupOptions" />
- <cfset requireValidMCNumber = request.qGetSystemSetupOptions.requireValidMCNumber>
-<cfinvoke component="#variables.objloadGateway#" method="getcurAgentMaildetails" returnvariable="request.qcurMailAgentdetails" employeID="#session.empid#" />
+	<cfajaxproxy cfc="#request.cfcpath#.loadgateway" jsclassname="ajaxLoadCutomer">
+	<cfinvoke component="#variables.objloadGateway#" method="getSystemSetupOptions" returnvariable="request.qGetSystemSetupOptions" />
+	<cfset requireValidMCNumber = request.qGetSystemSetupOptions.requireValidMCNumber>
+	<cfinvoke component="#variables.objloadGateway#" method="getcurAgentMaildetails" returnvariable="request.qcurMailAgentdetails" employeID="#session.empid#" />
 	<cfif request.qcurMailAgentdetails.recordcount gt 0 and (request.qcurMailAgentdetails.SmtpAddress eq "" or request.qcurMailAgentdetails.SmtpUsername eq "" or request.qcurMailAgentdetails.SmtpPort eq "" or request.qcurMailAgentdetails.SmtpPassword eq "" or request.qcurMailAgentdetails.SmtpPort eq 0)>
-	  <cfset mailsettings = "false">
-  <cfelse>
-	  <cfset mailsettings = "true">
-  </cfif>
+		<cfset mailsettings = "false">
+	<cfelse>
+		<cfset mailsettings = "true">
+	</cfif>
 	<cfif request.qGetSystemSetupOptions.freightBroker>
 		<cfset variables.freightBroker = "Carrier">
 	<cfelse>
 		<cfset variables.freightBroker = "Driver">
 	</cfif>
-</cfsilent>
+	<!---Init the default value------->
+	<cfparam name="pv_apcant_id" default="">
+	<cfparam name="pv_usdot_no" default="">
+	<cfparam name="pv_pref_docket" default="">
+	<cfparam name="pv_legal_name" default="">
+	<cfparam name="AuthType_Common_status" default="">
+	<cfparam name="AuthType_Common_appPending" default="">
+	<cfparam name="AuthType_Contract_status" default="">
+	<cfparam name="AuthType_Contract_appPending" default="">
+	<cfparam name="AuthType_Broker_status" default="">
+	<cfparam name="AuthType_Broker_appPending" default="">
+	<cfparam name="household_goods" default="">
+	<cfparam name="bipd_Insurance_required" default="">
+	<cfparam name="bipd_Insurance_on_file" default="">
+	<cfparam name="cargo_Insurance_required" default="">
+	<cfparam name="cargo_Insurance_on_file" default="">
+	<cfparam name="webLegger" default="">
+	<cfparam name="MCNumber" default="">
+	<cfparam name="businessAddress" default="">
+	<cfparam name="businessPhone" default="">
+	<cfparam name="insCarrier" default="">
+	<cfparam name="insPolicy" default="">
+	<cfparam name="insAgentName" default="">
+	<cfparam name="insCarrierDetails" default="">
+	<cfparam name="Status" default="">
+	<cfparam name="StatusValID" default="">
+	<cfparam name="StatusValCODE" default="">
+	<cfparam name="CarrierName" default="">
+	<cfparam name="City" default="">
+	<cfparam name="State" default="">
+	<cfparam name="State1" default="">
+	<cfparam name="Address" default="">
+	<cfparam name="Zipcode" default="">
+	<cfparam name="Country" default="">
+	<cfparam name="Country1" default="9bc066a3-2961-4410-b4ed-537cf4ee282a">
+	<cfparam name="Phone" default="">
+	<cfparam name="CellPhone" default="">
+	<cfparam name="Fax" default="">
+	<cfparam name="RemitName" default="">
+	<cfparam name="RemitAddress" default="">
+	<cfparam name="RemitCity" default="">
+	<cfparam name="RemitState" default="">
+	<cfparam name="RemitZipCode" default="">
+	<cfparam name="RemitContact" default="">
+	<cfparam name="RemitPhone" default="">
+	<cfparam name="RemitFax" default="">
+	<cfparam name="Tollfree" default="">
+	<cfparam name="Email" default="">
+	<cfparam name="Website" default="">
+	<cfparam name="InsCompany" default="">
+	<cfparam name="InsComPhone" default="">
+	<cfparam name="InsAgent" default="">
+	<cfparam name="InsAgentPhone" default="">
+	<cfparam name="InsPolicyNo" default="">
+	<cfparam name="InsExpDate" default="">
+	<cfparam name="InsExpDateLive" default="">
+	<cfparam name="CargoAmount" default="">
+	<cfparam name="Certificate" default="">
+	<cfparam name="Terms" default="">
+	<cfparam name="TaxID" default="">
+	<cfparam name="Track1099" default="">
+	<cfparam name="RegNumber" default="">
+	<cfparam name="ContactPerson" default="">
+	<!---<cfparam name="RatePerMile" default="0">--->
+	<cfparam name="Dispatcher" default="">
+	<cfparam name="TaxID" default="">
+	<cfparam name="equipment" default="">
+	<cfparam name="InsLimit" default="">
+	<cfparam name="CommRate" default="">
+	<cfparam name="CarrierInstructions" default="">
+	<cfparam name="EquipmentNotes" default="">
+	<cfparam name="Website" default="">
+	<cfparam name="editid" default="0">
+	<cfparam name="state11" default="">
+	<cfparam name="url.mcNo" default="0">
+	<cfparam name="StateValCODE" default="">
+	<cfparam name="notes" default="">
+	<cfparam name="variables.InsuranceCompanyName" default="">
+	<cfparam name="variables.InsuranceCompanyAddress" default="">
+	<cfparam name="variables.ExpirationDate" default="">
+	<cfparam name="variables.commonStatus" default="1">
+	<cfparam name="variables.contractstatus" default="1">
+	<cfparam name="variables.brokerStatus" default="1">
+	<cfparam name="variables.commonAppPending" default="1">
+	<cfparam name="variables.contractAppPending" default="1">
+	<cfparam name="variables.BrokerAppPending" default="1">
+	<cfparam name="variables.BIPDInsRequired" default="1">
+	<cfparam name="variables.cargoInsRequired" default="1">
+	<cfparam name="variables.BIPDInsonFile" default="1">
+	<cfparam name="variables.householdGoods" default="1">
+	<cfparam name="variables.cargoInsonFile" default="1">
+	<cfparam name="variables.CARGOExpirationDate" default="">
+	<!--- Encrypt String --->
+	<cfset Secret = application.dsn>
+	<cfset TheKey = 'NAMASKARAM'>
+	<cfset Encrypted = Encrypt(Secret, TheKey)>
+	<cfset dsn = ToBase64(Encrypted)>
+	<cfset CarrOrgName="">
+	<cfset getMCNoURL=""> 
+	<cfif isdefined('url.mcNo') and len(url.mcNo) gt 1>
+		<cfset MCNumber=url.mcNo>
+	</cfif>
+	<script type="text/javascript" language="javascript" src="javascripts/jquery.js"></script>
+	<script type='text/javascript' language="javascript" src='javascripts/jquery.autocomplete.js'></script>
+	<script type="text/javascript">
+		$(function() {
 
-<!---Init the default value------->
-<cfparam name="pv_apcant_id" default="">
-<cfparam name="pv_usdot_no" default="">
-<cfparam name="pv_pref_docket" default="">
-<cfparam name="pv_legal_name" default="">
-<cfparam name="AuthType_Common_status" default="">
-<cfparam name="AuthType_Common_appPending" default="">
-<cfparam name="AuthType_Contract_status" default="">
-<cfparam name="AuthType_Contract_appPending" default="">
-<cfparam name="AuthType_Broker_status" default="">
-<cfparam name="AuthType_Broker_appPending" default="">
-<cfparam name="household_goods" default="">
-<cfparam name="bipd_Insurance_required" default="">
-<cfparam name="bipd_Insurance_on_file" default="">
-<cfparam name="cargo_Insurance_required" default="">
-<cfparam name="cargo_Insurance_on_file" default="">
-<cfparam name="webLegger" default="">
-<cfparam name="MCNumber" default="">
-<cfparam name="businessAddress" default="">
-<cfparam name="businessPhone" default="">
-<cfparam name="insCarrier" default="">
-<cfparam name="insPolicy" default="">
-<cfparam name="insAgentName" default="">
-<cfparam name="insCarrierDetails" default="">
-<cfparam name="Status" default="">
-<cfparam name="StatusValID" default="">
-<cfparam name="StatusValCODE" default="">
-<cfparam name="CarrierName" default="">
-<cfparam name="City" default="">
-<cfparam name="State" default="">
-<cfparam name="State1" default="">
-<cfparam name="Address" default="">
-<cfparam name="Zipcode" default="">
-<cfparam name="Country" default="">
-<cfparam name="Country1" default="9bc066a3-2961-4410-b4ed-537cf4ee282a">
-<cfparam name="Phone" default="">
-<cfparam name="CellPhone" default="">
-<cfparam name="Fax" default="">
-<cfparam name="RemitName" default="">
-<cfparam name="RemitAddress" default="">
-<cfparam name="RemitCity" default="">
-<cfparam name="RemitState" default="">
-<cfparam name="RemitZipCode" default="">
-<cfparam name="RemitContact" default="">
-<cfparam name="RemitPhone" default="">
-<cfparam name="RemitFax" default="">
-<cfparam name="Tollfree" default="">
-<cfparam name="Email" default="">
-<cfparam name="Website" default="">
-<cfparam name="InsCompany" default="">
-<cfparam name="InsComPhone" default="">
-<cfparam name="InsAgent" default="">
-<cfparam name="InsAgentPhone" default="">
-<cfparam name="InsPolicyNo" default="">
-<cfparam name="InsExpDate" default="">
-<cfparam name="InsExpDateLive" default="">
-<cfparam name="CargoAmount" default="">
-<cfparam name="Certificate" default="">
-<cfparam name="Terms" default="">
-<cfparam name="TaxID" default="">
-<cfparam name="Track1099" default="">
-<cfparam name="RegNumber" default="">
-<cfparam name="ContactPerson" default="">
-<!---<cfparam name="RatePerMile" default="0">--->
-<cfparam name="Dispatcher" default="">
-<cfparam name="TaxID" default="">
-<cfparam name="equipment" default="">
-<cfparam name="InsLimit" default="">
-<cfparam name="CommRate" default="">
-<cfparam name="CarrierInstructions" default="">
-<cfparam name="EquipmentNotes" default="">
-<cfparam name="Website" default="">
-<cfparam name="editid" default="0">
-<cfparam name="state11" default="">
-<cfparam name="url.mcNo" default="0">
-<cfparam name="StateValCODE" default="">
-<cfparam name="notes" default="">
-
-<!--- Encrypt String --->
-<cfset Secret = application.dsn>
-<cfset TheKey = 'NAMASKARAM'>
-<cfset Encrypted = Encrypt(Secret, TheKey)>
-<cfset dsn = ToBase64(Encrypted)>
-
-
-<cfset CarrOrgName="">
-<cfset getMCNoURL=""> 
-<cfif isdefined('url.mcNo') and len(url.mcNo) gt 1>
-	<cfset MCNumber=url.mcNo>
-</cfif>
-
-<script type="text/javascript" language="javascript" src="javascripts/jquery.js"></script>
-<script type='text/javascript' language="javascript" src='javascripts/jquery.autocomplete.js'></script>
-<script type="text/javascript">
-	$(function() {
-
-	// City DropBox
-		function Cityformat(mail) 
-		{
-			return mail.city + "<br/><b><u>State</u>:</b> " + mail.state+"&nbsp;&nbsp;&nbsp;<b><u>Zip</u>:</b> " + mail.zip;
-		}
-		
-		function Zipformat(mail) 
-		{
-			return mail.zip + "<br/><b><u>State</u>:</b> " + mail.state+"&nbsp;&nbsp;&nbsp;<b><u>City</u>:</b> " + mail.city;
-		}
-	
-	
-		//City 
-		$("##City, ##RemitCity").autocomplete('searchCityAutoFill.cfm', {
-		extraParams: {queryType: 'getCity'},
-		multiple: false,
-		width: 400,
-		scroll: true,
-		scrollHeight: 300,
-		cacheLength: 1,
-		highlight: false,
-		dataType: "json",
-		parse: function(data) {
-			return $.map(data, function(row) {
-				return {
-					data: row,
-					value: row.value,
-					result: row.city
-				}
-			});
-		},
-		formatItem: function(item) {
-			return Cityformat(item);
-		}
-		}).result(function(event, data, formatted) 
-		{
-			var strId = this.id;
-			if(strId == "City")
+		// City DropBox
+			function Cityformat(mail) 
 			{
-				$('##state').val(data.state);
-				$('##Zipcode').val(data.zip);
+				return mail.city + "<br/><b><u>State</u>:</b> " + mail.state+"&nbsp;&nbsp;&nbsp;<b><u>Zip</u>:</b> " + mail.zip;
 			}
-			else if(strId == "RemitCity")
+			
+			function Zipformat(mail) 
 			{
-				$('##RemitState').val(data.state);
-				$('##RemitZipcode').val(data.zip);
+				return mail.zip + "<br/><b><u>State</u>:</b> " + mail.state+"&nbsp;&nbsp;&nbsp;<b><u>City</u>:</b> " + mail.city;
 			}
-
-		});
-	
-		//zip AutoComplete
-		$("##Zipcode, ##RemitZipcode").autocomplete('searchCityAutoFill.cfm', {
 		
-		extraParams: {queryType: 'GetZip'},
-		multiple: false,
-		width: 400,
-		scroll: true,
-		scrollHeight: 300,
-		cacheLength: 5,
-		minLength: 5,
-		highlight: false,
-		dataType: "json",
-		parse: function(data) {
-			return $.map(data, function(row) {
-				return {
-					data: row,
-					value: row.value,
-					result: row.zip
-				}
-			});
-		},
-		formatItem: function(item) {
-			return Zipformat(item);
-		}
-	}).result(function(event, data, formatted) {
-		strId = this.id;
-		zipCodeVal=$('##'+strId).val();
-		//auto complete the state and city based on first 5 characters of zip code
-		if(zipCodeVal.length == 5)
-		{
-
-			var strId = this.id;
-			if(strId == "Zipcode")
+		
+			//City 
+			$("##City, ##RemitCity").autocomplete('searchCityAutoFill.cfm', {
+			extraParams: {queryType: 'getCity'},
+			multiple: false,
+			width: 400,
+			scroll: true,
+			scrollHeight: 300,
+			cacheLength: 1,
+			highlight: false,
+			dataType: "json",
+			parse: function(data) {
+				return $.map(data, function(row) {
+					return {
+						data: row,
+						value: row.value,
+						result: row.city
+					}
+				});
+			},
+			formatItem: function(item) {
+				return Cityformat(item);
+			}
+			}).result(function(event, data, formatted) 
 			{
-				initialStr = strId.substr(0, 7);
-				//Donot update a field if there is already a value entered	
-				if($('##state').val() == '')
+				var strId = this.id;
+				if(strId == "City")
 				{
 					$('##state').val(data.state);
-				}	
-				
-				if($('##City').val() == '')
-				{
-					$('##City').val(data.city);	
+					$('##Zipcode').val(data.zip);
 				}
+				else if(strId == "RemitCity")
+				{
+					$('##RemitState').val(data.state);
+					$('##RemitZipcode').val(data.zip);
+				}
+
+			});
+		
+			//zip AutoComplete
+			$("##Zipcode, ##RemitZipcode").autocomplete('searchCityAutoFill.cfm', {
+			
+			extraParams: {queryType: 'GetZip'},
+			multiple: false,
+			width: 400,
+			scroll: true,
+			scrollHeight: 300,
+			cacheLength: 5,
+			minLength: 5,
+			highlight: false,
+			dataType: "json",
+			parse: function(data) {
+				return $.map(data, function(row) {
+					return {
+						data: row,
+						value: row.value,
+						result: row.zip
+					}
+				});
+			},
+			formatItem: function(item) {
+				return Zipformat(item);
 			}
-			else if(strId == "RemitZipcode")
+		}).result(function(event, data, formatted) {
+			strId = this.id;
+			zipCodeVal=$('##'+strId).val();
+			//auto complete the state and city based on first 5 characters of zip code
+			if(zipCodeVal.length == 5)
 			{
-				$('##RemitState').val(data.state);
-				$('##RemitCity').val(data.city);
-			}
-			
-			
-			
-		}	
-		});
-	
-		
-		
-	
-});
-function popitup(url) {
-	newwindow=window.open(url,'Map','height=600,width=600');
-	if (window.focus) {newwindow.focus()}
-	return false;
-}
-function InsAgentPhone1() {
-  var q=$('##InsAgentPhone').val();
-if(q.length>=50)
-{	
-	alert('Agent Phone needs to be corrected or text length must be less than 50' );
-  return false;
- }
-}	
 
-function addNewRow(){
-	var selectOptions = $('.sel_commodityType').html();
-	var currentRowCount = parseInt($('.commodityWrap tbody tr').length);
-	var newRowCont = currentRowCount+1;
-	var appenString = '<tr><td height="20" class="lft-bg">&nbsp;</td><td valign="middle" align="left" class="normaltd" style="width:274px;position:relative;top:-5px;padding:8px 0px;">';
-	appenString  = appenString + '<select class="sel_commodityType" id="type" style="width:240px;height:26px;" name="sel_commodityType_'+newRowCont+'">'+selectOptions+'</select>';
-	appenString  = appenString + '<input type="hidden" name="numberOfCommodity" value="1"></td>';
-	appenString  =	appenString + '<td valign="middle" align="left" class="normaltd" style="width:142px;position:relative;top:-5px;"><input type="text" class="txt_carrRateComm q-textbox" value="$0.00" name="txt_carrRateComm_'+newRowCont+'"></td>';
-	appenString  = appenString + '<td valign="middle" colspan="2" align="left" class="normaltd" style="width:132px;position:relative;top:-5px;"><input type="text" class="txt_custRateComm q-textbox" value="0.00%" name="txt_custRateComm_'+newRowCont+'"></td>';
-	
-						
-	$('.commodityWrap tbody').append(appenString);
-	$(appenString).find('.sel_commodityType').attr('name', 'sel_commodityType_' + parseInt(currentRowCount)+1);
-}
-
-function ConfirmMessage(index,stopno){
-	if(stopno !=0){
-		index=index+""+stopno;
+				var strId = this.id;
+				if(strId == "Zipcode")
+				{
+					initialStr = strId.substr(0, 7);
+					//Donot update a field if there is already a value entered	
+					if($('##state').val() == '')
+					{
+						$('##state').val(data.state);
+					}	
+					
+					if($('##City').val() == '')
+					{
+						$('##City').val(data.city);	
+					}
+				}
+				else if(strId == "RemitZipcode")
+				{
+					$('##RemitState').val(data.state);
+					$('##RemitCity').val(data.city);
+				}
+				
+				
+				
+			}	
+			});
+		
+			
+			
+		
+	});
+	function popitup(url) {
+		newwindow=window.open(url,'Map','height=600,width=600');
+		if (window.focus) {newwindow.focus()}
+		return false;
 	}
-	percentagedata=$('##txt_custRateComm_'+index).val();
-	percentagedata=percentagedata.replace("%", "");	
-	if(percentagedata.indexOf("%")==-1){
-		if(percentagedata<1){
-			percentagedata=percentagedata*100;			
+	function InsAgentPhone1() {
+	  var q=$('##InsAgentPhone').val();
+	if(q.length>=50)
+	{	
+		alert('Agent Phone needs to be corrected or text length must be less than 50' );
+	  return false;
+	 }
+	}	
+
+	function addNewRow(){
+		var selectOptions = $('.sel_commodityType').html();
+		var currentRowCount = parseInt($('.commodityWrap tbody tr').length);
+		var newRowCont = currentRowCount+1;
+		var appenString = '<tr><td height="20" class="lft-bg">&nbsp;</td><td valign="middle" align="left" class="normaltd" style="width:274px;position:relative;top:-5px;padding:8px 0px;">';
+		appenString  = appenString + '<select class="sel_commodityType" id="type" style="width:240px;height:26px;" name="sel_commodityType_'+newRowCont+'">'+selectOptions+'</select>';
+		appenString  = appenString + '<input type="hidden" name="numberOfCommodity" value="1"></td>';
+		appenString  =	appenString + '<td valign="middle" align="left" class="normaltd" style="width:142px;position:relative;top:-5px;"><input type="text" class="txt_carrRateComm q-textbox" value="$0.00" name="txt_carrRateComm_'+newRowCont+'"></td>';
+		appenString  = appenString + '<td valign="middle" colspan="2" align="left" class="normaltd" style="width:132px;position:relative;top:-5px;"><input type="text" class="txt_custRateComm q-textbox" value="0.00%" name="txt_custRateComm_'+newRowCont+'"></td>';
+		
+							
+		$('.commodityWrap tbody').append(appenString);
+		$(appenString).find('.sel_commodityType').attr('name', 'sel_commodityType_' + parseInt(currentRowCount)+1);
+	}
+
+	function ConfirmMessage(index,stopno){
+		if(stopno !=0){
+			index=index+""+stopno;
 		}
-		var percentagedata = parseFloat(percentagedata).toFixed(2);
-		$('##txt_custRateComm_'+index).val(percentagedata+"%");
+		percentagedata=$('##txt_custRateComm_'+index).val();
+		percentagedata=percentagedata.replace("%", "");	
+		if(percentagedata.indexOf("%")==-1){
+			if(percentagedata<1){
+				percentagedata=percentagedata*100;			
+			}
+			var percentagedata = parseFloat(percentagedata).toFixed(2);
+			$('##txt_custRateComm_'+index).val(percentagedata+"%");
+		}
+		if(percentagedata.indexOf("%")>-1){
+			var percentagedata = parseFloat(percentagedata).toFixed(2);
+			$('##txt_custRateComm_'+index).val(percentagedata+"%");
+		}
 	}
-	if(percentagedata.indexOf("%")>-1){
-		var percentagedata = parseFloat(percentagedata).toFixed(2);
-		$('##txt_custRateComm_'+index).val(percentagedata+"%");
-	}
-}
-</script>
+	</script>
 
-<cfif isDefined("url.carrierid") and len(url.carrierid)>
-    <cfinvoke component="#variables.objCarrierGateway#" method="getAllCarriers" returnvariable="request.qCarrier">
-    	<cfinvokeargument name="carrierid" value="#url.carrierid#">
-    </cfinvoke>
+	<cfif isDefined("url.carrierid") and len(url.carrierid)>
+		<cfinvoke component="#variables.objCarrierGateway#" method="getAllCarriers" returnvariable="request.qCarrier">
+			<cfinvokeargument name="carrierid" value="#url.carrierid#">
+		</cfinvoke>
+		<cfinvoke component="#variables.objCarrierGateway#" method="getlifmcaDetails" returnvariable="request.qrygetlifmcaDetails">
+			<cfinvokeargument name="carrierid" value="#url.carrierid#">
+		</cfinvoke>
+		<cfif request.qrygetlifmcaDetails.recordcount>
+			<cfset variables.InsuranceCompanyName=request.qrygetlifmcaDetails.InsuranceCompanyName>
+			<cfset variables.InsuranceCompanyAddress=request.qrygetlifmcaDetails.InsuranceCompanyAddress>
+			<cfset variables.ExpirationDate=request.qrygetlifmcaDetails.ExpirationDate>
+			<cfset variables.commonStatus=request.qrygetlifmcaDetails.commonStatus>
+			<cfset variables.contractStatus=request.qrygetlifmcaDetails.contractStatus>
+			<cfset variables.brokerStatus=request.qrygetlifmcaDetails.brokerStatus>
+			<cfset variables.commonAppPending=request.qrygetlifmcaDetails.commonAppPending>
+			<cfset variables.contractAppPending=request.qrygetlifmcaDetails.contractAppPending>
+			<cfset variables.BrokerAppPending=request.qrygetlifmcaDetails.BrokerAppPending>
+			<cfset variables.BIPDInsRequired=request.qrygetlifmcaDetails.BIPDInsRequired>
+			<cfset variables.cargoInsRequired=request.qrygetlifmcaDetails.cargoInsRequired>
+			<cfset variables.BIPDInsonFile=request.qrygetlifmcaDetails.BIPDInsonFile>
+			<cfset variables.cargoInsonFile=request.qrygetlifmcaDetails.cargoInsonFile>
+			<cfset variables.householdGoods=request.qrygetlifmcaDetails.householdGoods>
+			<cfset variables.CARGOExpirationDate=request.qrygetlifmcaDetails.CARGOExpirationDate>
+		</cfif>
 		<cfset MCNumber=request.qCarrier.MCNumber>
-</cfif>
-
-<!--- if updLIData exists in the url, then do the webservice call and update the db --->
-<cfif (isdefined('url.updLIData') or len('MCNumber')) and isdefined('url.carrierID')>
-	<cfinclude template="websiteDATA.cfm">
-	<cfinvoke component="#variables.objCarrierGateway#" method="EditLIWebsiteData" returnvariable="message">
-		 <cfinvokeargument name="carrierId" value="#url.carrierID#">
-	 </cfinvoke>
-	 <cfif not StructKeyExists(url,"updLIData")>
-		<cfset message="">
-	 </cfif>
-</cfif>
-<cfset variables.objunitGateway = getGateway("gateways.unitgateway", MakeParameters("dsn=#Application.dsn#,pwdExpiryDays=#Application.pwdExpiryDays#")) >
-    
-<cfinvoke component="#variables.objunitGateway#" method="getloadUnits" status="True" returnvariable="request.qUnits" />
+		<cfset variables.carrierId=url.carrierid>
+	<cfelse>
+		<cfset variables.carrierId=0>
+						
+	</cfif>
+	<!--- if updLIData exists in the url, then do the webservice call and update the db --->
+	<!---cfif (isdefined('url.updLIData') or len('MCNumber')) and isdefined('url.carrierID')>
+		<cfinclude template="websiteDATA.cfm">
+		<cfinvoke component="#variables.objCarrierGateway#" method="EditLIWebsiteData" returnvariable="message">
+			 <cfinvokeargument name="carrierId" value="#url.carrierID#">
+		 </cfinvoke>
+		 <cfif not StructKeyExists(url,"updLIData")>
+			<cfset message="">
+		 </cfif>
+	</cfif--->
+	<cfset variables.objunitGateway = getGateway("gateways.unitgateway", MakeParameters("dsn=#Application.dsn#,pwdExpiryDays=#Application.pwdExpiryDays#")) >
+	<cfinvoke component="#variables.objunitGateway#" method="getloadUnits" status="True" returnvariable="request.qUnits" />
 <cfif isDefined("url.carrierid") and len(url.carrierid)>
 	<cfinvoke component="#variables.objCarrierGateway#" method="getCarrierOffice" carrierid="#url.carrierid#" returnvariable="request.qCarrierOffice" />
 	<cfinvoke component="#variables.objCarrierGateway#" method="getLIWebsiteData" returnvariable="request.qLiWebsiteData">
 		<cfinvokeargument name="carrierid" value="#url.carrierid#">
     </cfinvoke>
-	
 	<cfinvoke component="#variables.objCarrierGateway#" method="getCommodityById"  returnvariable="request.qGetCommodityById" >
 		<cfinvokeargument name="carrierID" value="#url.carrierid#">
 	</cfinvoke>
-	
      <cfif request.qCarrier.recordcount gt 0 >
 	     <cfset CarrierName=request.qCarrier.CarrierName>
 	     <cfif isDefined("url.mcNo") and len(url.mcNo) gt 1>
-		 <cfset MCNumber=url.mcNo>		 
+			<cfset MCNumber=url.mcNo>		 
 		 <cfelse>	     
-	     <cfset MCNumber=request.qCarrier.MCNumber>
-	     <cfset Address=request.qCarrier.Address>
-         <cfset StateValCODE=trim(request.qCarrier.StateCODE)>
-	     <cfset Status=request.qCarrier.Status>
-	     <cfset City=request.qCarrier.City>
-	     <cfset Zipcode=request.qCarrier.Zipcode>
-	     <cfset Country1=request.qCarrier.Country>
-	     <cfset Phone=request.qCarrier.Phone>
-	     <cfset RemitName=request.qCarrier.RemitName>
-	     <cfset RemitAddress=request.qCarrier.RemitAddress>
-		 <cfset RemitCity=request.qCarrier.RemitCity>
-		 <cfset RemitState=request.qCarrier.RemitState>
-		 <cfset RemitZipCode=request.qCarrier.RemitZipCode>
-		 <cfset RemitContact=request.qCarrier.RemitContact>
-		 <cfset RemitPhone=request.qCarrier.RemitPhone>
-		 <cfset RemitFax=request.qCarrier.RemitFax>
-	     <cfset InsCompany=request.qCarrier.InsCompany>
-	     <cfset InsComPhone=request.qCarrier.InsCompPhone>
-	     <cfset InsAgent=request.qCarrier.InsAgent> 
-	     <cfset InsAgentPhone=request.qCarrier.InsAgentPhone>
-	     <cfset InsPolicyNo=request.qCarrier.InsPolicyNumber>
-	     <cfset InsExpDate=request.qCarrier.InsExpDate>
-	 </cfif>
-	     <cfset CellPhone=request.qCarrier.Cel>
-	     <cfset Fax=request.qCarrier.Fax> 
-	     <cfset Tollfree=request.qCarrier.Tollfree>
-	     <cfset Email=request.qCarrier.EmailID>
-	     
-	     <cfset TaxID=request.qCarrier.TaxID>
-	     <cfset Track1099=request.qCarrier.Track1099> 
-	     <cfset RegNumber=request.qCarrier.RegNumber> 
-	     <cfset ContactPerson=request.qCarrier.ContactPerson>
-<!---         <cfset RatePerMile=request.qCarrier.RatePrMile>--->
-	     <cfset equipment=request.qCarrier.EquipmentID>
-	     <cfset InsLimit=request.qCarrier.InsLimit>
-	     <cfset CommRate=request.qCarrier.CommRate>
-	     <cfset InsExpDate=request.qCarrier.InsExpDate>
-	     <cfset CarrierInstructions=request.qCarrier.CarrierInstructions>
-	     <cfset EquipmentNotes=request.qCarrier.EquipmentNotes>
-	     <cfset Website=request.qCarrier.Website>
+			 <cfset MCNumber=request.qCarrier.MCNumber>
+			 <cfset Address=request.qCarrier.Address>
+			 <cfset StateValCODE=trim(request.qCarrier.StateCODE)>
+			 <cfset Status=request.qCarrier.Status>
+			 <cfset City=request.qCarrier.City>
+			 <cfset Zipcode=request.qCarrier.Zipcode>
+			 <cfset Country1=request.qCarrier.Country>
+			 <cfset Phone=request.qCarrier.Phone>
+			 <cfset RemitName=request.qCarrier.RemitName>
+			 <cfset RemitAddress=request.qCarrier.RemitAddress>
+			 <cfset RemitCity=request.qCarrier.RemitCity>
+			 <cfset RemitState=request.qCarrier.RemitState>
+			 <cfset RemitZipCode=request.qCarrier.RemitZipCode>
+			 <cfset RemitContact=request.qCarrier.RemitContact>
+			 <cfset RemitPhone=request.qCarrier.RemitPhone>
+			 <cfset RemitFax=request.qCarrier.RemitFax>
+			 <cfset InsCompany=request.qCarrier.InsCompany>
+			 <cfset InsComPhone=request.qCarrier.InsCompPhone>
+			 <cfset InsAgent=request.qCarrier.InsAgent> 
+			 <cfset InsAgentPhone=request.qCarrier.InsAgentPhone>
+			 <cfset InsPolicyNo=request.qCarrier.InsPolicyNumber>
+			 <cfset InsExpDate=request.qCarrier.InsExpDate>
+		</cfif>
+		 <cfset CellPhone=request.qCarrier.Cel>
+		 <cfset Fax=request.qCarrier.Fax> 
+		 <cfset Tollfree=request.qCarrier.Tollfree>
+		 <cfset Email=request.qCarrier.EmailID>
+		 <cfset TaxID=request.qCarrier.TaxID>
+		 <cfset Track1099=request.qCarrier.Track1099> 
+		 <cfset RegNumber=request.qCarrier.RegNumber> 
+		 <cfset ContactPerson=request.qCarrier.ContactPerson>
+	<!---         <cfset RatePerMile=request.qCarrier.RatePrMile>--->
+		 <cfset equipment=request.qCarrier.EquipmentID>
+		 <cfset InsLimit=request.qCarrier.InsLimit>
+		 <cfset CommRate=request.qCarrier.CommRate>
+		 <cfset InsExpDate=request.qCarrier.InsExpDate>
+		 <cfset CarrierInstructions=request.qCarrier.CarrierInstructions>
+		 <cfset EquipmentNotes=request.qCarrier.EquipmentNotes>
+		 <cfset Website=request.qCarrier.Website>
 		 <cfset notes =request.qCarrier.notes>
 		 <cfset Terms =request.qCarrier.CarrierTerms>
-	     <cfset editid=#url.carrierid#>
-	     <cfset getMCNoURL="index.cfm?event=addcarrier&carrierid=#url.carrierid#&#session.URLToken#"> 
+		 <cfset editid=#url.carrierid#>
+		 <cfset getMCNoURL="index.cfm?event=addcarrier&carrierid=#url.carrierid#&#session.URLToken#"> 
 	       <!--- since the carrierid exists so pick the data from the carriersLNI and update the session variables and donot make a webservice call --->
 <!---	     <cfinclude template="dbwebsiteDATA.cfm"> 
 	     <!--- end --->
@@ -396,7 +422,7 @@ function ConfirmMessage(index,stopno){
 		     <cfset bipd_Insurance_on_file = replace(bipd_Insurance_on_file,",","","all")>
 		     <cfset InsLimit=val(bipd_Insurance_on_file)>
 	     </cfif>--->
-	     </cfif>
+	</cfif>
 <cfelse>
 	<cfset getMCNoURL="index.cfm?event=addcarrier&#session.URLToken#">
 	<cfif isdefined('url.mcNo') and len(url.mcNo) gt 1>
@@ -462,12 +488,10 @@ function ConfirmMessage(index,stopno){
         
 	</cfif>
 <cfelse>
-<cfset  ValidMCNO=0>
+	<cfset  ValidMCNO=0>
 </cfif>	
 <cfform name="frmCarrier" action="index.cfm?event=addcarrier:process&#session.URLToken#&editid=#editid#" onsubmit="return InsAgentPhone1();" method="post">
-
-<cfif isDefined("url.carrierid") and len(url.carrierid)>
- 
+	<cfif isDefined("url.carrierid") and len(url.carrierid)>
 	<cfinvoke component="#variables.objCarrierGateway#" method="getAttachedFiles" linkedid="#url.carrierid#" fileType="3" returnvariable="request.filesAttached" /> 
 	<div class="search-panel" style="height:40px;">
 		<div style="float: left; width: 13%;"><h1>Edit Carrier</h1></div>
@@ -478,7 +502,7 @@ function ConfirmMessage(index,stopno){
 		<div style="float:right">
 			<input id="mailDocLink" style="width:110px !important;line-height: 15px;" type="button" class="normal-bttn"value="Email Doc" <cfif mailsettings>data-allowmail="true"<cfelse>data-allowmail="false"</cfif>/>
 		  <cfif requireValidMCNumber EQ True>	
-			<cfinput name="Save" type="submit" class="normal-bttn" value="Save" onclick="return validateCarrier(frmCarrier,'#application.dsn#','#ValidMCNO#','driver');" onfocus="checkUnload();" style="width:44px;" />
+			<cfinput name="Save" type="submit" class="normal-bttn" value="Save" onclick="return validateCarrier(frmCarrier,'#application.dsn#','#ValidMCNO#','carrier');" onfocus="checkUnload();" style="width:44px;" />
 		  <cfelse>
 			<cfinput name="Save" type="submit" class="normal-bttn" value="Save" onclick="return validateCarrier(frmCarrier,'#application.dsn#');" onfocus="checkUnload();" style="width:44px;" />
 		  </cfif>	
@@ -490,9 +514,9 @@ function ConfirmMessage(index,stopno){
 	 <div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
 		 <div style="float: left; width: 20%;" id="divUploadedFiles">
 			 <cfif request.filesAttached.recordcount neq 0>
-				&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#url.carrierid#&attachTo=3&user=#session.adminusername#&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">View/Attach Files</a>
+				&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/multipleFileupload/MultipleUpload.cfm?id=#url.carrierid#&attachTo=3&user=#session.adminusername#&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">View/Attach Files</a>
 			<cfelse>
-				&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#url.carrierid#&attachTo=3&user=#session.adminusername#&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">Attach Files</a>
+				&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload//multipleFileupload/MultipleUpload.cfm?id=#url.carrierid#&attachTo=3&user=#session.adminusername#&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">Attach Files</a>
 
 			</cfif>	
 
@@ -508,7 +532,7 @@ function ConfirmMessage(index,stopno){
 	<h1>Add New Carrier</h1>
 		 <div class="white-con-area" style="height: 36px;background-color: ##82bbef;">
 			 <div style="float: left; width: 20%;" id="divUploadedFiles">
-				 	&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/singleupload.cfm?id=#tempLoadId#&attachTo=3&user=#session.adminusername#&newFlag=1&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">Attach Files</a>
+				 	&nbsp;<a style="display:block;font-size: 13px;padding-left: 2px;color:white;" href="##" onclick="popitup('../fileupload/multipleFileupload/MultipleUpload.cfm?id=#tempLoadId#&attachTo=3&user=#session.adminusername#&newFlag=1&dsn=#dsn#&attachtype=Carrier')"><img style="vertical-align:bottom;" src="images/attachment.png">Attach Files</a>
 			</div>
 			<div style="float: left; width: 46%;"><h2 style="color:white;font-weight:bold;">Carrier Information</h2></div>
 			<div style="float: left; width: 34%;"><h2 style="color:white;font-weight:bold;">Remit Information</h2></div>
@@ -675,7 +699,12 @@ function ConfirmMessage(index,stopno){
 							<label>Policy ##</label>
 							<cfinput name="InsPolicyNo" tabindex="30" type="text" value="#InsPolicyNo#" style="width:90px"/>
 							<label style="width:89px">Expiration Date</label>
-							<cfinput name="InsExpDate" tabindex="31" type="datefield" value="#Dateformat(InsExpDate,'mm/dd/yyyy')#" style="width:64px"/>
+							<cfif isdate(InsExpDate)>
+								<cfinput name="InsExpDate" tabindex="31" type="datefield" value="#Dateformat(InsExpDate,'mm/dd/yyyy')#" style="width:64px" onblur="checkDateFormat(this);"/>
+							<cfelse>
+								<cfinput name="InsExpDate" tabindex="31" type="datefield" value="" style="width:64px" onblur="checkDateFormat(this);"/>
+							</cfif>
+							
 							<div class="clear"></div>
 							<label>Insurance Limit</label>
 							<cfinput type="text" name="InsLimit" tabindex="32" value="#DollarFormat(InsLimit)#" validate="float" style="width:79px;text-align: right;">
@@ -775,15 +804,16 @@ function ConfirmMessage(index,stopno){
 				  </tfoot>	  
 				</table>
 		<div class="clear"></div>
-		<table cellpadding="0" class="noh" bgcolor="##ffffff" cellspacing="0" width="100%" border="0" style="padding-bottom:25px;">
+		<table cellpadding="0" class="noh" bgcolor="" cellspacing="0" width="100%" border="0" style="padding-bottom:25px;">
 		   <tr>
-		      <td bgcolor="##ffffff" height="28"><strong>L&I Website Data</strong></td>
-			  <td bgcolor="##ffffff" colspan="3" width="50">MC ###MCNumber#  #pv_legal_name#</td>
-			  <td bgcolor="##ffffff">#dateformat(now(),'mm/dd/yyyy')#</td>
+		      <td bgcolor="" height="28"><strong>L&I Website Data</strong></td>
+			  <td bgcolor="" colspan="3" width="50" style="padding-left:27px">MC ###MCNumber#  #pv_legal_name#</td>
+			  <td bgcolor="">#dateformat(now(),'mm/dd/yyyy')#</td>
 		   </tr>
 		    <tr>
 				<td valign="top">
-					<table width="250" border="0" cellspacing="0" cellpadding="0">
+					<input name="CarrierId" id="CarrierId" type="hidden" value="#variables.carrierId#">
+					<table width="237" border="0" cellspacing="0" cellpadding="0">
 						<thead>
 							<tr>
 								<th width="5" align="left" valign="top"><img src="images/top-left.gif" alt="" width="5" height="23" /></th>
@@ -796,20 +826,49 @@ function ConfirmMessage(index,stopno){
 						<tbody>
 							<tr bgcolor="##f7f7f7" >
 								<td colspan="2" class="head-bg lft-bg" valign="middle" align="center">COMMON</td>
-								<td class="normaltd" valign="middle" align="center">#AuthType_Common_status#</td>
-								<td class="normaltd2" valign="middle" align="center">#AuthType_Common_appPending#</td>
+								<td class="normaltd" valign="middle" align="center">
+									<select name="commonStatus" id="commonStatus" class="activeSelectbox">
+										<option value="1" <cfif variables.commonStatus eq 1>selected</cfif>>Active</option>
+										<option value="0" <cfif variables.commonStatus eq 0>selected</cfif>>InActive</option>
+									</select>
+								</td>
+								<td class="normaltd2" valign="middle" align="center">
+									<select name="commonAppPending" id="commonAppPending" class="activeSelectbox">
+										<option value="1" <cfif variables.commonAppPending eq 1>selected</cfif>>Yes</option>
+										<option value="0" <cfif variables.commonAppPending eq 0>selected</cfif>>No</option>
+									</select>
 								<td class="normal-td3">&nbsp;</td>
 							</tr>
 							<tr bgcolor="##FFFFFF">
 								<td colspan="2" class="head-bg lft-bg" valign="middle" align="center">CONTRACT</td>
-								<td class="normaltd" valign="middle" align="center">#AuthType_Contract_status#</td>
-								<td class="normaltd2" valign="middle" align="center">#AuthType_Contract_appPending#</td>
+								<td class="normaltd" valign="middle" align="center">
+									<select name="contractStatus" id="contractStatus" class="activeSelectbox">
+										<option value="1" <cfif variables.contractStatus eq 1>selected</cfif>>Active</option>
+										<option value="0" <cfif variables.contractStatus eq 0>selected</cfif>>InActive</option>
+									</select>
+								</td>
+								<td class="normaltd2" valign="middle" align="center">
+									<select name="contractAppPending" id="contractAppPending" class="activeSelectbox">
+										<option value="1" <cfif variables.contractAppPending eq 1>selected</cfif>>Yes</option>
+										<option value="0" <cfif variables.contractAppPending eq 0>selected</cfif>>No</option>
+									</select>
+								</td>
 								<td class="normal-td3">&nbsp;</td>
 							</tr>
 							<tr bgcolor="##f7f7f7">
 								<td colspan="2" class="head-bg lft-bg" valign="middle" align="center">BROKER</td>
-								<td class="normaltd" valign="middle" align="center">#AuthType_Broker_status#</td>
-								<td class="normaltd2" valign="middle" align="center">#AuthType_Broker_appPending#</td>
+								<td class="normaltd" valign="middle" align="center">
+									<select name="brokerStatus" id="brokerStatus" class="activeSelectbox">
+										<option value="1" <cfif variables.brokerStatus eq 1>selected</cfif>> Active</option>
+										<option value="0" <cfif variables.brokerStatus eq 0>selected</cfif>>InActive</option>
+									</select>
+								</td>
+								<td class="normaltd2" valign="middle" align="center">
+									<select name="BrokerAppPending" id="BrokerAppPending" class="activeSelectbox">
+										<option value="1" <cfif variables.BrokerAppPending eq 1>selected</cfif>>Yes</option>
+										<option value="0" <cfif variables.BrokerAppPending eq 0>selected</cfif>>No</option>
+									</select>
+								</td>
 								<td class="normal-td3">&nbsp;</td>
 							</tr>  
 						</tbody>
@@ -821,52 +880,86 @@ function ConfirmMessage(index,stopno){
 							</tr>	
 						</tfoot>	  
 					</table>
-					<cfif isdefined('url.CarrierId') and len(url.carrierId) gt 1>
+					<!---cfif isdefined('url.CarrierId') and len(url.carrierId) gt 1>
 						<div style="text-align: center;">
 									<cfinput name="updateL&I" type="button" class="normal-bttn" onclick="document.location.href='index.cfm?event=addcarrier&carrierid=#url.carrierid#&#session.URLToken#&updLIData=yes&mcno=#MCNumber#'" value="Update L&I Info" style="width:62px;line-height:15px;margin-top:4px;" />	
 						</div>
-					</cfif>
+					</cfif--->
 				</td>
-				<td width="50"></td>
+				<td width="25"></td>
 				<td valign="top">
-					<table width="250" border="0" cellspacing="0" cellpadding="0">
+					<table width="315" border="0" cellspacing="0" cellpadding="0">
 						<thead>
 							<tr>
 								<th width="5" align="left" valign="top"><img src="images/top-left.gif" alt="" width="5" height="23" /></th>
 								<th align="center" valign="middle" class="head-bg">Ins. Type</th>
 								<th align="center" valign="middle" class="head-bg">Ins. Required</th>
-								<th align="center" valign="middle" class="head-bg2">Ins. on File</th>
+								<th align="center" valign="middle" class="head-bg">Ins. on File</th>
+								<th align="center" valign="middle" class="head-bg2">Exp. Date</th>
 								<th width="5" align="right" valign="top"><img src="images/top-right.gif" alt="" width="5" height="23" /></th>
 							</tr>
 						</thead>
 						<tbody>
 							<tr bgcolor="##f7f7f7" >
 								<td class="head-bg lft-bg" colspan="2" valign="middle" align="center">BIPD</td>
-								<td class="normaltd" valign="middle" align="center">#bipd_Insurance_required#</td>
-								<td class="normaltd2" valign="middle" align="center">#bipd_Insurance_on_file#</td>
+								<td class="normaltd" valign="middle" align="center">
+									<select name="BIPDInsRequired" id="BIPDInsRequired" class="activeSelectbox">
+										<option value="1" <cfif variables.BIPDInsRequired eq 1>selected</cfif>>Yes</option>
+										<option value="0" <cfif variables.BIPDInsRequired eq 0>selected</cfif>>No</option>
+									</select>
+								</td>
+								<td class="normaltd" valign="middle" align="center">
+									<select name="BIPDInsonFile" id="BIPDInsonFile" class="activeSelectbox">
+										<option value="1" <cfif variables.BIPDInsonFile eq 1>selected</cfif>>Yes</option>
+										<option value="0" <cfif variables.BIPDInsonFile eq 0>selected</cfif>>No</option>
+									</select>
+								</td>
+								<td class="normaltd2" valign="middle" align="center">
+								
+									<cfinput name="ExpirationDate" type="datefield" value="#Dateformat(variables.ExpirationDate,'mm/dd/yyyy')#" style="width:64px" onblur="checkDateFormat(this);"/>
+								</td>
+								
 								<td class="normal-td3">&nbsp;</td>
 							</tr>
 						    <tr bgcolor="##FFFFFF">
 								<td class="head-bg lft-bg" colspan="2" valign="middle" align="center">CARGO</td>
-								<td class="normaltd" valign="middle" align="center">#cargo_Insurance_required#</td>
-								<td class="normaltd2" valign="middle" align="center">#cargo_Insurance_on_file#</td>
+								<td class="normaltd" valign="middle" align="center">
+									<select name="cargoInsRequired" id="cargoInsRequired" class="activeSelectbox">
+										<option value="1" <cfif variables.cargoInsRequired eq 1>selected</cfif>>Yes</option>
+										<option value="0" <cfif variables.cargoInsRequired eq 0>selected</cfif>>No</option>
+									</select>
+								</td>
+								<td class="normaltd" valign="middle" align="center">
+									<select name="cargoInsonFile" id="cargoInsonFile" class="activeSelectbox">
+										<option value="1" <cfif variables.cargoInsonFile eq 1>selected</cfif>>Yes</option>
+										<option value="0" <cfif variables.cargoInsonFile eq 0>selected</cfif>>No</option>
+									</select>
+								</td>
+								<td class="normaltd2" valign="middle" align="center">
+									<cfinput name="CARGOExpirationDate" type="datefield" value="#Dateformat(variables.CARGOExpirationDate,'mm/dd/yyyy')#" style="width:64px" onblur="checkDateFormat(this);"/>'
+								</td>
 								<td class="normal-td3">&nbsp;</td>
 						    </tr>
 							<tr bgcolor="##f7f7f7">
-								<td class="normaltd2 lft-bg" valign="middle" colspan="4" align="left">HOUSEHOLD GOODS: <strong>#household_goods#</strong></td>
+								<td class="normaltd2 lft-bg" valign="middle" colspan="5" align="left">HOUSEHOLD GOODS: 
+									<select name="householdGoods" id="householdGoods" class="activeSelectbox">
+										<option value="1" <cfif variables.householdGoods eq 1>selected</cfif>>Yes</option>
+										<option value="0" <cfif variables.householdGoods eq 0>selected</cfif>>No</option>
+									</select>
+								</td>
 								<td class="normal-td3">&nbsp;</td>
 							</tr>
 						</tbody>
 						<tfoot>
 							<tr>
 								<td width="5" align="left" valign="top"><img src="images/left-bot.gif" alt="" width="5" height="23" /></td>
-								<td colspan="3" align="left" valign="middle" class="footer-bg"></td>
+								<td colspan="4" align="left" valign="middle" class="footer-bg"></td>
 								<td width="5" align="right" valign="top"><img src="images/right-bot.gif" alt="" width="5" height="23" /></td>
 							</tr>	
 						</tfoot>	  
 					</table>
 				</td>
-				<td width="50"></td>
+				<td width="17"></td>
 				<td valign="top">
 					<table width="100%" border="0" cellpadding="0" cellspacing="0">
 						<thead>
@@ -879,7 +972,7 @@ function ConfirmMessage(index,stopno){
 						<tbody>
 							<tr bgcolor="##ffffff">
 								<td class="lft-bg" height="20">&nbsp;</td>
-								<td class="normaltd2" valign="middle" align="left">#insCarrier#<br>#insCarrierDetails#</td>
+								<td class="normaltd2" valign="middle" align="left"><input name="InsuranceCompanyName" id="InsuranceCompanyName" value="#variables.InsuranceCompanyName#" class="textBoxCarrierInsurance" placeholder="Company Name"><br><textarea name="InsuranceCompanyAddress" id="InsuranceCompanyAddress" class="textBoxCarrierInsurance" placeholder="Company Address">#variables.InsuranceCompanyAddress#</textarea></td>
 								<td class="normal-td3">&nbsp;</td>
 							</tr>
 						</tbody>
@@ -892,6 +985,7 @@ function ConfirmMessage(index,stopno){
 						</tfoot>	  
 					</table>
 				</td>
+			
 		   </tr>
 		</table>
 		</div>

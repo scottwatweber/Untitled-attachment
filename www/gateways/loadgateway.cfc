@@ -399,6 +399,10 @@
 	<cfargument name="statusDispatchNote" type="string" required="yes"/>
 	<cfargument name="emailreports" type="string" required="yes"/>
 	<cfargument name="printReports" type="string" required="yes"/>
+	<cfargument name="CustomerTerms" type="string" required="yes"/>
+	<cfargument name="loadNumberAssignment" type="string" required="yes"/>
+	<cfargument name="commodityWeight" type="string" required="yes"/>
+	
 	<cfif NOT len(arguments.userDef1)>
 		<cfset arguments.userDef1 = 'userDef1'>
 	</cfif>
@@ -472,7 +476,10 @@
 		MinimumLoadStartNumber=<cfqueryparam value="#arguments.minimunLoadNumber#" cfsqltype="cf_sql_numeric">,
 		StatusDispatchNotes=<cfqueryparam value="#arguments.statusDispatchNote#" cfsqltype="cf_sql_bit">,
 		AutomaticEmailReports = <cfqueryparam value="#arguments.emailreports#" cfsqltype="cf_sql_bit">,
-		AutomaticPrintReports = <cfqueryparam value="#arguments.printReports#" cfsqltype="cf_sql_bit">
+		AutomaticPrintReports = <cfqueryparam value="#arguments.printReports#" cfsqltype="cf_sql_bit">,
+		CustomerTerms=<cfqueryparam value="#CustomerTerms#" cfsqltype="cf_sql_varchar"> ,
+		loadNumberAssignment=<cfqueryparam value="#arguments.loadNumberAssignment#" cfsqltype="cf_sql_integer">,
+		commodityWeight=<cfqueryparam value="#arguments.commodityWeight#" cfsqltype="cf_sql_bit">
 		SELECT @@ROWCOUNT as updatedRows
 		SET NOCOUNT OFF
 	</cfquery>
@@ -502,7 +509,7 @@
     	<cfset activedns = variables.dsn>
     </cfif>
 	<cfquery name="qSystemSetupOptions" datasource="#activedns#">
-    	SELECT LongMiles, ShortMiles, DeductionPercentage, ARAndAPExportStatusID, showExpiredInsuranceCarriers, companyName, companyLogoName,DispatchNotes, CarrierNotes, PricingNotes, Notes, requireValidMCNumber,integratewithPEP,PEPsecretKey,PEPcustomerKey,CarrierTerms,integratewithTran360,trans360Usename,trans360Password,TRIGER_LOADSTATUS,AllowLoadentry,showReadyArriveDate,ISNULL(IntegrateWithITS,0) AS IntegrateWithITS,ITSUserName, ITSPassword, userDef1, userDef2, userDef3, userDef4, userDef5, userDef6, googleMapsPcMiler, minimumMargin, CarrierHead, CustInvHead, BOLHead, WorkImpHead, WorkExpHead, SalesHead, MinimumLoadStartNumber,StatusDispatchNotes,AutomaticEmailReports,AutomaticPrintReports, emailtype, FreightBroker
+    	SELECT LongMiles, ShortMiles, DeductionPercentage, ARAndAPExportStatusID, showExpiredInsuranceCarriers, companyName, companyLogoName,DispatchNotes, CarrierNotes, PricingNotes, Notes, requireValidMCNumber,integratewithPEP,PEPsecretKey,PEPcustomerKey,CarrierTerms,integratewithTran360,trans360Usename,trans360Password,TRIGER_LOADSTATUS,AllowLoadentry,showReadyArriveDate,ISNULL(IntegrateWithITS,0) AS IntegrateWithITS,ITSUserName, ITSPassword, userDef1, userDef2, userDef3, userDef4, userDef5, userDef6, googleMapsPcMiler, minimumMargin, CarrierHead, CustInvHead, BOLHead, WorkImpHead, WorkExpHead, SalesHead, MinimumLoadStartNumber,StatusDispatchNotes,AutomaticEmailReports,AutomaticPrintReports, emailtype, FreightBroker, CustomerTerms,loadNumberAssignment,commodityWeight
         FROM SystemConfig
     </cfquery>
     <cfreturn qSystemSetupOptions>
@@ -771,7 +778,6 @@
 			CustomerDirections= 	<cfqueryparam cfsqltype="cf_sql_longvarchar" value="#EValuate('arguments.formStruct.#updateType#Direction#stopNo#')#">,
 			CustomerNotes= 		<cfqueryparam cfsqltype="cf_sql_longvarchar" value="#EValuate('arguments.formStruct.#updateType#Notes#stopNo#')#">,
 			LastModifiedBy=		<cfqueryparam cfsqltype="cf_sql_varchar" value="#session.adminUserName#">,
-			CreatedDateTime=		<cfqueryparam cfsqltype="cf_sql_date" value="#now()#">,
 			LastModifiedDateTime=	<cfqueryparam cfsqltype="cf_sql_date" value="#now()#">,
 			UpdatedByIP=			<cfqueryparam cfsqltype="cf_sql_varchar" value="#cgi.REMOTE_ADDR#">
 		WHERE CustomerID = '#custToEditId#'
@@ -876,6 +882,7 @@
 	<!---  add by sp --->
 	<cfargument name="loadNumber" type="any" required="false" default="" />
 	<!---  add by sp --->
+	
 	<cftry> 
 		<cfoutput>
 			<!---  change by sp --->
@@ -957,7 +964,6 @@
 				<cfhttpparam type="header" name="SOAPAction" value="http://webservices.truckstop.com/v11/ILoadPosting/PostLoads"/>
 				<cfhttpparam type="xml"  value="#trim( soapHeaderPosttoITStxt )#" />
 			</cfhttp>
-			
 			<cfif objGet.Statuscode EQ "200 OK">
 				<cfset objGetITS =  objGet.filecontent />
 				<cfset PostToITSResponse = xmlParse(objGetITS) />
@@ -981,7 +987,7 @@
 						<cfset Alertvar="Your ITS Webservice status failed. 100" />
 					</cfif>
 				<cfelse>
-					<!----if sucess---->
+					<!----if success---->
 					<cfset sts='Success' />
 					<cfset Alertvar="1" />
 					
@@ -1054,7 +1060,6 @@
 				<cfhttpparam type="header" name="SOAPAction" value= "http://webservices.truckstop.com/v11/ILoadPosting/PostLoads" />
 				<cfhttpparam type="xml"  value="#trim(soapHeaderPosttoITSTxt)#" />
 			</cfhttp>
-			
 			<cfif objGet.Statuscode EQ "200 OK">
 				<cfset objGetITS =  objGet.filecontent />
 				<cfset PostToITSResponse = xmlParse( objGetITS ) />
@@ -1290,14 +1295,33 @@
 	<cfargument name="trans360Usename" type="any" required="true" />
 	<cfargument name="trans360Password" type="any" required="true" />
 	<cfparam name="Alertvar" default="1">
-	
+	<cfparam name="variables.EquipmentName" default="">
+	<cfparam name="variables.OriginCity" default="">
+	<cfparam name="variables.OriginState" default="">
+	<cfparam name="variables.DestCity" default="">
+	<cfparam name="variables.DestState" default="">
+	<cfparam name="variables.Weight" default="0">
+	<cfparam name="variables.Notes" default="">
+	<cfparam name="variables.length" default="1">
+	<cfparam name="variables.PickupDate" default="">
+	<cfparam name="variables.FinalDelivDate" default="">
 	<cftry>
 		<cfoutput>
-			
 			<cfquery name="ViewPostEveryWhere" datasource="#variables.dsn#">
 				select * from vwLoadsTranscore where loadnumber='#arguments.impref#' 
-			</cfquery>		
-			
+			</cfquery>	
+			<cfif ViewPostEveryWhere.recordcount>
+				<cfset variables.EquipmentName=ViewPostEveryWhere.EquipmentName>
+				<cfset variables.OriginCity=ViewPostEveryWhere.OriginCity>
+				<cfset variables.OriginState=ViewPostEveryWhere.OriginState>
+				<cfset variables.DestCity=ViewPostEveryWhere.DestCity>
+				<cfset variables.DestState=ViewPostEveryWhere.DestState>
+				<cfset variables.Weight=ViewPostEveryWhere.Weight>
+				<cfset variables.PickupDate=ViewPostEveryWhere.PickupDate>
+				<cfset variables.FinalDelivDate=ViewPostEveryWhere.FinalDelivDate>
+				<cfset variables.length=ViewPostEveryWhere.length>
+				<cfset variables.Notes=ViewPostEveryWhere.Notes>
+			</cfif>
 			<cfif ViewPostEveryWhere.length eq 0  or  ViewPostEveryWhere.length eq "">
 				<cfset ViewPostEveryWhere.length=1 />
 			</cfif>
@@ -1307,8 +1331,7 @@
 			<cfelse>
 				<cfset FullOrPartial='true' />
 			</cfif>
-			
-			<cfif  not structkeyexists(session,'primaryKey') and not structkeyexists(session,'SeconKey')  >
+			<!---cfif  not structkeyexists(session,'primaryKey') and not structkeyexists(session,'SeconKey')  --->
 				<!------login request----->
 				<cfsavecontent variable="soapHeaderTransCoreTxt">
 					<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tcor="http://www.tcore.com/TcoreHeaders.xsd" xmlns:tcor1="http://www.tcore.com/TcoreTypes.xsd" xmlns:tfm="http://www.tcore.com/TfmiFreightMatching.xsd">
@@ -1349,12 +1372,11 @@
 				<cfhttp method="post" url="http://www.transcoreservices.com:8000/TfmiRequest" result="TranscoreData360">
 					<cfhttpparam type="xml"  value="#trim( soapHeaderTransCoreTxt )#" />
 				</cfhttp>
-				
+					
 				<cfset soapResponse = xmlParse( TranscoreData360.FileContent ) />
 				
 				<cfset arr_primary		= XmlSearch(soapResponse,"//*[name()='tcor:primary']")>
 				<cfset arr_secondary	= XmlSearch(soapResponse,"//*[name()='tcor:secondary']")>
-				
 				<cfif arrayLen(arr_primary) AND  arrayLen(arr_secondary)>
 					<cfset session.primaryKey	= arr_primary />
 					<cfset session.SeconKey		= arr_secondary />
@@ -1369,13 +1391,13 @@
 					<cfreturn Alertvar />
 				</cfif>
 				<!------End login request----->
-			</cfif>
+			<!---/cfif--->
 		</cfoutput>
 					
 		<cftransaction>
 			<cfif arguments.postaction EQ 'D'><!--- Delete from Tanscore360 --->
 				<cfquery name="GetTranceCoreDBcount" datasource="#variables.dsn#">
-					SELECT imprtref FROM LoadPostEverywhereDetails WHERE imprtref='#arguments.impref#' AND From_web='Tc360' AND status='sucess'
+					SELECT imprtref FROM LoadPostEverywhereDetails WHERE imprtref='#arguments.impref#' AND From_web='Tc360' AND status='success'
 				</cfquery>
 				
 				<cfif GetTranceCoreDBcount.recordcount GT 0>
@@ -1390,8 +1412,8 @@
 								<Header>
 									<tcor:sessionHeader>
 										<tcor:sessionToken>
-											<tcor1:primary>#session.primaryKey[1].XmlText#</tcor1:primary>
-											<tcor1:secondary>#session.SeconKey[1].XmlText#</tcor1:secondary>
+											<tcor1:primary>#trim(session.primaryKey[1].XmlText)#</tcor1:primary>
+											<tcor1:secondary>#trim(session.SeconKey[1].XmlText)#</tcor1:secondary>
 										</tcor:sessionToken>
 									</tcor:sessionHeader>
 								</Header>
@@ -1420,11 +1442,11 @@
 					</cfhttp>
 				</cfif>
 				
-				<cfset Alertvar = "This Load sucessfully deleted from transcore 360 " />
+				<cfset Alertvar = "This Load sucessfully deleted from DAT Loadboard " />
 				
 				<!-----Delete asset from DB if any---->
 				<cfquery name="GetTranceCoreDBcount" datasource="#variables.dsn#">
-					DELETE FROM LoadPostEverywhereDetails WHERE imprtref='#arguments.impref#' AND From_web='Tc360' AND status='sucess'
+					DELETE FROM LoadPostEverywhereDetails WHERE imprtref='#arguments.impref#' AND From_web='Tc360' AND status='success'
 				</cfquery>
 				
 				<cfquery name="TransFlaginsert" datasource="#variables.dsn#">
@@ -1453,39 +1475,39 @@
 								<tfm:postAssetRequest>
 									<tfm:postAssetOperations>
 										<tfm:shipment>
-											<tfm:equipmentType>#ViewPostEveryWhere.EquipmentName#</tfm:equipmentType>
+											<tfm:equipmentType>#variables.EquipmentName#</tfm:equipmentType>
 											<tfm:origin>
 												<tfm:cityAndState>
-													<tfm:city>#ViewPostEveryWhere.OriginCity#</tfm:city>
-													<tfm:stateProvince>#ViewPostEveryWhere.OriginState#</tfm:stateProvince>
+													<tfm:city>#variables.OriginCity#</tfm:city>
+													<tfm:stateProvince>#variables.OriginState#</tfm:stateProvince>
 												</tfm:cityAndState>
 											</tfm:origin>
 											<tfm:destination>
 												<tfm:cityAndState>
-													<tfm:city>#ViewPostEveryWhere.DestCity#</tfm:city>
-													<tfm:stateProvince>#ViewPostEveryWhere.DestState#</tfm:stateProvince>
+													<tfm:city>#variables.DestCity#</tfm:city>
+													<tfm:stateProvince>#variables.DestState#</tfm:stateProvince>
 												</tfm:cityAndState>
 											</tfm:destination>
 										</tfm:shipment>
 										<tfm:postersReferenceId>#arguments.impref#</tfm:postersReferenceId>
 										<tfm:ltl>#FullOrPartial#</tfm:ltl>
-										<tfm:comments>#ViewPostEveryWhere.Notes#</tfm:comments>
+										<tfm:comments>#variables.Notes#</tfm:comments>
 										<tfm:dimensions>
-											<tfm:lengthFeet>#ViewPostEveryWhere.length#</tfm:lengthFeet>
+											<tfm:lengthFeet>#variables.length#</tfm:lengthFeet>
 											<tfm:weightPounds>
-												<cfif not isnumeric(ViewPostEveryWhere.Weight) or ViewPostEveryWhere.Weight eq 0>
+												<cfif not isnumeric(variables.Weight) or variables.Weight eq 0>
 													1
 												<cfelse>
-													#ViewPostEveryWhere.Weight#
+													#variables.Weight#
 												</cfif>
 											</tfm:weightPounds>
 										</tfm:dimensions>
 										<tfm:availability>
 											<tfm:earliest>
-												#dateformat(ViewPostEveryWhere.PickupDate,"yyyy-mm-dd")#T08:00:00.000Z
+												#dateformat(variables.PickupDate,"yyyy-mm-dd")#T08:00:00.000Z
 											</tfm:earliest>
 											<tfm:latest>
-												#dateformat(ViewPostEveryWhere.FinalDelivDate,"yyyy-mm-dd")#T08:00:00.000Z
+												#dateformat(variables.FinalDelivDate,"yyyy-mm-dd")#T08:00:00.000Z
 											</tfm:latest>
 										</tfm:availability>
 										<tfm:includeAsset>false</tfm:includeAsset>
@@ -1511,164 +1533,138 @@
 				<cfset objGet360 =  objGet.filecontent />
 				<cfset TranscoreobjGetData3601 = xmlParse( objGet360 ) />
 				<cfset postAssetSuccess_res = XmlSearch(TranscoreobjGetData3601,"//*[name()='tfm:postAssetSuccessData']") />
-				
 				<!---<cfset errorInResult = XmlSearch(TranscoreobjGetData3601,"//*[name()='tcor:detailedMessage']") />--->
 				<cfset errorInResult = XmlSearch(TranscoreobjGetData3601,"//*[name()='message']") />
 				
-				<cfif arraylen(errorInResult)>	
-					<cfif not findnocase("Reference ID already exists",errorInResult[1].XmlText)>
-						
-						<cfif arraylen(postAssetSuccess_res) eq 0>	
-							<cfquery name="GetTranceCoreDBcount" datasource="#variables.dsn#">
-								select imprtref,Postrequest_text from LoadPostEverywhereDetails where imprtref='#arguments.impref#' and From_web='Tc360' and status='sucess' 
+				<!---cfif arraylen(errorInResult)>	
+					<cfif not findnocase("Reference ID already exists",errorInResult[1].XmlText)--->
+				
+				<cfif arraylen(postAssetSuccess_res) eq 0>	
+					<cfquery name="GetTranceCoreDBcount" datasource="#variables.dsn#">
+						select imprtref,Postrequest_text from LoadPostEverywhereDetails where imprtref='#arguments.impref#' and From_web='Tc360' and status='success' 
+					</cfquery>
+					<cfif GetTranceCoreDBcount.recordcount gt 0>
+						<!-----rechecking prepost if fail----->
+						<!------Post asset to trancecore----->
+						<cfoutput>
+							<cfsavecontent variable="soapHeaderTransCoreHead">
+								<Header>
+									<tcor:sessionHeader>
+										<tcor:sessionToken>
+											<tcor1:primary>#session.primaryKey[1].XmlText#</tcor1:primary>
+											<tcor1:secondary>#session.SeconKey[1].XmlText#</tcor1:secondary>
+										</tcor:sessionToken>
+									</tcor:sessionHeader>
+								</Header>
+							</cfsavecontent>
+							<cfset strHXml = reReplace(GetTranceCoreDBcount.Postrequest_text, "<Header>(.*?)</Header>", soapHeaderTransCoreHead) />
+							<cfsavecontent variable="soapHeaderTransCoreTokenTxt">
+								#trim(strHXml)# 
+							</cfsavecontent>
+						</cfoutput>
+						<!--- Test URL --->
+<!---						<cfhttp method="post" url="http://cnx.test.dat.com:9280/TfmiRequest" result="objGet1">
+							<cfhttpparam type="xml"  value="#trim( soapHeaderTransCoreTokenTxt )#" />
+						</cfhttp>--->
+						<!--- Live URL --->
+						<cfhttp method="post" url="http://www.transcoreservices.com:8000/TfmiRequest" result="objGet1">
+							<cfhttpparam type="xml"  value="#trim( soapHeaderTransCoreTokenTxt )#" />
+						</cfhttp>	
+						<cfset objGet3601 =  objGet1.filecontent />
+						<cfset TranscoreobjGetData36011 = xmlParse( objGet3601 ) />
+						<cfset postAssetSuccess_res1 = XmlSearch(TranscoreobjGetData36011,"//*[name()='tfm:postAssetSuccessData']") />
+						<cfif arraylen(postAssetSuccess_res1) eq 0>
+							<!-----if fail----->
+							<cfset sts='Fail' />							
+							<cfquery name="TransFlaginsert" datasource="#variables.dsn#">
+								update Loads SET IsTransCorePst=0,Trans_Sucess_Flag=0 where controlNumber=#arguments.impref# 
 							</cfquery>
-							
-							<cfif GetTranceCoreDBcount.recordcount gt 0>
-								<!-----rechecking prepost if fail----->
-								<!------Post asset to trancecore----->
-								<cfoutput>
-									<cfsavecontent variable="soapHeaderTransCoreHead">
-										<Header>
-											<tcor:sessionHeader>
-												<tcor:sessionToken>
-													<tcor1:primary>#session.primaryKey[1].XmlText#</tcor1:primary>
-													<tcor1:secondary>#session.SeconKey[1].XmlText#</tcor1:secondary>
-												</tcor:sessionToken>
-											</tcor:sessionHeader>
-										</Header>
-									</cfsavecontent>
-									<cfset strHXml = reReplace(GetTranceCoreDBcount.Postrequest_text, "<Header>(.*?)</Header>", soapHeaderTransCoreHead) />
-									<cfsavecontent variable="soapHeaderTransCoreTokenTxt">
-										#trim(strHXml)# 
-									</cfsavecontent>
-								</cfoutput>
-								
-								<!--- Test URL --->
-		<!---						<cfhttp method="post" url="http://cnx.test.dat.com:9280/TfmiRequest" result="objGet1">
-									<cfhttpparam type="xml"  value="#trim( soapHeaderTransCoreTokenTxt )#" />
-								</cfhttp>--->
-								
-								<!--- Live URL --->
-								<cfhttp method="post" url="http://www.transcoreservices.com:8000/TfmiRequest" result="objGet1">
-									<cfhttpparam type="xml"  value="#trim( soapHeaderTransCoreTokenTxt )#" />
-								</cfhttp>						
-								
-								<cfset objGet3601 =  objGet1.filecontent />
-								<cfset TranscoreobjGetData36011 = xmlParse( objGet3601 ) />
-								<cfset postAssetSuccess_res1 = XmlSearch(TranscoreobjGetData36011,"//*[name()='tfm:postAssetSuccessData']") />
-								
-								
-								
-								<cfif arraylen(postAssetSuccess_res1) eq 0>
-									<!-----if fail----->
-									<cfset sts='Fail' />							
-								<cfquery name="TransFlaginsert" datasource="#variables.dsn#">
-										update Loads SET IsTransCorePst=0,Trans_Sucess_Flag=0 where controlNumber=#arguments.impref# 
-									</cfquery>
-									<cfset Alertvar ="1" />
-									<cfset msg = XmlSearch(TranscoreobjGetData36011,"//*[name()='message']") />
-									<cfif arraylen(msg) eq 0>
-										<cfset Alertvar ="1" />
-										<cfset msg1 = XmlSearch(TranscoreobjGetData36011,"//*[name()='tcor:message']") />
-										<cfif arraylen(msg1) eq 0>
-											<cfset Alertvar ="1" />
-										<cfelse>
-											<cfset Alertvar=replace(#msg1[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
-										</cfif>
-									<cfelse>
-										<cfset Alertvar=replace(#msg[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
-									</cfif>
-									<cfif Alertvar eq  1>
-										<cfset Alertvar="Your Transcore Webservice status is Failed" />
-									</cfif>
-									<!-----if fail----->
-								<cfelse>
-									<!----if sucess---->
-									<cfset sts='sucess' />
-									<cfset Prev_sts='sucess' />
-									<cfset Alertvar="1" />
-									<cfset msg = XmlSearch(TranscoreobjGetData3601,"//*[name()='message']") />
-									<cfif arraylen(msg) eq 0>
-										<cfset Alertvar ="1" />
-										<cfset msg1 = XmlSearch(TranscoreobjGetData3601,"//*[name()='tcor:message']") />
-										<cfif arraylen(msg1) eq 0>
-											<cfset Alertvar ="1" />
-										<cfelse>
-											<cfset Alertvar=replace(#msg1[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
-										</cfif>
-									<cfelse>
-										<cfset Alertvar=replace(#msg[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
-									</cfif>
-									<cfif Alertvar eq  1>
-										<cfset Alertvar="Your Transcore Webservice status is Failed" />
-									</cfif>							
-									<cfquery name="TransFlaginsert" datasource="#variables.dsn#">
-										update Loads SET IsTransCorePst=1,Trans_Sucess_Flag=1 where controlNumber=#arguments.impref# 
-									</cfquery>
-									<!-----if sucess--->
-								</cfif>
-								<!-----rechecking prepost if fail----->
-							<cfelse>
-								<!-----if fail----->
-								<cfset sts='Fail' />
-								<cfquery name="TransFlaginsert" datasource="#variables.dsn#">
-									update Loads SET IsTransCorePst=0,Trans_Sucess_Flag=0 where controlNumber=#arguments.impref# 
-								</cfquery>
-								
+							<cfset Alertvar ="1" />
+							<cfset msg = XmlSearch(TranscoreobjGetData36011,"//*[name()='message']") />
+							<cfif arraylen(msg) eq 0>
 								<cfset Alertvar ="1" />
-								<cfset msg = XmlSearch(TranscoreobjGetData3601,"//*[name()='message']") />
-								
-								<cfif arraylen(msg) eq 0>
+								<cfset msg1 = XmlSearch(TranscoreobjGetData36011,"//*[name()='tcor:message']") />
+								<cfif arraylen(msg1) eq 0>
 									<cfset Alertvar ="1" />
-									<cfset msg1 = XmlSearch(TranscoreobjGetData3601,"//*[name()='tcor:message']") />
-									<cfif arraylen(msg1) eq 0>
-										<cfset Alertvar ="1" />
-									<cfelse>
-										<cfset Alertvar=replace(#msg1[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
-									</cfif>
 								<cfelse>
-									<cfset Alertvar=replace(#msg[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
+									<cfset Alertvar=replace(#msg1[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
 								</cfif>
-								
-								<cfif Alertvar eq  1>
-									<cfset Alertvar="Your Transcore Webservice status is Failed" />
+							<cfelse>
+								<cfset Alertvar=replace(#msg[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
+							</cfif>
+							<cfif Alertvar eq  1>
+								<cfset Alertvar="Your Transcore Webservice status is Failed" />
+							</cfif>
+							<!-----if fail----->
+						<cfelse>
+							<!----if success---->
+							<cfset sts='success' />
+							<cfset Prev_sts='success' />
+							<cfset Alertvar="1" />
+							<cfset msg = XmlSearch(TranscoreobjGetData3601,"//*[name()='message']") />
+							<cfif arraylen(msg) eq 0>
+								<cfset Alertvar ="1" />
+								<cfset msg1 = XmlSearch(TranscoreobjGetData3601,"//*[name()='tcor:message']") />
+								<cfif arraylen(msg1) eq 0>
+									<cfset Alertvar ="1" />
+								<cfelse>
+									<cfset Alertvar=replace(#msg1[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
 								</cfif>
-								<!-----if fail----->
+							<cfelse>
+								<cfset Alertvar=replace(#msg[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
+							</cfif>
+							<cfif Alertvar eq  1>
+								<cfset Alertvar="Your Transcore Webservice status is Failed" />
+							</cfif>							
+							<cfquery name="TransFlaginsert" datasource="#variables.dsn#">
+								update Loads SET IsTransCorePst=1,Trans_Sucess_Flag=1 where controlNumber=#arguments.impref# 
+							</cfquery>
+							<!-----if success--->
+						</cfif>
+						<!-----rechecking prepost if fail----->
+					<cfelse>
+						<!-----if fail----->
+						<cfset sts='Fail' />
+						<cfquery name="TransFlaginsert" datasource="#variables.dsn#">
+							update Loads SET IsTransCorePst=0,Trans_Sucess_Flag=0 where controlNumber=#arguments.impref# 
+						</cfquery>
+						<cfset Alertvar ="1" />
+						<cfset msg = XmlSearch(TranscoreobjGetData3601,"//*[name()='message']") />
+						<cfif arraylen(msg) eq 0>
+							<cfset Alertvar ="1" />
+							<cfset msg1 = XmlSearch(TranscoreobjGetData3601,"//*[name()='tcor:message']") />
+							<cfif arraylen(msg1) eq 0>
+								<cfset Alertvar ="1" />
+							<cfelse>
+								<cfset Alertvar=replace(#msg1[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
 							</cfif>
 						<cfelse>
-							<!----if sucess---->
-							<cfset sts='sucess' />
-							<cfset Alertvar="1" />
-							
-							<cfquery name="TransFlaginsert" datasource="#variables.dsn#" result="mm">
-								update Loads SET IsTransCorePst=1,Trans_Sucess_Flag=1 where LOADNUMBER=#arguments.impref# 
-							</cfquery>
-							<!-----if sucess--->
+							<cfset Alertvar=replace(#msg[1].XmlText#,"http://www.tcore.com/TcoreTypes.xsd" ,"") />
 						</cfif>
-						
-						<!-----delete asset from DB if any---->
-						<cfquery name="GetTranceCoreDBcount" datasource="#variables.dsn#">
-							delete from LoadPostEverywhereDetails where imprtref='#ViewPostEveryWhere.IMPORTREF#' and From_web='Tc360' and status='sucess' 
-							<!--- delete from LoadPostEverywhereDetails where imprtref='#arguments.impref#' and From_web='Tc360' and status='sucess' --->
-						</cfquery>
-						<!-----Insert new asset from DB if any---->
-						<cfquery name="PEPinsert" datasource="#variables.dsn#">
-							INSERT INTO LoadPostEverywhereDetails (Postrequest_text,Response_text,imprtref,From_web,status) VALUES('#soapHeaderTransCoreTokenTxt#','#objGet.FileContent#','#ViewPostEveryWhere.IMPORTREF#','Tc360','#sts#')
-							<!--- INSERT INTO LoadPostEverywhereDetails (Postrequest_text,Response_text,imprtref,From_web,status) VALUES('#soapHeaderTransCoreTokenTxt#','#objGet.FileContent#','#arguments.impref#','Tc360','#sts#') --->
-						</cfquery>
-					<cfelse>
-						<cfquery name="TransFlaginsert" datasource="#variables.dsn#" >
-							update Loads SET IsTransCorePst=1,Trans_Sucess_Flag=1 where LOADNUMBER=#arguments.impref# 
-						</cfquery>
-						<cfset Alertvar="1" />	
-						<cfquery name="TransFlaginsert" datasource="#variables.dsn#"> 
-							select * from Loads where LOADNUMBER=#arguments.impref# 
-						</cfquery>
-					
+						<cfif Alertvar eq  1>
+							<cfset Alertvar="Your Transcore Webservice status is Failed" />
+						</cfif>
+						<!-----if fail----->
 					</cfif>
-				
+				<cfelse>
+					<!----if success---->
+					<cfset sts='success' />
+					<cfset Alertvar="You have successfully posted to Dat Loadboard" />
+					<cfquery name="TransFlaginsert" datasource="#variables.dsn#" result="mm">
+						update Loads SET IsTransCorePst=1,Trans_Sucess_Flag=1 where LOADNUMBER=#arguments.impref# 
+					</cfquery>
+					<!-----if success--->
 				</cfif>
-					
+					<!-----delete asset from DB if any---->
+					<cfquery name="GetTranceCoreDBcount" datasource="#variables.dsn#">
+						delete from LoadPostEverywhereDetails where imprtref='#ViewPostEveryWhere.IMPORTREF#' and From_web='Tc360' and status='success' 
+						<!--- delete from LoadPostEverywhereDetails where imprtref='#arguments.impref#' and From_web='Tc360' and status='success' --->
+					</cfquery>
+					<!-----Insert new asset from DB if any---->
+					<cfquery name="PEPinsert" datasource="#variables.dsn#">
+						INSERT INTO LoadPostEverywhereDetails (Postrequest_text,Response_text,imprtref,From_web,status) VALUES('#soapHeaderTransCoreTokenTxt#','#objGet.FileContent#','#ViewPostEveryWhere.IMPORTREF#','Tc360','#sts#')
+						<!--- INSERT INTO LoadPostEverywhereDetails (Postrequest_text,Response_text,imprtref,From_web,status) VALUES('#soapHeaderTransCoreTokenTxt#','#objGet.FileContent#','#arguments.impref#','Tc360','#sts#') --->
+					</cfquery>	
 			<cfelseif arguments.postaction EQ 'U'>
 				<cfoutput>
 						<cfsavecontent variable="soapHeaderDelAsstCoreTxt">
@@ -1697,15 +1693,11 @@
 							</Envelope>
 						</cfsavecontent>
 					</cfoutput>
-					
-					
-					
 					<!--- TEST URL --->			
 <!---					<cfhttp method="post" url="http://cnx.test.dat.com:9280/TfmiRequest" result="searchlookup_res">
 						<cfhttpparam type="xml"  value="#trim( soapHeaderDelAsstCoreTxt )#" />
 					</cfhttp>					
 					--->
-					
 					<!--- LIVE URL --->
 					<cfhttp method="post" url="http://www.transcoreservices.com:8000/TfmiRequest" result="searchlookup_res">
 						<cfhttpparam type="xml"  value="#trim( soapHeaderDelAsstCoreTxt )#" />
@@ -1729,39 +1721,39 @@
 								<tfm:postAssetRequest>
 									<tfm:postAssetOperations>
 										<tfm:shipment>
-											<tfm:equipmentType>#ViewPostEveryWhere.EquipmentName#</tfm:equipmentType>
+											<tfm:equipmentType>#variables.EquipmentName#</tfm:equipmentType>
 											<tfm:origin>
 												<tfm:cityAndState>
-													<tfm:city>#ViewPostEveryWhere.OriginCity#</tfm:city>
-													<tfm:stateProvince>#ViewPostEveryWhere.OriginState#</tfm:stateProvince>
+													<tfm:city>#variables.OriginCity#</tfm:city>
+													<tfm:stateProvince>#variables.OriginState#</tfm:stateProvince>
 												</tfm:cityAndState>
 											</tfm:origin>
 											<tfm:destination>
 												<tfm:cityAndState>
-													<tfm:city>#ViewPostEveryWhere.DestCity#</tfm:city>
-													<tfm:stateProvince>#ViewPostEveryWhere.DestState#</tfm:stateProvince>
+													<tfm:city>#variables.DestCity#</tfm:city>
+													<tfm:stateProvince>#variables.DestState#</tfm:stateProvince>
 												</tfm:cityAndState>
 											</tfm:destination>
 										</tfm:shipment>
 										<tfm:postersReferenceId>#arguments.impref#</tfm:postersReferenceId>
 										<tfm:ltl>#FullOrPartial#</tfm:ltl>
-										<tfm:comments>#ViewPostEveryWhere.Notes#</tfm:comments>
+										<tfm:comments>#variables.Notes#</tfm:comments>
 										<tfm:dimensions>
-											<tfm:lengthFeet>#ViewPostEveryWhere.length#</tfm:lengthFeet>
+											<tfm:lengthFeet>#variables.length#</tfm:lengthFeet>
 											<tfm:weightPounds>
-												<cfif not isnumeric(ViewPostEveryWhere.Weight) or ViewPostEveryWhere.Weight eq 0>
+												<cfif not isnumeric(variables.Weight) or variables.Weight eq 0>
 													1
 												<cfelse>
-													#ViewPostEveryWhere.Weight#
+													#variables.Weight#
 												</cfif>
 											</tfm:weightPounds>
 										</tfm:dimensions>
 										<tfm:availability>
 											<tfm:earliest>
-												#dateformat(ViewPostEveryWhere.PickupDate,"yyyy-mm-dd")#T08:00:00.000Z
+												#dateformat(variables.PickupDate,"yyyy-mm-dd")#T08:00:00.000Z
 											</tfm:earliest>
 											<tfm:latest>
-												#dateformat(ViewPostEveryWhere.FinalDelivDate,"yyyy-mm-dd")#T08:00:00.000Z
+												#dateformat(variables.FinalDelivDate,"yyyy-mm-dd")#T08:00:00.000Z
 											</tfm:latest>
 										</tfm:availability>
 										<tfm:includeAsset>false</tfm:includeAsset>
@@ -1773,7 +1765,6 @@
 				</cfoutput>
 				
 				<!--- Insert into transcore --->
-
 				<!--- TEST URL --->
 <!---				<cfhttp method="post" url="http://cnx.test.dat.com:9280/TfmiRequest" result="objGet">
 					<cfhttpparam type="xml"  value="#trim( soapHeaderTransCoreTokenTxt )#" />
@@ -1783,23 +1774,21 @@
 				<cfhttp method="post" url="http://www.transcoreservices.com:8000/TfmiRequest" result="objGet">
 					<cfhttpparam type="xml"  value="#trim( soapHeaderTransCoreTokenTxt )#" />
 				</cfhttp>
-					
 				<cfset objGet360 =  objGet.filecontent />
 				<cfset TranscoreobjGetData3601 = xmlParse( objGet360 ) />
 				<cfset postAssetSuccess_res = XmlSearch(TranscoreobjGetData3601,"//*[name()='tfm:postAssetSuccessData']") />
 				
 				<!--- <cfset errorInResult = XmlSearch(TranscoreobjGetData3601,"//*[name()='tcor:detailedMessage']") /> --->
 				<cfset errorInResult = XmlSearch(TranscoreobjGetData3601,"//*[name()='message']") />
-				
+				<!---
 				<cfif arraylen(errorInResult)>	
 					<cfif not findnocase("Reference ID already exists",errorInResult[1].XmlText)>
-						
+				--->
 						<cfif arraylen(postAssetSuccess_res) eq 0>	
 							<cfquery name="GetTranceCoreDBcount" datasource="#variables.dsn#">
-								select imprtref,Postrequest_text from LoadPostEverywhereDetails where imprtref='#arguments.impref#' and From_web='Tc360' and status='sucess' 
+								select imprtref,Postrequest_text from LoadPostEverywhereDetails where imprtref='#arguments.impref#' and From_web='Tc360' and status='success' 
 							</cfquery>
-							
-							<cfif GetTranceCoreDBcount.recordcount gt 0>
+							<cfif GetTranceCoreDBcount.recordcount>
 								<!-----rechecking prepost if fail----->
 								<!------Post asset to trancecore----->
 								<cfoutput>
@@ -1807,8 +1796,8 @@
 										<Header>
 											<tcor:sessionHeader>
 												<tcor:sessionToken>
-													<tcor1:primary>#session.primaryKey[1].XmlText#</tcor1:primary>
-													<tcor1:secondary>#session.SeconKey[1].XmlText#</tcor1:secondary>
+													<tcor1:primary>#trim(session.primaryKey[1].XmlText)#</tcor1:primary>
+													<tcor1:secondary>#trim(session.SeconKey[1].XmlText)#</tcor1:secondary>
 												</tcor:sessionToken>
 											</tcor:sessionHeader>
 										</Header>
@@ -1828,7 +1817,7 @@
 								<cfhttp method="post" url="http://www.transcoreservices.com:8000/TfmiRequest" result="objGet1">
 									<cfhttpparam type="xml"  value="#trim( soapHeaderTransCoreTokenTxt )#" />
 								</cfhttp>						
-								
+							
 								<cfset objGet3601 =  objGet1.filecontent />
 								<cfset TranscoreobjGetData36011 = xmlParse( objGet3601 ) />
 								<cfset postAssetSuccess_res1 = XmlSearch(TranscoreobjGetData36011,"//*[name()='tfm:postAssetSuccessData']") />
@@ -1838,7 +1827,7 @@
 								<cfif arraylen(postAssetSuccess_res1) eq 0>
 									<!-----if fail----->
 									<cfset sts='Fail' />							
-								<cfquery name="TransFlaginsert" datasource="#variables.dsn#">
+									<cfquery name="TransFlaginsert" datasource="#variables.dsn#">
 										update Loads SET IsTransCorePst=0,Trans_Sucess_Flag=0 where controlNumber=#arguments.impref# 
 									</cfquery>
 									<cfset Alertvar ="1" />
@@ -1859,9 +1848,9 @@
 									</cfif>
 									<!-----if fail----->
 								<cfelse>
-									<!----if sucess---->
-									<cfset sts='sucess' />
-									<cfset Prev_sts='sucess' />
+									<!----if success---->
+									<cfset sts='Fail' />
+									<cfset Prev_sts='success' />
 									<cfset Alertvar="1" />
 									<cfset msg = XmlSearch(TranscoreobjGetData3601,"//*[name()='message']") />
 									<cfif arraylen(msg) eq 0>
@@ -1879,9 +1868,9 @@
 										<cfset Alertvar="Your Transcore Webservice status is Failed" />
 									</cfif>							
 									<cfquery name="TransFlaginsert" datasource="#variables.dsn#">
-										update Loads SET IsTransCorePst=1,Trans_Sucess_Flag=1 where controlNumber=#arguments.impref# 
+										update Loads SET IsTransCorePst=0,Trans_Sucess_Flag=0 where controlNumber=#arguments.impref# 
 									</cfquery>
-									<!-----if sucess--->
+									<!-----if success--->
 								</cfif>
 								<!-----rechecking prepost if fail----->
 							<cfelse>
@@ -1912,159 +1901,31 @@
 								<!-----if fail----->
 							</cfif>
 						<cfelse>
-							<!----if sucess---->
-							<cfset sts='sucess' />
-							<cfset Alertvar="1" />
+							<!----if success---->
+							<cfset sts='success' />
+							<cfset Alertvar="you have successfully posted to Dat Loadboard" />
 							
 							<cfquery name="TransFlaginsert" datasource="#variables.dsn#" result="mm">
 								update Loads SET IsTransCorePst=1,Trans_Sucess_Flag=1 where LOADNUMBER=#arguments.impref# 
 							</cfquery>
-							<!-----if sucess--->
+							<!-----if success--->
 						</cfif>
 						
 						<!-----delete asset from DB if any---->
 						<cfquery name="GetTranceCoreDBcount" datasource="#variables.dsn#">
-							delete from LoadPostEverywhereDetails where imprtref='#ViewPostEveryWhere.IMPORTREF#' and From_web='Tc360' and status='sucess' 
-							<!--- delete from LoadPostEverywhereDetails where imprtref='#arguments.impref#' and From_web='Tc360' and status='sucess' --->
+							delete from LoadPostEverywhereDetails where imprtref='#ViewPostEveryWhere.IMPORTREF#' and From_web='Tc360' and status='success' 
+							<!--- delete from LoadPostEverywhereDetails where imprtref='#arguments.impref#' and From_web='Tc360' and status='success' --->
 						</cfquery>
 						<!-----Insert new asset from DB if any---->
-						<cfquery name="PEPinsert" datasource="#variables.dsn#">
+						<cfquery name="PEPinsert" datasource="#variables.dsn#" result="result">
 							INSERT INTO LoadPostEverywhereDetails (Postrequest_text,Response_text,imprtref,From_web,status) VALUES('#soapHeaderTransCoreTokenTxt#','#objGet.FileContent#','#ViewPostEveryWhere.IMPORTREF#','Tc360','#sts#')
 							<!--- INSERT INTO LoadPostEverywhereDetails (Postrequest_text,Response_text,imprtref,From_web,status) VALUES('#soapHeaderTransCoreTokenTxt#','#objGet.FileContent#','#arguments.impref#','Tc360','#sts#') --->
 						</cfquery>
-					<cfelse>
-						<cfquery name="TransFlaginsert" datasource="#variables.dsn#" >
-							update Loads SET IsTransCorePst=1,Trans_Sucess_Flag=1 where LOADNUMBER=#arguments.impref# 
-						</cfquery>
-						<cfset Alertvar="1" />	
-						<cfquery name="TransFlaginsert" datasource="#variables.dsn#"> 
-							select * from Loads where LOADNUMBER=#arguments.impref# 
-						</cfquery>
-					
-					</cfif>
-				
-				</cfif>
-			
-				<!--- Update asset in trancecore --->
-			<!---	<cfoutput>
-					<cfsavecontent variable="soapHeaderTransCoreTokenTxt">
-						<Envelope 
-							xmlns="http://schemas.xmlsoap.org/soap/envelope/" 
-							xmlns:tcor="http://www.tcore.com/TcoreHeaders.xsd" 
-							xmlns:tcor1="http://www.tcore.com/TcoreTypes.xsd" 
-							xmlns:tfm="http://www.tcore.com/TfmiFreightMatching.xsd">
-							<Header>
-								<tcor:sessionHeader>
-									<tcor:sessionToken>
-										<tcor1:primary>#session.primaryKey[1].XmlText#</tcor1:primary>
-										<tcor1:secondary>#session.SeconKey[1].XmlText#</tcor1:secondary>
-									</tcor:sessionToken>
-								</tcor:sessionHeader>
-							</Header>
-							<Body>
-								<tfm:updateAssetRequest>
-								   <tfm:updateAssetOperation>
-								      <tfm:postersReferenceId>#arguments.impref#</tfm:postersReferenceId>
-								      <tfm:shipmentUpdate>
-								         <tfm:ltl>#FullOrPartial#</tfm:ltl>
-								         <tfm:comments>#ViewPostEveryWhere.Notes# test is done as per thew tabe</tfm:comments>
-									
-										<tfm:availability>
-											<tfm:earliest>
-												#dateformat(ViewPostEveryWhere.PickupDate,"yyyy-mm-dd")#T00:00:00.000Z
-											</tfm:earliest>
-											<tfm:latest>
-												#dateformat(ViewPostEveryWhere.FinalDelivDate,"yyyy-mm-dd")#T00:00:00.000Z
-											</tfm:latest>
-										</tfm:availability>
-										
-								         <tfm:dimensions>
-								            <tfm:lengthFeet>#ViewPostEveryWhere.length#</tfm:lengthFeet>
-								            <tfm:weightPounds>
-								            	<cfif  not isnumeric(ViewPostEveryWhere.Weight) or ViewPostEveryWhere.Weight eq 0>
-													1
-												<cfelse>
-													#ViewPostEveryWhere.Weight#
-												</cfif>
-								            </tfm:weightPounds>
-								         </tfm:dimensions>
-								         <tfm:truckStops>
-								            <tfm:alternateClosest>
-								               <tfm:alternateOrigin>
-								                  <tfm:cityAndState>
-								                     <tfm:city>#ViewPostEveryWhere.OriginCity#</tfm:city>
-								                     <tfm:stateProvince>#ViewPostEveryWhere.OriginState#</tfm:stateProvince>
-								                  </tfm:cityAndState>
-								               </tfm:alternateOrigin>
-								            </tfm:alternateClosest>
-								         </tfm:truckStops>
-								      </tfm:shipmentUpdate>
-								   </tfm:updateAssetOperation>
-								</tfm:updateAssetRequest>
-							</Body>
-						</Envelope>
-					</cfsavecontent>
-				</cfoutput>
-				
-				
-				<!--- Update to transcore --->
-				<!--- Test URL --->
-<!---				<cfhttp method="post" url="http://cnx.test.dat.com:9280/TfmiRequest" result="objGet">
-					<cfhttpparam type="xml"  value="#trim(soapHeaderTransCoreTokenTxt)#" />
-				</cfhttp>--->
-				
-				<!--- Live URL --->
-				<cfhttp method="post" url="http://www.transcoreservices.com:8000/TfmiRequest" result="objGet">
-					<cfhttpparam type="xml"  value="#trim(soapHeaderTransCoreTokenTxt)#" />
-				</cfhttp>
-				
-				<cfset objGet360 =  objGet.filecontent />
-				<cfset TranscoreUpdateResponse = xmlParse( objGet360 ) />
-				<cfset updateAssetSuccess_res = XmlSearch(TranscoreUpdateResponse,"//*[name()='tfm:updateAssetSuccessData']") />
-				
-				
-				<cfif arrayLen(updateAssetSuccess_res) EQ 0>
-					<!--- If fail --->
-					<cfset sts='Fail' />
-										
-					<cfset Alertvar ="" />
-					
-					<cfif isDefined("TranscoreUpdateResponse.Envelope.body.updateAssetResponse.updateAssetResult.serviceError.detailedMessage")>
-						<cfset Alertvar = TranscoreUpdateResponse.Envelope.body.updateAssetResponse.updateAssetResult.serviceError.detailedMessage.xmlText>
-					</cfif>
-					
-					<cfif Alertvar EQ "">
-						<cfset Alertvar="Your Transcore Webservice status is Failed" />
-					</cfif>
-					
-					<cfquery name="PEPinsert" datasource="#variables.dsn#">
-						INSERT INTO LoadPostEverywhereDetails (Postrequest_text,Response_text,imprtref,From_web,status) VALUES('#soapHeaderTransCoreTokenTxt#','#objGet360#','#arguments.impref#','Tc360','#sts#') 
-					</cfquery>
-				<cfelse>
-					<!--- If success --->
-					<cfset sts		= 'sucess' />
-					<cfset Alertvar	= "1" />
-					
-					<cfquery name="TransFlaginsert" datasource="#variables.dsn#">
-						UPDATE Loads SET IsTransCorePst=1, Trans_Sucess_Flag=1 WHERE loadnumber = #arguments.impref# 
-					</cfquery>
-					
-					<cfquery name="UpdateAsset" datasource="#variables.dsn#">
-						UPDATE LoadPostEverywhereDetails
-						SET 
-							Postrequest_text	= '#soapHeaderTransCoreTokenTxt#',
-							Response_text		= '#objGet360#',
-							created				= GETDATE()
-						WHERE imprtref = '#arguments.impref#' AND From_web = 'Tc360' AND status = 'sucess'
-					</cfquery>
-				</cfif>--->
 			</cfif>
 		</cftransaction>
-		
 		<cfif Alertvar neq 1>
-			<cfset Alertvar="Transcore Says : "&Alertvar />
+			<cfset Alertvar="DAT Loadboard Says : "&Alertvar />
 		</cfif>
-		
 		<cfif isdefined("Prev_sts")>
 			<cfset Alertvar=Alertvar&"!!!" />
 		</cfif>
@@ -2077,9 +1938,69 @@
 		</cfcatch>
 	</cftry>
 </cffunction>
-
- 
 <!---------------Transcore 360 webservice end----->	
+	
+	<!---------------delete 123loadboard seperateloads end----->	
+	<cffunction name="delete123LoadBoardWebserviceSeparate" access="remote" returntype="any">	
+		<cfargument name="username" type="string" required="yes">
+		<cfargument name="password" type="string" required="yes">
+		<cfargument name="dsn" type="string" required="yes">
+		<cfargument name="loadStopId" type="string" required="yes">
+		<cfparam name="Alertvar" default="1">
+		<cfoutput>
+			<cfset variables.PostProviderID='LMGR428AP'>
+		<!--- Delete from 123LoadboardAjax--->
+			<cfquery name="Get123LoadBoardDBcount" datasource="#arguments.dsn#">
+				select * from vwLoads123LoadBoard where LOADSTOPID=<cfqueryparam value="#arguments.loadStopId#" cfsqltype="cf_sql_varchar">
+			</cfquery>		
+			<cfif Get123LoadBoardDBcount.recordcount>
+				<!-----Delete asset from TranceCore---->
+				<cfsavecontent variable="myVariable"> 
+						<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+							<s:Header>
+								<Action>http://ws.123loadboard.com/PostingWS/PostingServiceV00.svc?xsd=xsd0</Action>
+							</s:Header> 
+							<s:Body>
+								<CancelLoad xmlns="http://schemas.123loadboard.com/2009/05/06">
+									<PostProviderID>#variables.PostProviderID#</PostProviderID>
+									<UserName>#arguments.username#</UserName>
+									<Password>#arguments.password#</Password>
+									<LoadIDs xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+										
+											<a:string>#left(arguments.loadStopId,25)#</a:string>
+										
+									</LoadIDs>
+								</CancelLoad>
+							</s:Body>
+						</s:Envelope>
+				</cfsavecontent> 
+				<cfscript>
+					var getHttpResponse = "";
+					var httpServiceParams = [
+						{
+							type = "xml",
+							value = trim(myVariable)
+						}
+					];
+					getHttpResponse = getHttpResponseCancelLoad ( method = "post", setUrl = "http://ws.123loadboard.com/PostingWS/PostingServiceV00.svc?xsd=xsd0", httpParameters = httpServiceParams );
+				</cfscript>
+				<cfif getHttpResponse.Statuscode eq '200 OK'>
+					<cfset variables.status="success">
+				<cfelse>
+					<cfset variables.status="fail">
+				</cfif>
+				<cfif variables.status EQ "success">			
+					<cfset Alertvar = "This Load has been sucessfully deleted from 123 LoadBoard "/>
+				<cfelse>
+					<cfset Alertvar = "This Load is not sucessfully cancelled from 123 LoadBoard "/>
+				</cfif>
+			</cfif>
+			<cfif Alertvar neq 1>
+				<cfset Alertvar="123Loadboard Says : "&Alertvar />
+			</cfif>
+		</cfoutput>	
+		<cfreturn Alertvar>
+	</cffunction>		
 <!------------- Webservice for 123loadboard start----------------->
 	<cffunction name="postTo123LoadBoardWebservice" access="remote" returntype="any">	
 		<cfargument name="postAction" type="string" required="yes"> 
@@ -2100,7 +2021,7 @@
 				</cfquery>	
 				<cfset var stopNumbers=valuelist(qryGetStopNo.stopNo)>
 				<!--- Create a new three-column query, specifying the column data types ---> 
-				<cfset qryView123LoadBoard = QueryNew("loadid,EquipmentCode,LoadBoardcode,stopNo,LoadType,sourceCity,sourceStatecode,sourcePostalCode,emailId,contactPerson,phone,sourceStopDate,sourceStopTime,isPartial,notes,LoadNumber,weight,qty,commodity,destnationCity,destinationStatecode,destinationPostalcode,destinationStopdate,destinationStoptime")> 
+				<cfset qryView123LoadBoard = QueryNew("loadid,loadStopid,EquipmentCode,LoadBoardcode,stopNo,LoadType,sourceCity,sourceStatecode,sourcePostalCode,emailId,contactPerson,phone,sourceStopDate,sourceStopTime,isPartial,notes,LoadNumber,weight,qty,commodity,destnationCity,destinationStatecode,destinationPostalcode,destinationStopdate,destinationStoptime")> 
 				 
 				<!--- Make  rows in the query ---> 
 				<cfset newRow = QueryAddRow(qryView123LoadBoard, 1)> 
@@ -2108,8 +2029,10 @@
 				<cfloop list="#stopNumbers#" index="i">
 					 <cfquery name="qryEachStop" datasource="#variables.dsn#">
 						select * from vwLoads123LoadBoard where stopNo = <cfqueryparam value="#i#" cfsqltype="cf_sql_integer">and loadnumber=<cfqueryparam value="#arguments.impref#" cfsqltype="cf_sql_integer">
+						order by loadtype asc
 					 </cfquery>
 					 <cfset variables.loadid=GetQueryRow(qryEachStop,1)>
+					  <cfset variables.loadStopid=GetQueryRow(qryEachStop,1)>
 					 <cfset variables.EquipmentCode=GetQueryRow(qryEachStop,1)>
 					 <cfset variables.LoadBoardcode=GetQueryRow(qryEachStop,1)>
 					 <cfset variables.stopNo=GetQueryRow(qryEachStop,1)>
@@ -2133,6 +2056,7 @@
 					 <cfset variables.destinationStopdate=GetQueryRow(qryEachStop,2)>
 					 <cfset variables.destinationStoptime=GetQueryRow(qryEachStop,2)>
 					 <cfset QuerySetCell(qryView123LoadBoard, "loadid",variables.loadid.loadid, rowNum)>
+					 <cfset QuerySetCell(qryView123LoadBoard, "loadStopid",variables.loadStopid.loadstopid, rowNum)>
 					 <cfset QuerySetCell(qryView123LoadBoard, "EquipmentCode", variables.loadid.equipmentcode, rowNum)> 
 					 <cfset QuerySetCell(qryView123LoadBoard, "LoadBoardcode", variables.LoadBoardcode.LoadBoardcode, rowNum)> 
 					 <cfset QuerySetCell(qryView123LoadBoard, "stopNo", variables.stopNo.stopNo, rowNum)> 
@@ -2181,9 +2105,12 @@
 												<PostProviderID>#arguments.PostProviderID#</PostProviderID>
 												<UserName>#arguments.username#</UserName>
 												<Password>#arguments.password#</Password>
-												<LoadIDs>
-													<LoadID>#ViewPost123LoadBoard.loadID#</LoadID>
-												</LoadIDs>
+												<LoadIDs xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+													<cfloop query="qryView123LoadBoard">
+														<cfset count=qryView123LoadBoard.STOPNO+1>
+														<a:string>#left(qryView123LoadBoard.loadStopid,25)#</a:string>
+													</cfloop>
+         										</LoadIDs>
 											</CancelLoad>
 										</s:Body>
 									</s:Envelope>
@@ -2219,32 +2146,35 @@
 									WHERE 
 										ControlNumber=<cfqueryparam value="#arguments.impref#" cfsqltype="cf_sql_integer">
 								</cfquery>
-								<cfset Alertvar = "This Load sucessfully deleted from 123 LoadBoard "/>
+								<cfset Alertvar = "This Load has been sucessfully deleted from 123 LoadBoard "/>
 							<cfelse>
 								<cfset Alertvar = "This Load is not sucessfully cancelled from 123 LoadBoard "/>
 							</cfif>
 						</cfif>
 					<cfelseif arguments.postaction EQ 'A'>
 						<!------Post asset to 123loadboard----->
-						
+							
 							<cfsavecontent variable="myVariable"> 
+								
 								<?xml version="1.0" encoding="UTF-8"?>
 									<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+										
 										<s:Header>
 											<Action>http://ws.123loadboard.com/PostingWS/PostingServiceV00.svc?xsd=xsd0</Action>
 										</s:Header> 
 										<s:Body>
+											
 											<PostLoad xmlns="http://schemas.123loadboard.com/2009/05/06">
 												<PostProviderID>#arguments.PostProviderID#</PostProviderID>
 												<UserName>#arguments.username#</UserName>
 												<Password>#arguments.password#</Password>
+												
 												<Loads xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
-													
 													<cfloop query="qryView123LoadBoard">
-													<cfset count=qryView123LoadBoard.STOPNO+1>
+														<cfset count=qryView123LoadBoard.STOPNO+1>
 														<Load>
 															<AmountType i:nil="true"/>
-															<Commodity i:nil="true">#qryView123LoadBoard.commodity#</Commodity>
+															<Commodity i:nil="true">#Replace(qryView123LoadBoard.commodity, "&", "and", "ALL")#</Commodity>
 															<DelivDate>#dateformat(qryView123LoadBoard.destinationstopdate,"yyyy-mm-dd'T'HH:mm:ss")#</DelivDate>
 															<DestCity>#qryView123LoadBoard.destnationcity#</DestCity>
 															<DestState>#qryView123LoadBoard.destinationstatecode#</DestState>
@@ -2254,7 +2184,7 @@
 															<DispatcherPhone i:nil="true">#qryView123LoadBoard.phone#</DispatcherPhone>
 															<EquipCode>#qryView123LoadBoard.loadboardcode#</EquipCode>
 															<EquipInfo i:nil="true"/>
-															<LoadID>#qryView123LoadBoard.loadid#</LoadID>
+															<LoadID>#left(qryView123LoadBoard.loadStopid,25)#</LoadID>
 															<LoadSize><cfif qryView123LoadBoard.ISPARTIAL eq 0>TL<cfelse>LTL</cfif></LoadSize>
 															<OrigCity>#qryView123LoadBoard.sourcecity#</OrigCity>
 															<OrigLatitude>0</OrigLatitude>
@@ -2262,7 +2192,7 @@
 															<OrigState>#qryView123LoadBoard.sourcestatecode#</OrigState>
 															<OrigZipcode i:nil="true">#qryView123LoadBoard.sourcepostalcode#</OrigZipcode>
 															<PickUpDate>#dateformat(qryView123LoadBoard.sourcestopdate,"yyyy-mm-dd'T'HH:mm:ss")#</PickUpDate>
-															<RepeatDaily>false</RepeatDaily>
+															<RepeatDaily>true</RepeatDaily>
 															<TeamLoad i:nil="true"/>
 															<Notes i:nil="true">#qryView123LoadBoard.notes#</Notes>
 															<TrackNo i:nil="true"/>
@@ -2272,11 +2202,14 @@
 															<PickUpTime i:nil="true">#qryView123LoadBoard.sourcestoptime#</PickUpTime>
 															<Stops>#count#</Stops>
 														</Load>
-													</cfloop>		
+													</cfloop>
 												</Loads>
 											</PostLoad>
+											
 										</s:Body>
+											
 									</s:Envelope>
+											
 							</cfsavecontent> 
 						<cfscript>
 							var getHttpResponse = "";
@@ -2335,7 +2268,6 @@
 						</cfif>	
 					<cfelseif arguments.postaction EQ 'U'>
 						<!------Post asset to 123loadboard----->
-					
 							<cfsavecontent variable="myVariable"> 
 								<?xml version="1.0" encoding="UTF-8"?>
 									<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
@@ -2349,10 +2281,10 @@
 												<Password>#arguments.password#</Password>
 												<Loads xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
 													<cfloop query="qryView123LoadBoard">
-													<cfset count=qryView123LoadBoard.STOPNO+1>
+														<cfset count=qryView123LoadBoard.STOPNO+1>
 														<Load>
 															<AmountType i:nil="true"/>
-															<Commodity i:nil="true">#qryView123LoadBoard.commodity#</Commodity>
+															<Commodity i:nil="true">#Replace(qryView123LoadBoard.commodity, "&", "and", "ALL")#</Commodity>
 															<DelivDate>#dateformat(qryView123LoadBoard.destinationstopdate,"yyyy-mm-dd'T'HH:mm:ss")#</DelivDate>
 															<DestCity>#qryView123LoadBoard.destnationcity#</DestCity>
 															<DestState>#qryView123LoadBoard.destinationstatecode#</DestState>
@@ -2362,7 +2294,7 @@
 															<DispatcherPhone i:nil="true">#qryView123LoadBoard.phone#</DispatcherPhone>
 															<EquipCode>#qryView123LoadBoard.loadboardcode#</EquipCode>
 															<EquipInfo i:nil="true"/>
-															<LoadID>#qryView123LoadBoard.loadid#</LoadID>
+															<LoadID>#left(qryView123LoadBoard.loadStopid,25)#</LoadID>
 															<LoadSize><cfif qryView123LoadBoard.ISPARTIAL eq 0>TL<cfelse>LTL</cfif></LoadSize>
 															<OrigCity>#qryView123LoadBoard.sourcecity#</OrigCity>
 															<OrigLatitude>0</OrigLatitude>
@@ -2380,13 +2312,12 @@
 															<PickUpTime i:nil="true">#qryView123LoadBoard.sourcestoptime#</PickUpTime>
 															<Stops>#count#</Stops>
 														</Load>
-													</cfloop>			
+													</cfloop>
 												</Loads>
 											</PostLoad>
 										</s:Body>
 									</s:Envelope>
-							</cfsavecontent> 
-						
+							</cfsavecontent>
 						<cfscript>
 							var getHttpResponse = "";
 							var httpServiceParams = [
@@ -2595,7 +2526,67 @@ Never call it alone otherwise you'll cause the DB inconsistancy --->
 	<cfelse>
 		<cfset APExported="0">
 	</cfif>
-	 
+	<cfquery name="qryGetLoadNumberAssignment" datasource="#variables.dsn#">
+		SELECT loadNumberAssignment FROM SystemConfig
+	</cfquery>
+	<cfset variables.loadNumberAssignment=0>
+	<cfif qryGetLoadNumberAssignment.loadNumberAssignment gt 0>
+		<cfswitch expression="#arguments.frmstruct.LOADSTATUS#">
+			<cfcase value="FBE06AA0-0868-48A9-A353-2B7CF8DA9F45">
+				<cfset variables.loadNumberAssignment=1>
+			</cfcase>
+			<cfcase value="EBE06AA0-0868-48A9-A353-2B7CF8DA9F45">
+				<cfset variables.loadNumberAssignment=2>
+			</cfcase>
+			<cfcase value="EBE06AA0-0868-48A9-A353-2B7CF8DA9F44">
+				<cfset variables.loadNumberAssignment=3>
+			</cfcase>
+			<cfcase value="B54D5427-A82E-4A7A-BAA1-DA95F4061EBE">
+				<cfset variables.loadNumberAssignment=4>
+			</cfcase>
+			<cfcase value="74151038-11EA-47F7-8451-D195D73DE2E4">
+				<cfset variables.loadNumberAssignment=5>
+			</cfcase>
+			<cfcase value="C4C98C6D-018A-41BD-8807-58D0DE1BB0F8">
+				<cfset variables.loadNumberAssignment=6>
+			</cfcase>
+			<cfcase value="E62ACAA8-804B-4B00-94E0-3FE7B081C012">
+				<cfset variables.loadNumberAssignment=7>
+			</cfcase>
+			<cfcase value="C980CD90-F7CD-4596-B254-141EAEC90186">
+				<cfset variables.loadNumberAssignment=8>
+			</cfcase>
+			<cfcase value="6419693E-A04C-4ECE-B612-36D3D40CFC70">
+				<cfset variables.loadNumberAssignment=9>
+			</cfcase>
+			<cfcase value="CE991E00-404D-486F-89B7-6E16C61676F3">
+				<cfset variables.loadNumberAssignment=10>
+			</cfcase>
+			<cfcase value="5C075883-B216-49FD-B0BF-851DCB5744A4">
+				<cfset variables.loadNumberAssignment=11>
+			</cfcase>
+			<cfcase value="C126B878-9DB5-4411-BE4D-61E93FAB8C95">
+				<cfset variables.loadNumberAssignment=12>
+			</cfcase>
+		</cfswitch>	
+	</cfif>	
+	<cfif variables.loadNumberAssignment gte qryGetLoadNumberAssignment.loadNumberAssignment>
+		<cfif  isdefined("arguments.frmstruct.InvoiceNumber") and arguments.frmstruct.InvoiceNumber eq 0>
+				<cfquery name="getloadmanual" datasource="#variables.dsn#">
+					SELECT  invoiceNumber= case when MAX(invoiceNumber)= 0 then null else MAX(invoiceNumber)+1 end FROM Loads
+				</cfquery>
+				<cfif getloadmanual.invoiceNumber eq "null" or  getloadmanual.invoiceNumber eq "" >
+					<cfquery name="getloadmanual" datasource="#variables.dsn#">
+						SELECT invoiceNumber=[MinimumLoadInvoiceNumber]+1 FROM SystemConfig
+					</cfquery>
+				</cfif>
+			<cfset invoiceNumber=getloadmanual.invoiceNumber>
+		<cfelseif  isdefined("arguments.frmstruct.InvoiceNumber") and arguments.frmstruct.InvoiceNumber neq 0>
+			<cfset invoiceNumber=arguments.frmstruct.InvoiceNumber>
+		 </cfif> 
+	<cfelse>
+		<cfset invoiceNumber=0>
+	</cfif>
 	 <cfif arguments.frmstruct.loadManualNo neq "">
 		<cfset loadManualNo=arguments.frmstruct.loadManualNo>
 	 <cfelse>
@@ -2722,12 +2713,12 @@ Never call it alone otherwise you'll cause the DB inconsistancy --->
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.trailerNo#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.BookedWith#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupNO1#" cfsqltype="CF_SQL_VARCHAR">
-		 	<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupDate#" cfsqltype="CF_SQL_dATE">
+		 	<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupDate#" cfsqltype="CF_SQL_dATE" null="#yesNoFormat(NOT len(arguments.frmstruct.shipperPickupDate))#">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.shipperPickupTime#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.shipperTimeIn#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.shipperTimeOut#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupNO#" cfsqltype="CF_SQL_VARCHAR">
-		 	<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupDate#" cfsqltype="CF_SQL_VARCHAR">
+		 	<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupDate#" cfsqltype="CF_SQL_dATE" null="#yesNoFormat(NOT len(arguments.frmstruct.consigneePickupDate))#">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.consigneePickupTime#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.consigneeTimeIn#" cfsqltype="CF_SQL_VARCHAR">
 		 	<CFPROCPARAM VALUE="#arguments.frmstruct.consigneeTimeOut#" cfsqltype="CF_SQL_VARCHAR">
@@ -2781,7 +2772,12 @@ Never call it alone otherwise you'll cause the DB inconsistancy --->
 			<cfelse>
 				<CFPROCPARAM VALUE="#trim(bookedBy)#" cfsqltype="CF_SQL_VARCHAR" null="true">
 			</cfif>
-			
+			<CFPROCPARAM VALUE="#invoiceNumber#" cfsqltype="CF_SQL_Integer">
+			<cfif structkeyexists(arguments.frmstruct,"weightStop1") and isnumeric(arguments.frmstruct.weightStop1)>
+				<CFPROCPARAM VALUE="#arguments.frmstruct.weightStop1#" cfsqltype="CF_SQL_INTEGER">
+			<cfelse>	
+				<CFPROCPARAM VALUE="0" cfsqltype="CF_SQL_INTEGER">
+			</cfif>	
 			<CFPROCRESULT NAME="qInsertedLoadID">
 	   </CFSTOREDPROC>
 	   
@@ -3182,7 +3178,7 @@ Never call it alone otherwise you'll cause the DB inconsistancy --->
 			CODFee,
 			DeclaredValue,
 			postto123loadboard,
-			Notes	
+			Notes,invoiceNumber,weight	
 ROW_NUMBER() OVER (ORDER BY 
                   #arguments.sortBy# #arguments.sortOrder#,l.LoadNumber
                             
@@ -3292,7 +3288,6 @@ ROW_NUMBER() OVER (ORDER BY
 
 <cffunction name="getAllItems" access="public" returntype="query">
 	<cfargument name="LOADSTOPID" required="false" type="any">
-	
 	
 	<CFSTOREDPROC PROCEDURE="USP_GetLoadItems" DATASOURCE="#variables.dsn#"> 
 		<cfif isdefined('arguments.LOADSTOPID') and len(arguments.LOADSTOPID) gt 1>
@@ -4149,7 +4144,6 @@ ROW_NUMBER() OVER (ORDER BY
 			and zipCode COLLATE Latin1_General_CS_AS = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.customerZipCode#">			
 	</cfquery>
 	<cfset checkResultStruct = '|'&dataExistenseCheck.recordcount & '|'& dataExistenseCheck.customerID &'|'& dataExistenseCheck.isPayer &'|'>
-	
 	<cfreturn checkResultStruct>
 </cffunction>
 <cffunction name="getIsPayer" access="public" returntype="any">
@@ -4346,18 +4340,26 @@ ROW_NUMBER() OVER (ORDER BY
 	<cfargument name="fileId" type="string" required="yes" />
 	 <cfargument name="fileName" required="yes" type="string">
 	<cfargument name="dsnName" required="yes" type="string"> 
+	<cfargument name="newFlag" required="yes" type="numeric"> 
 	
 
 	<cfset fileString = "#expandPath('../fileupload/img/#arguments.fileName#')#">
 	
 
 	 <!---<cftry>---->
-
-			<cfquery name="deleteItems" datasource="#arguments.dsnName#">
-				delete from FileAttachments where attachment_Id = '#arguments.fileId#'
-			</cfquery>
+			<cfif arguments.newFlag eq 0>
+				<cfquery name="deleteItems" datasource="#arguments.dsnName#">
+					delete from FileAttachments where attachment_Id = '#arguments.fileId#'
+				</cfquery>
+			<cfelse>
+				<cfquery name="deleteItems" datasource="#arguments.dsnName#">
+					delete from FileAttachmentsTemp where attachment_Id = '#arguments.fileId#'
+				</cfquery>
+			</cfif>
 			<!--- need to add code to remove the file from the directory aswell --->
-			<cffile action="delete" file="#fileString#">
+			<cfif fileexists(fileString)>
+				<cffile action="delete" file="#fileString#">
+			</cfif>	
 		     <cfreturn true> 
 		<!--- <cfcatch type="any">
 			 <cfreturn cfcatch.Detail> 
@@ -4379,8 +4381,8 @@ ROW_NUMBER() OVER (ORDER BY
 	<cfif retriveFromTemp.recordcount neq 0>
 		<cfloop query="retriveFromTemp">
 			<cfquery name="insertFilesUploaded" datasource="#application.dsn#">
-				insert into FileAttachments(linked_Id,linked_to,attachedFileLabel,attachmentFileName,uploadedBy)
-				values('#permLoadId#','#retriveFromTemp.linked_to#','#retriveFromTemp.attachedFileLabel#','#retriveFromTemp.attachmentFileName#','#retriveFromTemp.uploadedBy#')
+				insert into FileAttachments(linked_Id,linked_to,attachedFileLabel,attachmentFileName,uploadedBy,Billingattachments)
+				values('#permLoadId#','#retriveFromTemp.linked_to#','#retriveFromTemp.attachedFileLabel#','#retriveFromTemp.attachmentFileName#','#retriveFromTemp.uploadedBy#',<cfqueryparam cfsqltype="cf_sql_bit" value="#retriveFromTemp.Billingattachments#" >)
 			</cfquery>
 		</cfloop>	
 		<cfset flagFile =1>
@@ -4505,11 +4507,129 @@ ROW_NUMBER() OVER (ORDER BY
 	<cfquery name="getLoads" datasource="#Application.dsn#">
 		select loadnumber from Loads where loadid= <cfqueryparam value="#arguments.loadid#" cfsqltype="cf_sql_varchar">
 	</cfquery>
-	<cfif getLoads.recordcount>
 	<cfquery name="LoadboardInsertTOEveryWhereCount" datasource="#Application.dsn#">
 		select * from LoadPostEverywhereDetails where imprtref= <cfqueryparam value="#getLoads.loadnumber#" cfsqltype="cf_sql_integer"> and From_web=<cfqueryparam value="123LoadBoard" cfsqltype="cf_sql_varchar">
 	</cfquery>
-	</cfif>
 	<cfreturn LoadboardInsertTOEveryWhereCount>
-</cffunction>	
+</cffunction>
+
+<cffunction name="rememberSearchSession" access="remote" returnformat="plain" output="false">
+	<cfargument name="isChecked" default="true">
+	<cfargument name="searchText" default="">
+	<cfif arguments.isChecked>		
+		<cfset session.searchtext = '#arguments.searchText#'>
+	<cfelse>
+		<cfset session.searchtext = ''>
+	</cfif>
+	<cfset variables.sessionvalue=session.searchtext>
+	
+	<cfreturn variables.sessionvalue>
+</cffunction>
+
+<!---function to checkEditLoadId Exists--->
+<cffunction name="checkEditLoadIdExists" access="public" returntype="query">
+	<cfargument name="loadid" required="yes"/>
+	<cfquery name="qryGetUserEditLoad" datasource="#Application.dsn#">
+		select user_id from UserEditingLoads
+		where loadid=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.loadid#">
+	</cfquery>
+	<cfif structkeyexists (session,"empid")>			
+		<cfif Session.empid neq "" >
+			<cfset variables.userId=session.empid>
+		</cfif>
+	</cfif>	
+	<cfif structkeyexists (session,"customerid")>			
+		<cfif Session.customerid neq "" >
+			<cfset variables.userId=session.customerid>
+		</cfif>
+	</cfif>	
+	<cfif qryGetUserEditLoad.user_id eq variables.userId>
+		<cfquery name="qryGetUserEditLoadforRefresh" datasource="#Application.dsn#">
+			select user_id from UserEditingLoads
+			where loadid=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.loadid#">
+			AND user_id !=<cfqueryparam cfsqltype="cf_sql_varchar" value="#variables.userId#">
+		</cfquery>
+		<cfreturn qryGetUserEditLoadforRefresh>
+	<cfelse>
+		<cfreturn qryGetUserEditLoad>
+	</cfif>	
+	
+</cffunction>
+
+
+<!---function to insert or update UserEditingLoads--->
+<cffunction name="insertUserEditingLoad" access="public" >
+	<cfargument name="loadid" required="yes"/>
+		<cfif structkeyexists (session,"empid")>		
+			<cfif Session.empid neq "">
+				<cfquery name="qryGetUsername" datasource="#application.dsn#">
+					select name from Employees where EmployeeID=<cfqueryparam cfsqltype="cf_sql_varchar" value="#session.empid#">
+				</cfquery>
+				<cfquery name="qryGetLoadEdit" datasource="#application.dsn#">
+					select * from UserEditingLoads 
+					where 
+						LoadId=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.loadid#">
+					and 
+						user_id=<cfqueryparam cfsqltype="cf_sql_varchar" value="#session.empid#">
+				</cfquery>
+				<cfif qryGetLoadEdit.recordcount and qryGetUsername.recordcount>
+					<cfquery name="qryUpdateuserEdit" datasource="#Application.dsn#">
+						update UserEditingLoads
+						set 
+							DateCreated = <cfqueryparam cfsqltype="cf_sql_timestamp" value="#CreateODBCDateTime(now())#">
+						where 
+							LoadId=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.loadid#">
+						and 
+							user_id=<cfqueryparam cfsqltype="cf_sql_varchar" value="#session.empid#">
+					</cfquery>
+				<cfelse>
+					<cfquery name="qryInsertUserEdit" datasource="#Application.dsn#">
+						insert into UserEditingLoads(Username,LoadId,DateCreated,user_id)
+							VALUES(
+								<cfqueryparam cfsqltype="cf_sql_varchar" value="#qryGetUsername.name#">,
+								<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.loadid#">,
+								<cfqueryparam cfsqltype="cf_sql_timestamp" value="#CreateODBCDateTime(now())#">,
+								<cfqueryparam cfsqltype="cf_sql_varchar" value="#session.empid#">
+							) 
+					</cfquery>
+				</cfif>
+			</cfif>
+		</cfif>		
+		<cfif structkeyexists (session,"customerid")>
+			<cfif Session.customerid neq "">	
+				<cfquery name="qryGetUsername" datasource="#application.dsn#">
+					select CustomerName from Customers where CustomerID=<cfqueryparam cfsqltype="cf_sql_varchar" value="#session.customerid#">
+				</cfquery>
+				<cfquery name="qryGetLoadEdit" datasource="#application.dsn#">
+					select * from UserEditingLoads 
+					where 
+						LoadId=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.loadid#">
+					and 
+						user_id=<cfqueryparam cfsqltype="cf_sql_varchar" value="#session.customerid#">
+				</cfquery>
+				<cfif qryGetLoadEdit.recordcount and qryGetUsername.recordcount>
+					<cfquery name="qryUpdateuserEdit" datasource="#Application.dsn#">
+						update UserEditingLoads
+						set 
+							DateCreated = <cfqueryparam cfsqltype="cf_sql_timestamp" value="#CreateODBCDateTime(now())#">
+						where 
+							LoadId=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.loadid#">
+						and 
+							user_id=<cfqueryparam cfsqltype="cf_sql_varchar" value="#session.customerid#">
+					</cfquery>
+				<cfelse>
+					<cfquery name="qryInsertUserEdit" datasource="#Application.dsn#">
+						insert into UserEditingLoads(Username,LoadId,DateCreated,user_id)
+							VALUES(
+								<cfqueryparam cfsqltype="cf_sql_varchar" value="#qryGetUsername.CustomerName#">,
+								<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.loadid#">,
+								<cfqueryparam cfsqltype="cf_sql_timestamp" value="#CreateODBCDateTime(now())#">,
+								<cfqueryparam cfsqltype="cf_sql_varchar" value="#session.customerid#">
+							) 
+					</cfquery>
+				</cfif>
+			</cfif>
+		</cfif>
+</cffunction>
+
 </cfcomponent>

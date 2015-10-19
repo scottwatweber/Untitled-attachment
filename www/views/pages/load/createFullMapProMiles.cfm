@@ -18,7 +18,7 @@
 			</cfif>
 		</cfif>
 		<Cfset variables.decryptedvar = decrypt(toString(toBinary(url.dsn)), 'load')>
-		
+			
 		<cfif isdefined("URL.fifthConAdd") and Len(trim(URL.fifthConAdd)) gt 3> 
 			<cfset variables.desinationValue = URL.fifthConAdd>
 		<cfelseif isdefined("URL.fifthShpAdd") and Len(trim(URL.fifthShpAdd)) gt 3> 
@@ -72,6 +72,18 @@
 										<AllowRelaxRestrictions>1</AllowRelaxRestrictions>
 									</Routing>
 								</Options>
+								<FuelPurchases>
+									<FuelPurchase>
+										<PurchaseState>#URL.frstConAdd#</PurchaseState>
+										<AmountPurchased>0.0</AmountPurchased>
+										<IsLiters>1</IsLiters>
+										<Station></Station>
+										<City>#URL.frstShpAdd#</City>
+										<Invoice></Invoice>
+										<FuelCost>0.0</FuelCost>
+										<TypeOfFuel>DIESEL</TypeOfFuel>
+									</FuelPurchase>
+								</FuelPurchases>
 								<TripLegs>
 									<TripLeg>
 										<LocationText>#URL.frstShpAdd#</LocationText>
@@ -168,7 +180,6 @@
 		</cfhttp>
 		<cfset soapResponse = xmlParse(httpResponse.fileContent) />
 		<cfset xmlToStruct = variables.objProMileGateWay.ConvertXmlToStruct(soapResponse, structnew())>
-		
 		<cfif IsDefined('xmlToStruct.Body.RunTripResponse.RunTripResult.Results')>
 			<cfset resultArray = xmlToStruct.Body.RunTripResponse.RunTripResult.Results.StateMileage.StateBreakoutRow>
 			<cfset nonTollMiles = arraynew(1)>

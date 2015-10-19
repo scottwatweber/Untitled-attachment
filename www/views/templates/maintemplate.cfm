@@ -16,12 +16,14 @@
 		<script>
           urlComponentPath  = "/#urlCfcPath#/";
         </script>
+		 
         <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.0/themes/smoothness/jquery-ui.css">
 		<link href="styles/style.css?#now()#" rel="stylesheet" type="text/css" />
         <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
 	    <script src="https://code.jquery.com/ui/1.11.0/jquery-ui.min.js"></script>
         <script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.9/jquery.validate.min.js"></script>
 		<script src="javascripts/Validation.js?#now()#" language="javascript" type="text/javascript"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 		<cfif (isdefined("url.loadid") and len(trim(url.loadid)) gt 1) OR (isdefined("url.loadToBeCopied") and len(trim(url.loadToBeCopied)) gt 1)>
         
 		<cfparam name="NewcustomerID" default="">
@@ -30,7 +32,62 @@
 				getCutomerForm('#NewcustomerID#','#application.DSN#','#session.URLToken#');
 			});
       	</script>
+
           </cfif>
+		  <script>
+			// When the DOM is ready to be interacted with, let's
+			// set up our heartbeat.
+			
+			$(function(){
+				// When setting up the interval for our heartbeat,
+				// we want it to fire every 90 seconds so that it
+				// doesn't allow the session to timeout. Because
+				// AJAX passes back all the same cookies, the server
+				// will see this as a normal page request.
+				//
+				// Save a handle on the interval in our window scope
+				// so that we can clear it when needbe.
+			   window.heartBeat = setInterval(
+					function(){
+						$.get( "userCountRunning.cfm" );
+					},
+					
+					(45 * 1000)
+					);
+				// If someone leaves their window open, we might not
+				// want their session to stay open indeterminetly. As
+				// such, let's kill the heart beat after a certain
+				// amount of time (ex. 20 minutes).
+				setTimeout(
+					function(){
+						// Clear the heart beat.
+						clearInterval( window.heartBeat );
+					},
+					(120 * 60 * 1000)
+					);
+			});
+			</script>
+		  <style>
+			.unReadMessage{
+				background-color: ##d21f1f;
+				border-radius: 50%;
+				color: ##fff;
+				display: inline-block;
+				float: right;
+				height: 20px;
+				margin-left: 31px;
+				position: absolute;
+				text-align: center;
+				top: 60px;
+				width: 20px;
+			}
+			.unread {
+				font-size: 11px;
+				position: relative;
+				right: 0;
+				top: -7px;
+			}
+		  </style>
 		</head>
 		<body>
 		<cfparam name="url.thnks" default="0">
@@ -46,6 +103,9 @@
 				
 				</script>
 	 </cfif>
+		
+		<cfinvoke component="#variables.objequipmentGateway#" method="getCountEquipments" returnvariable="request.qryCountEquipments" />
+	
 		<cfinvoke component="#variables.objloadGateway#" method="getLoadSystemSetupOptions" returnvariable="request.qSystemSetupOptions1" />
 			<!------posteverywhere & transcore alert messages---------->
 			<cfif structkeyexists(url,"AlertvarP") and url.AlertvarP neq "1"  and url.AlertvarP neq "" and  request.qSystemSetupOptions1.integratewithPEP  neq 0 >
@@ -126,6 +186,17 @@
 					
 				</cfoutput> 
 			</cfif>	
+			 <cfif structkeyexists(url,"Ialert") and url.Ialert neq 1>
+				<cfoutput>
+						
+						<script>
+							
+							var #toScript(url.Ialert,"jsVar")#;
+							alert(jsVar);
+						</script> 
+					
+				</cfoutput> 
+			</cfif>	
 			<!---------end post & transcore alert message------> 
 			<cfparam name="event" default="home">
 			<cfparam name="variables.ClassName" default="">
@@ -151,7 +222,7 @@
 				</cfif>
 				</div>
 				 
-				<div style="width:5%; float:left; margin-top:2%;"> Version 2.76.20150702</div>
+				<div style="width:5%; float:left; margin-top:2%;"> Version 2.76.20151006</div>
 				<div style="clear:left;"></div>
 				<table width="100%" border="0px" cellpadding="0px" style="height:100%;" cellspacing="0px"<cfif Not StructKeyExists(request, "content") And StructKeyExists(request, "tabs")> style="height:100%;"</cfif>>
 					<tr>
@@ -179,8 +250,18 @@
 																	Carriers
 																<cfelse>
 																	Drivers
+																	
 																</cfif>
 															</a>
+															<cfif not request.qSystemSetupOptions1.freightBroker>
+																<cfif request.qryCountEquipments.COMPUTED_COLUMN_1  gt 0>
+																	<a href="index.cfm?event=equipment&EquipmentMaint=1&#Session.URLToken#">
+																		<span class="unReadMessage">
+																			<span title="#request.qryCountEquipments.COMPUTED_COLUMN_1# Equipments Need maintenance" class="unread">#request.qryCountEquipments.COMPUTED_COLUMN_1#</span>
+																		</span>
+																	</a>
+																</cfif>
+															</cfif>	
 														</td>
 													</cfif>
 													<td><a href="index.cfm?event=load&#Session.URLToken#" <cfif event is 'load' or event is 'addload:process' or event is 'unit' or event is 'class' or event is 'addload' or event is 'addunit:process' or event is 'addunit' or event is 'addclass:process' or event is 'addclass' or event is 'advancedsearch'> class="active" </cfif>>All Loads</a></td>
@@ -201,7 +282,7 @@
 														</cfif>
 														<td><a href="#sysSetupUrl#" <cfif event is 'systemsetup'> class="active" </cfif>>System Setup</a></td>
 													</cfif>
-													<td class="nobg"><a href="index.cfm?event=logout:process&#Session.URLToken#">Logout</a></td>
+													<td class="nobg"><a href="index.cfm?event=logout:process&#Session.URLToken#&reinit=true">Logout</a></td>
 													
 												</tr>
 											</table>
